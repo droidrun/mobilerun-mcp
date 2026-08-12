@@ -1,0 +1,10 @@
+{
+  "name": "mobilerun-mcp",
+  "private": true,
+  "packageManager": "pnpm@10.18.1",
+  "scripts": {
+    "typecheck": "pnpm -r run typecheck",
+    "test": "bun test",
+    "build": "pnpm -r run build"
+  }
+}
