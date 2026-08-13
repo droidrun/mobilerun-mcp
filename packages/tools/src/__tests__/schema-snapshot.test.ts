@@ -154,14 +154,6 @@ function noopBackend(): Backend {
             enableEsim: notImplemented,
             removeEsim: notImplemented,
         },
-        profiles: {
-            listProfiles: notImplemented,
-            getProfile: notImplemented,
-            createProfile: notImplemented,
-            updateProfile: notImplemented,
-            deleteProfile: notImplemented,
-            applyProfile: notImplemented,
-        },
     };
 }
 

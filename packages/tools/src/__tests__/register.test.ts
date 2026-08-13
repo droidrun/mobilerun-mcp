@@ -166,14 +166,6 @@ function stubBackend(): Backend & { calls: string[] } {
             enableEsim: () => record('deviceControl.enableEsim'),
             removeEsim: () => record('deviceControl.removeEsim'),
         },
-        profiles: {
-            listProfiles: () => record('profiles.listProfiles'),
-            getProfile: () => record('profiles.getProfile'),
-            createProfile: () => record('profiles.createProfile'),
-            updateProfile: () => record('profiles.updateProfile'),
-            deleteProfile: () => record('profiles.deleteProfile'),
-            applyProfile: () => record('profiles.applyProfile'),
-        },
     };
     return backend;
 }
@@ -199,7 +191,7 @@ async function connectedClient(ctx: ToolCtx, opts?: Parameters<typeof buildMcpSe
 const EXPECTED_TOOL_NAMES = [...ALL_TOOL_NAMES];
 
 describe('buildMcpServer', () => {
-    test('registers every tool in ALL_TOOL_NAMES (35 tools) under a full-access policy', async () => {
+    test('registers every tool in ALL_TOOL_NAMES (34 tools) under a full-access policy', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));
         const { tools } = await client.listTools();

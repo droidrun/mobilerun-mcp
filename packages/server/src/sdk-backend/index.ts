@@ -7,7 +7,6 @@ import { createDeviceControlBackend } from './device-control.js';
 import { createDevicesBackend } from './devices.js';
 import { withBackendErrors } from './errors.js';
 import { createPlatformCatalogBackend } from './platform-catalog.js';
-import { createProfilesBackend } from './profiles.js';
 import { createProxiesBackend } from './proxies.js';
 import { createTasksBackend } from './tasks.js';
 import { createWebhooksBackend } from './webhooks.js';
@@ -31,7 +30,6 @@ export function createSdkBackend(client: Mobilerun): Backend {
         credentials: withBackendErrors(createCredentialsBackend(client)),
         tasks: withBackendErrors(createTasksBackend(client)),
         deviceControl: withBackendErrors(createDeviceControlBackend(client)),
-        profiles: withBackendErrors(createProfilesBackend(client)),
         apps: withBackendErrors(createAppsBackend(client)),
         proxies: withBackendErrors(createProxiesBackend(client)),
         connect: withBackendErrors(createConnectBackend(client)),

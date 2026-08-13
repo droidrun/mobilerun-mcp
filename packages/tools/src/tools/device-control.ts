@@ -1,7 +1,5 @@
 // Device-control bundle tools: manage_device, device_action,
 // manage_device_apps, manage_device_files, configure_device, manage_esim.
-// `profiles` is registered separately (../tools/profiles.ts) since it has
-// its own backend port (../backend/profiles.ts).
 //
 // Every operation below was verified directly against @mobilerun/sdk 5.1.0's
 // shipped .d.ts — several operations that were originally sketched for this
