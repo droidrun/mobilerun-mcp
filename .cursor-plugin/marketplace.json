@@ -12,7 +12,7 @@
     {
       "name": "mobilerun",
       "source": "./plugins/mobilerun",
-      "description": "Control Android device fleets, phone numbers, eSIMs, apps, and automation workflows via the Mobilerun MCP."
+      "description": "Control Android device fleets, phone numbers, apps, and automation workflows via the Mobilerun MCP."
     }
   ]
 }
