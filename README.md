@@ -8,7 +8,7 @@ and what's planned next).
 
 - `packages/tools` (`@mobilerun/mcp-tools`) — auth-agnostic tool core. No
   hono, no SDK dependency, only `zod` + MCP SDK types. Exports
-  `buildMcpServer(ctx, opts?)`, the `Backend` interface, and all 35 tools.
+  `buildMcpServer(ctx, opts?)`, the `Backend` interface, and all 34 tools.
 - `packages/server` (`@mobilerun/mcp-server`) — public composition: Bearer
   auth → `@mobilerun/sdk` client → `SdkBackend` → `ToolCtx` →
   `buildMcpServer`. Ships both an HTTP (Streamable HTTP, stateless) and a
@@ -115,7 +115,7 @@ HTTP envelope) — local-only fallback, not used by the HTTP transport.
 Validated with `zod` + `safeParse` at startup (`env.ts`) — an invalid config
 fails fast (`process.exit(1)`) rather than serving with a bad default.
 
-## Tools (35 total)
+## Tools (34 total)
 
 | Tool | Domain | Notes |
 |---|---|---|
@@ -133,7 +133,6 @@ fails fast (`process.exit(1)`) rather than serving with a bad default.
 | `manage_device_files` | Device-control | Bundle: `operation ∈ list, upload, download, delete` |
 | `configure_device` | Device-control | Bundle: `operation ∈ get_language, set_language, get_timezone, set_timezone, get_location, set_location, get_time, get_overlay, set_overlay, proxy_connect, proxy_disconnect, get_proxy_status` |
 | `manage_esim` | Device-control | Bundle: `operation ∈ list, activate, enable, remove` |
-| `profiles` | Device-control | Bundle: `operation ∈ list, get, create, update, delete, apply` |
 | `apps` | Platform | Bundle: `operation ∈ list, get, versions, create_upload_url, confirm_upload, mark_failed, delete` |
 | `proxies` | Platform | Bundle: `operation ∈ list, get, create, update, delete, lookup` — device-proxy configs (socks5/wireguard) |
 | `connect` | Platform | Bundle: `operation ∈ list_countries, list_proxies, get_proxy, buy_proxy, cancel_proxy, ping_proxy, list_connections, list_users, get_user, list_user_connections`. `buy_proxy`/`cancel_proxy` are billed — denied under `no-commerce`. User mutations (`create_user`/`update_user`/`delete_user`) are intentionally not exposed — not public product surface |
@@ -181,9 +180,9 @@ The HTTP and stdio servers build their `Policy` via `policyForProfile(env.MCP_PO
 
 | Profile | Tool count | Notes |
 |---|---|---|
-| `readonly` | 25 | `list_*`/`get_*` tools, `platform_catalog`, plus 12 bundle tools narrowed to their read operations via `operationAllowlist` (`webhooks`, `manage_device`, `manage_device_apps`, `manage_device_files`, `configure_device`, `manage_esim`, `profiles`, `apps`, `proxies`, `connect`, `manage_flow`, `workflow_events`). `device_action` and `manage_credentials` are excluded outright — neither has a read-only operation. |
-| `no-commerce` (**default**) | 33 | Everything except `create_device`, `terminate_device` (tool-level), and `connect`'s `buy_proxy`/`cancel_proxy` operations (operation-level — the `connect` tool itself stays visible). The required safe default — a server that never sets `MCP_POLICY_PROFILE` must not fail open to `full`. |
-| `full` | 35 | Every tool, no operation gates — `fullAccessPolicy()`, opt-in only. |
+| `readonly` | 24 | `list_*`/`get_*` tools, `platform_catalog`, plus 11 bundle tools narrowed to their read operations via `operationAllowlist` (`webhooks`, `manage_device`, `manage_device_apps`, `manage_device_files`, `configure_device`, `manage_esim`, `apps`, `proxies`, `connect`, `manage_flow`, `workflow_events`). `device_action` and `manage_credentials` are excluded outright — neither has a read-only operation. |
+| `no-commerce` (**default**) | 32 | Everything except `create_device`, `terminate_device` (tool-level), and `connect`'s `buy_proxy`/`cancel_proxy` operations (operation-level — the `connect` tool itself stays visible). The required safe default — a server that never sets `MCP_POLICY_PROFILE` must not fail open to `full`. |
+| `full` | 34 | Every tool, no operation gates — `fullAccessPolicy()`, opt-in only. |
 
 Set `MCP_POLICY_PROFILE=readonly|no-commerce|full` to choose; both the HTTP
 and stdio transports read the same env var, so they stay in lockstep.

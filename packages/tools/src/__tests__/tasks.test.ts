@@ -163,14 +163,6 @@ function stubBackend(): Backend & { calls: Array<{ method: string; args: unknown
             enableEsim: record('deviceControl.enableEsim'),
             removeEsim: record('deviceControl.removeEsim'),
         },
-        profiles: {
-            listProfiles: record('profiles.listProfiles'),
-            getProfile: record('profiles.getProfile'),
-            createProfile: record('profiles.createProfile'),
-            updateProfile: record('profiles.updateProfile'),
-            deleteProfile: record('profiles.deleteProfile'),
-            applyProfile: record('profiles.applyProfile'),
-        },
         calls,
     };
     return backend;

@@ -2,7 +2,7 @@
 
 `mobilerun-mcp` is a curated MCP (Model Context Protocol) server for the
 Mobilerun platform API: devices, workflows, webhooks, credentials, tasks,
-device control, profiles, apps, proxies, connect, and platform catalog data,
+device control, apps, proxies, connect, and platform catalog data,
 exposed as a set of well-scoped MCP tools an LLM agent can call.
 
 ## Architecture
@@ -10,7 +10,7 @@ exposed as a set of well-scoped MCP tools an LLM agent can call.
 - **Auth-agnostic tool core** (`packages/tools`, `@mobilerun/mcp-tools`) —
   has no opinion about how a caller authenticates or which backend serves a
   request. It defines a `Backend` port per domain (devices, workflows,
-  webhooks, credentials, tasks, device-control, profiles, apps, proxies,
+  webhooks, credentials, tasks, device-control, apps, proxies,
   connect, platform-catalog), a `ToolCtx` (backend + auth context + policy),
   and `buildMcpServer(ctx, opts?)`, which registers every tool against an
   MCP `McpServer` instance.
@@ -36,8 +36,8 @@ exposed as a set of well-scoped MCP tools an LLM agent can call.
 
 ## What exists today
 
-- **35 tools** across devices, workflows, webhooks, credentials, tasks,
-  device-control, profiles, apps, proxies, connect, and platform catalog.
+- **34 tools** across devices, workflows, webhooks, credentials, tasks,
+  device-control, apps, proxies, connect, and platform catalog.
   See the README's tool table for the full list and each bundle tool's
   operation enum.
 - **Three policy profiles**: `readonly` (25 tools), `no-commerce` (33 tools,

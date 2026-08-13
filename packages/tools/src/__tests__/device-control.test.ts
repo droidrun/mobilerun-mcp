@@ -1,6 +1,6 @@
 // Tests for the device-control bundle tools: manage_device,
 // device_action, manage_device_apps, manage_device_files, configure_device,
-// manage_esim, profiles. Mirrors register.test.ts's stub-backend pattern,
+// manage_esim. Mirrors register.test.ts's stub-backend pattern,
 // self-contained per this repo's convention (schema-snapshot.test.ts does
 // the same rather than importing register.test.ts's helpers).
 import { describe, expect, test } from 'bun:test';
@@ -164,14 +164,6 @@ function stubBackend(): Backend & { calls: string[] } {
             enableEsim: () => record('deviceControl.enableEsim'),
             removeEsim: () => record('deviceControl.removeEsim'),
         },
-        profiles: {
-            listProfiles: () => record('profiles.listProfiles'),
-            getProfile: () => record('profiles.getProfile'),
-            createProfile: () => record('profiles.createProfile'),
-            updateProfile: () => record('profiles.updateProfile'),
-            deleteProfile: () => record('profiles.deleteProfile'),
-            applyProfile: () => record('profiles.applyProfile'),
-        },
     };
     return backend;
 }
@@ -197,12 +189,12 @@ function textOf(result: Awaited<ReturnType<Client['callTool']>>): string {
 const DEVICE_ID = 'd1';
 
 describe('device-control bundle tools', () => {
-    test('all 7 new tools are registered under a full-access policy', async () => {
+    test('all 6 device-control tools are registered under a full-access policy', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));
         const { tools } = await client.listTools();
         const names = tools.map((t) => t.name);
-        for (const name of ['manage_device', 'device_action', 'manage_device_apps', 'manage_device_files', 'configure_device', 'manage_esim', 'profiles']) {
+        for (const name of ['manage_device', 'device_action', 'manage_device_apps', 'manage_device_files', 'configure_device', 'manage_esim']) {
             expect(names).toContain(name);
         }
         // device_recordings has no SDK support at all — must never be registered.
@@ -380,40 +372,6 @@ describe('device-control bundle tools', () => {
         const result = await client.callTool({ name: 'manage_esim', arguments: { operation: 'activate', deviceId: DEVICE_ID } });
         expect(result.isError).toBe(true);
         expect(backend.calls).not.toContain('deviceControl.activateEsim');
-    });
-
-    test('profiles: list (read) and delete (destructive mutation) are distinct operation values, both dispatch correctly', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const list = await client.callTool({ name: 'profiles', arguments: { operation: 'list' } });
-        expect(list.isError).not.toBe(true);
-        expect(backend.calls).toContain('profiles.listProfiles');
-
-        backend.calls.length = 0;
-        const del = await client.callTool({ name: 'profiles', arguments: { operation: 'delete', profileId: 'p1' } });
-        expect(del.isError).not.toBe(true);
-        expect(backend.calls).toContain('profiles.deleteProfile');
-        expect(backend.calls).not.toContain('profiles.listProfiles');
-    });
-
-    test('profiles: apply dispatches to devices.profile.update via profiles.applyProfile, distinct from create', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const apply = await client.callTool({ name: 'profiles', arguments: { operation: 'apply', deviceId: DEVICE_ID, profileId: 'p1' } });
-        expect(apply.isError).not.toBe(true);
-        expect(backend.calls).toContain('profiles.applyProfile');
-        expect(backend.calls).not.toContain('profiles.createProfile');
-    });
-
-    test('profiles: field allowlist rejects a field foreign to the chosen operation', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-        const result = await client.callTool({ name: 'profiles', arguments: { operation: 'get', profileId: 'p1', name: 'unexpected' } });
-        expect(result.isError).toBe(true);
-        expect(textOf(result)).toContain('not valid for operation=get');
-        expect(backend.calls).not.toContain('profiles.getProfile');
     });
 
     test('operation-level allowlist gates a device-control bundle tool the same way as webhooks', async () => {

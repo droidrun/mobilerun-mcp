@@ -64,7 +64,7 @@ describe('/ — mirrors /mcp (Traefik stripPrefix delivers requests at root)', (
         });
         expect(res.status).toBe(200);
         const body = (await res.json()) as { result?: { tools?: Array<{ name: string }> } };
-        expect(body.result?.tools?.length).toBe(33);
+        expect(body.result?.tools?.length).toBe(32);
     });
 
     test('POST / missing credentials -> 401', async () => {
@@ -128,6 +128,6 @@ describe('POST /mcp tools/list — default policy profile', () => {
         const names = (body.result?.tools ?? []).map((t) => t.name);
         expect(names).not.toContain('create_device');
         expect(names).not.toContain('terminate_device');
-        expect(names.length).toBe(33);
+        expect(names.length).toBe(32);
     });
 });

@@ -1,9 +1,7 @@
 // Device-control port — see devices.ts's file header for the DTO
 // philosophy. Backs the device-control bundle tools:
 // manage_device, device_action, manage_device_apps, manage_device_files,
-// configure_device, manage_esim. `profiles` has its own port (profiles.ts)
-// since it isn't device-scoped the same way (profile CRUD lives at
-// /profiles, only `apply` touches a device).
+// configure_device, manage_esim.
 //
 // Every method here was verified against @mobilerun/sdk 5.1.0's shipped
 // .d.ts — see the header comment in

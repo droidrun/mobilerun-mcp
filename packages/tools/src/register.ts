@@ -11,7 +11,6 @@ import { registerDeviceControlTools } from './tools/device-control.js';
 import { registerDeviceTools } from './tools/devices.js';
 import { registerManageFlowTool } from './tools/manage-flow.js';
 import { registerPlatformCatalogTools } from './tools/platform-catalog.js';
-import { registerProfileTools } from './tools/profiles.js';
 import { registerProxiesTools } from './tools/proxies.js';
 import { registerTaskTools } from './tools/tasks.js';
 import { registerWebhookTools } from './tools/webhooks.js';
@@ -52,7 +51,6 @@ export const ALL_TOOL_NAMES = [
     'manage_device_files',
     'configure_device',
     'manage_esim',
-    'profiles',
     'apps',
     'manage_credentials',
     'proxies',
@@ -88,7 +86,6 @@ const OPERATION_FIELD: Readonly<Record<string, string>> = {
     manage_device_files: 'operation',
     configure_device: 'operation',
     manage_esim: 'operation',
-    profiles: 'operation',
     manage_flow: 'operation',
     workflow_events: 'operation',
     apps: 'operation',
@@ -245,7 +242,6 @@ export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): Mcp
     registerCredentialTools(server, ctx);
     registerTaskTools(server, ctx);
     registerDeviceControlTools(server, ctx);
-    registerProfileTools(server, ctx);
     registerAppsTools(server, ctx);
     registerManageCredentialsTool(server, ctx);
     registerProxiesTools(server, ctx);

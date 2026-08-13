@@ -91,13 +91,6 @@ export type {
     EsimSubscriptionDto,
     EsimListDto,
     EsimActivateOpts,
-    ProfilesBackend,
-    DeviceSpecInput,
-    ProfileDto,
-    ProfileListDto,
-    ProfileDeleteResultDto,
-    ProfileApplyResultDto,
-    ListProfilesOpts,
     InitPackageParams,
     CreateCredentialParams,
     DeleteCredentialParams,
@@ -138,7 +131,6 @@ export { registerCredentialTools, registerManageCredentialsTool } from './tools/
 export { registerTaskTools } from './tools/tasks.js';
 export { compactTrajectory, type CompactTrajectory } from './tools/tasks.js';
 export { registerDeviceControlTools } from './tools/device-control.js';
-export { registerProfileTools } from './tools/profiles.js';
 export { registerAppsTools } from './tools/apps.js';
 export { registerProxiesTools } from './tools/proxies.js';
 export { registerConnectTools } from './tools/connect.js';

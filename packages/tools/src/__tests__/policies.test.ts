@@ -164,14 +164,6 @@ function stubBackend(): Backend & { calls: string[] } {
             enableEsim: () => record('deviceControl.enableEsim'),
             removeEsim: () => record('deviceControl.removeEsim'),
         },
-        profiles: {
-            listProfiles: () => record('profiles.listProfiles'),
-            getProfile: () => record('profiles.getProfile'),
-            createProfile: () => record('profiles.createProfile'),
-            updateProfile: () => record('profiles.updateProfile'),
-            deleteProfile: () => record('profiles.deleteProfile'),
-            applyProfile: () => record('profiles.applyProfile'),
-        },
     };
 }
 
@@ -186,11 +178,11 @@ async function connectedClient(backend: Backend, profile: Parameters<typeof poli
 }
 
 describe('policyForProfile', () => {
-    test('"full" registers all 35 tools', async () => {
+    test('"full" registers all 34 tools', async () => {
         const backend = stubBackend();
         const client = await connectedClient(backend, 'full');
         const { tools } = await client.listTools();
-        expect(tools).toHaveLength(35);
+        expect(tools).toHaveLength(34);
         expect(tools.map((t) => t.name).sort()).toEqual([...ALL_TOOL_NAMES].sort());
     });
 
@@ -201,7 +193,7 @@ describe('policyForProfile', () => {
         const names = tools.map((t) => t.name).sort();
         expect(names).not.toContain('create_device');
         expect(names).not.toContain('terminate_device');
-        expect(tools).toHaveLength(33);
+        expect(tools).toHaveLength(32);
         expect(names).toEqual([...ALL_TOOL_NAMES].filter((n) => n !== 'create_device' && n !== 'terminate_device').sort());
 
         // Everything else, including other mutations, stays reachable.
@@ -254,7 +246,6 @@ describe('policyForProfile', () => {
                 'manage_esim',
                 'manage_flow',
                 'platform_catalog',
-                'profiles',
                 'proxies',
                 'webhooks',
                 'workflow_events',

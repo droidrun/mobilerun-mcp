@@ -55,8 +55,6 @@ const READONLY_BUNDLE_OPERATIONS = new Map<string, ReadonlySet<string>>([
     ['configure_device', new Set(['get_language', 'get_timezone', 'get_location', 'get_time', 'get_overlay', 'get_proxy_status'])],
     // activate/enable/remove are mutations.
     ['manage_esim', new Set(['list'])],
-    // create/update/delete/apply are mutations.
-    ['profiles', new Set(['list', 'get'])],
     // create_upload_url/confirm_upload/mark_failed/delete are mutations.
     ['apps', new Set(['list', 'get', 'versions'])],
     // create/update/delete are mutations.
