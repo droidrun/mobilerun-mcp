@@ -423,7 +423,7 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
         'configure_device',
         {
             description:
-                'Read/write device settings. Operations: get_language/set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), get_timezone/set_timezone (IANA tz), get_location/set_location (latitude, longitude — no reset; use set_location again to change), get_time (read-only device clock), get_overlay/set_overlay (visible: the on-device debug/annotation overlay), proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy), proxy_disconnect, get_proxy_status.' +
+                'Read/write device settings. Operations: get_language/set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), get_timezone/set_timezone (IANA tz), get_location/set_location (latitude, longitude — no reset; use set_location again to change), get_time (read-only device clock), get_overlay/set_overlay (visible: the on-device debug/annotation overlay), proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy; smartIp defaults to true — match the device GPS/time zone/locale/carrier to the proxy exit IP, so the phone appears where the proxy exits; pass false to bind without changing device settings), proxy_disconnect, get_proxy_status.' +
                 allowedValuesNote(values, CONFIGURE_DEVICE_OPERATIONS),
             inputSchema: {
                 operation: z.enum(CONFIGURE_DEVICE_OPERATIONS),
@@ -482,7 +482,9 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
                     const socks5Port = input.socks5Port as number | undefined;
                     await backend.connectProxy(deviceId, {
                         name: input.proxyName as string | undefined,
-                        smartIp: input.smartIp as boolean | undefined,
+                        // Default smart-IP on: align device GPS/time zone/locale/carrier
+                        // to the proxy exit IP unless the caller explicitly opts out.
+                        smartIp: (input.smartIp as boolean | undefined) ?? true,
                         socks5:
                             socks5Host && socks5Port !== undefined
                                 ? { host: socks5Host, port: socks5Port, user: input.socks5User as string | undefined, password: input.socks5Password as string | undefined }
