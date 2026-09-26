@@ -83,6 +83,10 @@ export interface FlowChildActionInput {
     continueOnError?: boolean;
     nameOverride?: string;
     overrides?: FlowActionOverrides | null;
+    // Stable per-step id (template resolution v3: `{{steps.<key>.body.<field>}}`).
+    // Optional on input — derived server-side when omitted on create/add, and
+    // by this tool when omitted on replace_actions (see tools/step-key.ts).
+    key?: string;
 }
 export interface FlowActionBinding extends FlowChildActionInput {
     children?: FlowChildActionInput[];
@@ -229,6 +233,12 @@ export interface FlowDto {
     userId: string;
     createdAt: string | null;
     updatedAt: string | null;
+    // Which step-reference syntax this flow's action params use: 3 means
+    // `{{steps.<key>.body.<field>}}` / `{{event.payload.*}}` only; 1/2 mean
+    // the older name/slug-based syntax. Optional/defensive: not yet typed by
+    // @mobilerun/sdk's Flow response type, so treat as "present when the API
+    // sends it" rather than assuming every flow has it.
+    templateResolutionVersion?: 1 | 2 | 3;
 }
 export interface FlowListDto {
     items: FlowDto[];
@@ -287,6 +297,8 @@ export interface FlowActionDto {
     overrides: FlowActionOverrides | null;
     parentFlowActionId: string | null;
     position: number;
+    // Stable per-step id. The API now returns this on every flow action.
+    key: string;
 }
 export interface FlowActionEnvelopeDto {
     data: FlowActionDto;
@@ -371,6 +383,10 @@ export interface WorkflowsBackend {
     addFlowAction(params: AddFlowActionParams): Promise<FlowActionEnvelopeDto>;
     removeFlowAction(params: RemoveFlowActionParams): Promise<RemoveFlowActionResultDto>;
     replaceFlowActions(params: ReplaceFlowActionsParams): Promise<FlowActionListDto>;
+    // Internal-only (not a tool surface): used by manage_flow's replace_actions
+    // to look up each existing step's key before a full replace. See
+    // tools/step-key.ts.
+    listFlowActions(flowId: string): Promise<FlowActionListDto>;
     listExecutions(opts: ListExecutionsOpts): Promise<ExecutionListDto>;
     getExecution(id: string): Promise<ExecutionEnvelopeDto>;
     getExecutionMetrics(opts: ExecutionMetricsOpts): Promise<ExecutionMetricsDto>;

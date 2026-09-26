@@ -412,6 +412,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "actionId": {
                 "type": "string",
               },
+              "key": {
+                "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
+                "type": "string",
+              },
               "position": {
                 "exclusiveMinimum": 0,
                 "type": "integer",
@@ -1308,6 +1312,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "continueOnError": {
                 "$ref": "#/properties/children/items/properties/continueOnError",
               },
+              "flowActionId": {
+                "$ref": "#/properties/children/items/properties/flowActionId",
+              },
+              "key": {
+                "$ref": "#/properties/children/items/properties/key",
+              },
               "nameOverride": {
                 "$ref": "#/properties/children/items/properties/nameOverride",
               },
@@ -1336,6 +1346,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               },
               "continueOnError": {
                 "type": "boolean",
+              },
+              "flowActionId": {
+                "description": "operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior add_action/create_flow/replace_actions response), used only to carry over its key when key is omitted.",
+                "type": "string",
+              },
+              "key": {
+                "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this tool carry over the key of the existing step at the same position (or matching flowActionId) and derive a new one for genuinely new steps.",
+                "type": "string",
               },
               "nameOverride": {
                 "type": "string",

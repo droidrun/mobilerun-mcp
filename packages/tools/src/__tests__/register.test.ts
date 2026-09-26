@@ -48,6 +48,7 @@ function stubBackend(): Backend & { calls: string[] } {
             addFlowAction: () => record('workflows.addFlowAction'),
             removeFlowAction: () => record('workflows.removeFlowAction'),
             replaceFlowActions: () => record('workflows.replaceFlowActions'),
+            listFlowActions: () => record('workflows.listFlowActions', { items: [] }),
             listExecutions: () => record('workflows.listExecutions'),
             getExecution: () => record('workflows.getExecution'),
             getExecutionMetrics: () => record('workflows.getExecutionMetrics'),
@@ -358,7 +359,11 @@ describe('buildMcpServer', () => {
                 expectMethod: 'workflows.removeFlowAction',
             },
             {
-                args: { operation: 'replace_actions', flowId: 'flow-1', actions: [{ actionId: 'action-1', position: 1 }] },
+                args: {
+                    operation: 'replace_actions',
+                    flowId: 'flow-1',
+                    actions: [{ actionId: 'action-1', position: 1, key: 'action_1' }],
+                },
                 expectMethod: 'workflows.replaceFlowActions',
             },
             { args: { operation: 'execution_metrics' }, expectMethod: 'workflows.getExecutionMetrics' },

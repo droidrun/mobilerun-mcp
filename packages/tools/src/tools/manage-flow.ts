@@ -22,6 +22,7 @@ import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
+import { replaceActionsNeedsExistingLookup, resolveReplaceActionKeys } from './step-key.js';
 
 const MANAGE_FLOW_OPERATIONS = ['clone', 'unblock', 'add_action', 'remove_action', 'replace_actions', 'execution_metrics'] as const;
 const manageFlowOperationSchema = z.enum(MANAGE_FLOW_OPERATIONS);
@@ -37,6 +38,15 @@ const flowChildActionInputSchema = z.object({
     continueOnError: z.boolean().optional(),
     nameOverride: z.string().optional(),
     overrides: flowActionOverridesSchema,
+    key: z.string().optional().describe(
+        'Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this ' +
+            'tool carry over the key of the existing step at the same position (or matching flowActionId) and ' +
+            'derive a new one for genuinely new steps.',
+    ),
+    flowActionId: z.string().optional().describe(
+        'operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior ' +
+            'add_action/create_flow/replace_actions response), used only to carry over its key when key is omitted.',
+    ),
 });
 const flowActionBindingSchema = flowChildActionInputSchema.extend({
     children: z.array(flowChildActionInputSchema).optional(),
@@ -112,7 +122,16 @@ export async function executeManageFlowOperation(input: ManageFlowInput, ctx: To
     // operation === 'replace_actions'
     const flowId = requireValue(input.flowId, 'flowId', operation);
     const actions = requireValue(input.actions, 'actions', operation);
-    return backend.replaceFlowActions({ flowId, actions });
+    // Every node needs a key on a flow whose templateResolutionVersion is 3
+    // (the server rejects a full replace missing one there; harmless on
+    // v1/v2 flows, which still derive missing keys server-side). A caller-
+    // supplied key always wins; otherwise carry over the existing step's key
+    // (matched by flowActionId, else by position) or derive a fresh one —
+    // see step-key.ts. Only fetched when actually needed.
+    const resolvedActions = replaceActionsNeedsExistingLookup(actions)
+        ? resolveReplaceActionKeys(actions, (await backend.listFlowActions(flowId)).items)
+        : actions;
+    return backend.replaceFlowActions({ flowId, actions: resolvedActions });
 }
 
 export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
@@ -124,11 +143,17 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
             description:
                 'Flow lifecycle operations beyond create_flow. Operations: clone (flowId, optional name/deviceIds — copies a flow), ' +
                 'unblock (flowId — clears blocked status after fixing the underlying issue, idempotent), ' +
-                'add_action (flowId, actionId, position, optional continueOnError/nameOverride/overrides/parentFlowActionId/children), ' +
+                'add_action (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children — ' +
+                'key is derived from the step if omitted), ' +
                 'remove_action (flowActionId, flowId), ' +
-                'replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow), ' +
+                'replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action\'s optional key is ' +
+                'carried over from the existing step at the same position, or matching flowActionId, when omitted, and derived for ' +
+                'genuinely new steps), ' +
                 'execution_metrics (optional flowId/triggerId/from/to — aggregate execution stats, not a single execution; ' +
                 'use get_workflow_resource(resource="execution") for one execution). ' +
+                'Check the flow\'s templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action\'s ' +
+                'overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the ' +
+                'triggering event); older flows use name/slug-based references instead. ' +
                 'To simulate an event against flows without side effects, use workflow_events(operation="dry_run") instead — ' +
                 'there is no per-flow dry-run.' +
                 allowedValuesNote(operationValues, MANAGE_FLOW_OPERATIONS),

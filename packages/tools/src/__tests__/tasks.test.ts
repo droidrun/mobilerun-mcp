@@ -50,6 +50,7 @@ function stubBackend(): Backend & { calls: Array<{ method: string; args: unknown
             addFlowAction: record('workflows.addFlowAction'),
             removeFlowAction: record('workflows.removeFlowAction'),
             replaceFlowActions: record('workflows.replaceFlowActions'),
+            listFlowActions: record('workflows.listFlowActions', { items: [] }),
             listExecutions: record('workflows.listExecutions'),
             getExecution: record('workflows.getExecution'),
             getExecutionMetrics: record('workflows.getExecutionMetrics'),

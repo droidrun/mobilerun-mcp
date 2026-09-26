@@ -21,6 +21,17 @@ import type {
     WorkflowsBackend,
 } from '@mobilerun/mcp-tools';
 
+// GAP: @mobilerun/sdk's flow-action types (ActionAddParams, ActionReplaceParams.Action,
+// FlowChildActionInput, and the FlowAction response type — see
+// workflows/flows/actions.d.ts) don't yet declare the `key` field the API added for
+// template resolution v3. The wire body/response is a plain JSON object, so `key` reaches
+// the API on write and is present on every flow action on read regardless of what the
+// SDK's shipped types say — forwarded/read through this one loose cast at each such call
+// site, same pattern as `scheduleRule.jitter` below. Remove once the SDK types include `key`.
+function withFlowActionKey<T extends object>(value: T): T & { key: string } {
+    return value as T & { key: string };
+}
+
 export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
     return {
         async listActionCatalog(opts: ListActionCatalogOpts) {
@@ -130,15 +141,20 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             return client.workflows.flows.unblock(flowId);
         },
         async addFlowAction(params: AddFlowActionParams) {
-            return client.workflows.flows.actions.add(params.flowId, {
-                actionId: params.actionId,
-                position: params.position,
-                children: params.children,
-                continueOnError: params.continueOnError,
-                nameOverride: params.nameOverride,
-                overrides: params.overrides,
-                parentFlowActionId: params.parentFlowActionId,
-            });
+            const response = await client.workflows.flows.actions.add(
+                params.flowId,
+                withFlowActionKey({
+                    actionId: params.actionId,
+                    position: params.position,
+                    children: params.children,
+                    continueOnError: params.continueOnError,
+                    nameOverride: params.nameOverride,
+                    overrides: params.overrides,
+                    parentFlowActionId: params.parentFlowActionId,
+                    key: params.key,
+                }),
+            );
+            return { data: withFlowActionKey(response.data) };
         },
         async removeFlowAction(params: RemoveFlowActionParams) {
             return client.workflows.flows.actions.remove(params.flowActionId, { flowId: params.flowId });
@@ -147,7 +163,12 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             // SDK's ActionReplaceResponse is `{ data: FlowAction[] }`, not
             // `{ items }` — normalized to this port's list-shape convention.
             const response = await client.workflows.flows.actions.replace(params.flowId, { actions: params.actions });
-            return { items: response.data };
+            return { items: response.data.map(withFlowActionKey) };
+        },
+        async listFlowActions(flowId: string) {
+            // Same list-shape normalization as replaceFlowActions above.
+            const response = await client.workflows.flows.actions.list(flowId);
+            return { items: response.data.map(withFlowActionKey) };
         },
         async getExecutionMetrics(opts: ExecutionMetricsOpts) {
             return client.workflows.executions.getMetrics({
