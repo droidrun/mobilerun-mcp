@@ -417,7 +417,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                 "type": "string",
               },
               "position": {
-                "exclusiveMinimum": 0,
+                "minimum": 0,
                 "type": "integer",
               },
             },
@@ -1362,7 +1362,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                 "$ref": "#/properties/overrides",
               },
               "position": {
-                "exclusiveMinimum": 0,
+                "minimum": 0,
                 "type": "integer",
               },
             },
@@ -1445,7 +1445,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           ],
         },
         "position": {
-          "exclusiveMinimum": 0,
+          "minimum": 0,
           "type": "integer",
         },
         "to": {

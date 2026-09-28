@@ -134,6 +134,21 @@ describe('resolveReplaceActionKeys', () => {
         expect(resolved[0]!.key).toBe('existing_key');
     });
 
+    test('carries over the existing key by matching position and actionId when the flow uses 0-based positions', () => {
+        const resolved = resolveReplaceActionKeys(
+            [
+                { actionId: 'a', position: 0 },
+                { actionId: 'b', position: 1 },
+            ],
+            [
+                { id: 'fa-1', key: 'a_key', actionId: 'a', position: 0, parentFlowActionId: null },
+                { id: 'fa-2', key: 'b_key', actionId: 'b', position: 1, parentFlowActionId: null },
+            ],
+        );
+        expect(resolved[0]!.key).toBe('a_key');
+        expect(resolved[1]!.key).toBe('b_key');
+    });
+
     test('same position but a different actionId is treated as new, not carried over', () => {
         const resolved = resolveReplaceActionKeys(
             [{ actionId: 'b', position: 1 }],

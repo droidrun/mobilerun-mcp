@@ -422,6 +422,72 @@ describe('buildMcpServer', () => {
         expect(createFlowArgs).toMatchObject({ actions: [{ actionId: 'action-1', position: 1, key: 'fetch_profile' }] });
     });
 
+    test('manage_flow add_action and create_flow accept position 0 (0-based flows)', async () => {
+        const backend = stubBackend();
+        const { client } = await connectedClient(ctxWith(backend));
+
+        const addResult = await client.callTool({
+            name: 'manage_flow',
+            arguments: { operation: 'add_action', flowId: 'flow-1', actionId: 'action-1', position: 0 },
+        });
+        expect(addResult.isError).not.toBe(true);
+        expect(backend.calls).toContain('workflows.addFlowAction');
+
+        backend.calls.length = 0;
+        const createResult = await client.callTool({
+            name: 'create_flow',
+            arguments: {
+                name: 'My flow',
+                triggerId: 'trigger-1',
+                actions: [{ actionId: 'action-1', position: 0 }],
+                deviceIds: ['device-1'],
+            },
+        });
+        expect(createResult.isError).not.toBe(true);
+        expect(backend.calls).toContain('workflows.createFlow');
+    });
+
+    test('manage_flow replace_actions on a 0-based flow carries over keys by position + actionId when key/flowActionId are omitted', async () => {
+        const backend = stubBackend();
+        backend.workflows.listFlowActions = () =>
+            Promise.resolve({
+                items: [
+                    { id: 'fa-1', key: 'a_key', actionId: 'action-a', position: 0, parentFlowActionId: null },
+                    { id: 'fa-2', key: 'b_key', actionId: 'action-b', position: 1, parentFlowActionId: null },
+                ],
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
+        let replaceArgs: unknown;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (backend.workflows as any).replaceFlowActions = (params: unknown) => {
+            replaceArgs = params;
+            backend.calls.push('workflows.replaceFlowActions');
+            return Promise.resolve({ items: [] });
+        };
+        const { client } = await connectedClient(ctxWith(backend));
+
+        const result = await client.callTool({
+            name: 'manage_flow',
+            arguments: {
+                operation: 'replace_actions',
+                flowId: 'flow-1',
+                actions: [
+                    { actionId: 'action-a', position: 0 },
+                    { actionId: 'action-b', position: 1 },
+                ],
+            },
+        });
+
+        expect(result.isError).not.toBe(true);
+        expect(replaceArgs).toMatchObject({
+            flowId: 'flow-1',
+            actions: [
+                { actionId: 'action-a', position: 0, key: 'a_key' },
+                { actionId: 'action-b', position: 1, key: 'b_key' },
+            ],
+        });
+    });
+
     test('manage_flow requires flowId for clone/unblock/add_action/remove_action/replace_actions', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));

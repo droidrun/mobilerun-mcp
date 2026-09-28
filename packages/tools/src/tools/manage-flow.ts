@@ -34,7 +34,7 @@ const flowActionOverridesSchema = z
 
 const flowChildActionInputSchema = z.object({
     actionId: z.string(),
-    position: z.number().int().positive(),
+    position: z.number().int().min(0),
     continueOnError: z.boolean().optional(),
     nameOverride: z.string().optional(),
     overrides: flowActionOverridesSchema,
@@ -171,7 +171,7 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 name: z.string().optional().describe('New flow name for operation=clone; defaults to a server-generated copy name.'),
                 deviceIds: z.array(z.string()).optional().describe('Target devices for operation=clone; defaults to the source flow\'s devices.'),
                 actionId: z.string().optional(),
-                position: z.number().int().positive().optional(),
+                position: z.number().int().min(0).optional(),
                 key: z.string().optional().describe(
                     'operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this ' +
                         'step\'s output from later steps. Derived from the action if omitted.',
