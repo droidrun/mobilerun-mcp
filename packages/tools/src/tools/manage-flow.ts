@@ -40,12 +40,15 @@ const flowChildActionInputSchema = z.object({
     overrides: flowActionOverridesSchema,
     key: z.string().optional().describe(
         'Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this ' +
-            'tool carry over the key of the existing step at the same position (or matching flowActionId) and ' +
-            'derive a new one for genuinely new steps.',
+            'tool carry over the key of the existing step matching flowActionId, or at the same position with the ' +
+            'same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass ' +
+            'flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new ' +
+            'rather than risking a wrong carry-over onto a shifted position.',
     ),
     flowActionId: z.string().optional().describe(
         'operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior ' +
-            'add_action/create_flow/replace_actions response), used only to carry over its key when key is omitted.',
+            'add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — ' +
+            'the reliable way to identify a kept step when reordering or inserting.',
     ),
 });
 const flowActionBindingSchema = flowChildActionInputSchema.extend({
@@ -147,8 +150,9 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 'key is derived from the step if omitted), ' +
                 'remove_action (flowActionId, flowId), ' +
                 'replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action\'s optional key is ' +
-                'carried over from the existing step at the same position, or matching flowActionId, when omitted, and derived for ' +
-                'genuinely new steps), ' +
+                'carried over from the existing step matching flowActionId, or at the same position with the same actionId, when ' +
+                'omitted, and derived for genuinely new steps; when reordering or inserting steps, pass key or flowActionId for ' +
+                'every step you are keeping so it is not mistaken for a new one), ' +
                 'execution_metrics (optional flowId/triggerId/from/to — aggregate execution stats, not a single execution; ' +
                 'use get_workflow_resource(resource="execution") for one execution). ' +
                 'Check the flow\'s templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action\'s ' +
