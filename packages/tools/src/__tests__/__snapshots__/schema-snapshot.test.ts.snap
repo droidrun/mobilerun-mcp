@@ -1398,6 +1398,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "null",
           ],
         },
+        "key": {
+          "description": "operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
+          "type": "string",
+        },
         "name": {
           "description": "New flow name for operation=clone; defaults to a server-generated copy name.",
           "type": "string",

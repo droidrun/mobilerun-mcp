@@ -62,6 +62,7 @@ type ManageFlowInput = {
     deviceIds?: string[];
     actionId?: string;
     position?: number;
+    key?: string;
     continueOnError?: boolean;
     nameOverride?: string;
     overrides?: { params?: Record<string, unknown> } | null;
@@ -107,6 +108,7 @@ export async function executeManageFlowOperation(input: ManageFlowInput, ctx: To
             flowId,
             actionId: requireValue(input.actionId, 'actionId', operation),
             position: requireValue(input.position, 'position', operation),
+            key: input.key,
             continueOnError: input.continueOnError,
             nameOverride: input.nameOverride,
             overrides: input.overrides,
@@ -170,6 +172,10 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 deviceIds: z.array(z.string()).optional().describe('Target devices for operation=clone; defaults to the source flow\'s devices.'),
                 actionId: z.string().optional(),
                 position: z.number().int().positive().optional(),
+                key: z.string().optional().describe(
+                    'operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this ' +
+                        'step\'s output from later steps. Derived from the action if omitted.',
+                ),
                 continueOnError: z.boolean().optional(),
                 nameOverride: z.string().optional(),
                 overrides: flowActionOverridesSchema,

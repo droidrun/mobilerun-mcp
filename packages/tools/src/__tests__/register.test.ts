@@ -377,6 +377,51 @@ describe('buildMcpServer', () => {
         }
     });
 
+    test('manage_flow add_action forwards the caller-supplied key to the backend', async () => {
+        const backend = stubBackend();
+        let addFlowActionArgs: unknown;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (backend.workflows as any).addFlowAction = (params: unknown) => {
+            addFlowActionArgs = params;
+            backend.calls.push('workflows.addFlowAction');
+            return Promise.resolve({ data: { key: 'fetch_profile' } });
+        };
+        const { client } = await connectedClient(ctxWith(backend));
+
+        const result = await client.callTool({
+            name: 'manage_flow',
+            arguments: { operation: 'add_action', flowId: 'flow-1', actionId: 'action-1', position: 1, key: 'fetch_profile' },
+        });
+
+        expect(result.isError).not.toBe(true);
+        expect(addFlowActionArgs).toMatchObject({ flowId: 'flow-1', actionId: 'action-1', position: 1, key: 'fetch_profile' });
+    });
+
+    test('create_flow forwards each action\'s caller-supplied key to the backend', async () => {
+        const backend = stubBackend();
+        let createFlowArgs: unknown;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (backend.workflows as any).createFlow = (params: unknown) => {
+            createFlowArgs = params;
+            backend.calls.push('workflows.createFlow');
+            return Promise.resolve({ data: { id: 'flow-1' } });
+        };
+        const { client } = await connectedClient(ctxWith(backend));
+
+        const result = await client.callTool({
+            name: 'create_flow',
+            arguments: {
+                name: 'My flow',
+                triggerId: 'trigger-1',
+                actions: [{ actionId: 'action-1', position: 1, key: 'fetch_profile' }],
+                deviceIds: ['device-1'],
+            },
+        });
+
+        expect(result.isError).not.toBe(true);
+        expect(createFlowArgs).toMatchObject({ actions: [{ actionId: 'action-1', position: 1, key: 'fetch_profile' }] });
+    });
+
     test('manage_flow requires flowId for clone/unblock/add_action/remove_action/replace_actions', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));
