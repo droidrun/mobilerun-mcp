@@ -319,7 +319,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
         'create_flow',
         {
             description:
-                'Create a flow binding a trigger to ordered actions. Put target devices in the top-level `deviceIds` array. Each action entry is { actionId, position (0-based), optional key }; action-level deviceId is not supported. ' +
+                'Create a flow binding a trigger to ordered actions. Put target devices in the top-level `deviceIds` array. Each action entry is { actionId, position (integer >= 0; defines order), optional key }; action-level deviceId is not supported. ' +
                 'The created flow uses template resolution version 3: reference an earlier step\'s output in a later action\'s params as {{steps.<key>.body.<field>}}, and the triggering event as {{event.payload.*}} (check templateResolutionVersion via get_workflow_resource(resource="flow") on older flows).',
             inputSchema: {
                 name: z.string(),
