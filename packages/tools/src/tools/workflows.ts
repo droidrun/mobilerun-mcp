@@ -14,6 +14,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BackendError } from '../backend/errors.js';
+import { scheduleRuleSchema } from '../backend/workflows.js';
 import type { ToolCtx } from '../ctx.js';
 import { asErrorResult, asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
@@ -94,21 +95,6 @@ function disallowedFilterError(resource: ListResource, filters: ListFilters): st
     return null;
 }
 
-const scheduleRuleSchema = z.object({
-    type: z.enum(['once', 'cron', 'recurring']),
-    dateTime: z.string().optional().describe('Required when type=once. ISO 8601.'),
-    expression: z.string().optional().describe('Required when type=cron. 5-field cron.'),
-    rrule: z.string().optional().describe('Required when type=recurring. RRULE string.'),
-    jitter: z
-        .object({
-            beforeMinutes: z.number().int().min(0).max(1440).optional(),
-            afterMinutes: z.number().int().min(0).max(1440).optional(),
-        })
-        .optional()
-        .describe(
-            'Random execution window in minutes around the nominal time (0-1440 each). Each occurrence gets a stable random offset within it.',
-        ),
-});
 
 const flowActionBindingSchema = z
     .object({
@@ -140,7 +126,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
                 'own filter subset — a filter only valid for a DIFFERENT resource is rejected naming what is ' +
                 'allowed here. `resource` values:\n' +
                 '- action_catalog (filters: service): the full reviewed workflow step surface.\n' +
-                '- app_event_catalog (no filters): the static selectable app event catalog with event type, label, and payload fields. Call this BEFORE create_trigger with activation ' +
+                '- app_event_catalog (no filters): the static selectable app event catalog with event type, label, app, source event, and payload fields. Call this BEFORE create_trigger with activation ' +
                 '"event" — never guess an app.*/system.* type.\n' +
                 "- action (filters: service, search, page, pageSize): the user's saved actions (configured " +
                 'catalog instances) — slim overview; call get_workflow_resource(resource="action") for full params.\n' +

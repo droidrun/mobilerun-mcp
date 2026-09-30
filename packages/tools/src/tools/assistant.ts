@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { AssistantHistory } from '../backend/assistant.js';
+import type { AssistantAnswer, AssistantHistory } from '../backend/assistant.js';
 import type { ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
@@ -31,7 +31,7 @@ type AssistantToolInput = {
     permissionId?: string;
     response?: 'once' | 'always' | 'reject';
     questionId?: string;
-    answers?: Array<Array<{ label: string; custom: string } | { label: string } | { custom: string }>>;
+    answers?: AssistantAnswer;
 };
 
 function requireValue<T>(value: T | undefined, name: string, operation: string): T {
@@ -51,19 +51,20 @@ export function curateAssistantHistory(history: AssistantHistory) {
     const questions: Array<{ questionId: unknown; questions: unknown }> = [];
     const messages = history.messages.map(({ id, role, createdAt, source, parts }) => ({
         id, role, createdAt, source,
-        parts: parts.map((part) => {
+        parts: (Array.isArray(parts) ? parts : []).map((part) => {
             const data = objectValue(part);
-            if (part.type === 'tool-hitl-approval' && data.state === 'input-available') {
+            const type = data.type;
+            if (type === 'tool-hitl-approval' && data.state === 'input-available') {
                 const input = objectValue(data.input);
                 permissions.push({ permissionId: data.toolCallId, action: input.action, title: input.title, params: input.params });
             }
-            if (part.type === 'tool-question' && data.state === 'input-available') {
+            if (type === 'tool-question' && data.state === 'input-available') {
                 const input = objectValue(data.input);
                 questions.push({ questionId: input.questionID ?? data.toolCallId, questions: input.questions });
             }
-            if (part.type === 'text') return { type: 'text', text: data.text };
-            if (part.type === 'tool-hitl-approval' || part.type === 'tool-question') return part;
-            return { type: part.type, toolCallId: data.toolCallId, state: data.state };
+            if (type === 'text') return { type: 'text', text: data.text };
+            if (type === 'tool-hitl-approval' || type === 'tool-question') return part;
+            return { type: type, toolCallId: data.toolCallId, state: data.state };
         }),
     }));
     const turnState = history.turnState;
