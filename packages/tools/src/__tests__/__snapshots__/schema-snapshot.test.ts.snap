@@ -412,8 +412,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "actionId": {
                 "type": "string",
               },
+              "key": {
+                "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
+                "type": "string",
+              },
               "position": {
-                "exclusiveMinimum": 0,
+                "minimum": 0,
                 "type": "integer",
               },
             },
@@ -1308,6 +1312,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "continueOnError": {
                 "$ref": "#/properties/children/items/properties/continueOnError",
               },
+              "flowActionId": {
+                "$ref": "#/properties/children/items/properties/flowActionId",
+              },
+              "key": {
+                "$ref": "#/properties/children/items/properties/key",
+              },
               "nameOverride": {
                 "$ref": "#/properties/children/items/properties/nameOverride",
               },
@@ -1337,6 +1347,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "continueOnError": {
                 "type": "boolean",
               },
+              "flowActionId": {
+                "description": "operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — the reliable way to identify a kept step when reordering or inserting.",
+                "type": "string",
+              },
+              "key": {
+                "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this tool carry over the key of the existing step matching flowActionId, or at the same position with the same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new rather than risking a wrong carry-over onto a shifted position.",
+                "type": "string",
+              },
               "nameOverride": {
                 "type": "string",
               },
@@ -1344,7 +1362,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                 "$ref": "#/properties/overrides",
               },
               "position": {
-                "exclusiveMinimum": 0,
+                "minimum": 0,
                 "type": "integer",
               },
             },
@@ -1379,6 +1397,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "string",
             "null",
           ],
+        },
+        "key": {
+          "description": "operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
+          "type": "string",
         },
         "name": {
           "description": "New flow name for operation=clone; defaults to a server-generated copy name.",
@@ -1423,7 +1445,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           ],
         },
         "position": {
-          "exclusiveMinimum": 0,
+          "minimum": 0,
           "type": "integer",
         },
         "to": {

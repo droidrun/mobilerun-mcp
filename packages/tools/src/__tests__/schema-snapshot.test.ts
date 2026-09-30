@@ -41,6 +41,7 @@ function noopBackend(): Backend {
             addFlowAction: notImplemented,
             removeFlowAction: notImplemented,
             replaceFlowActions: notImplemented,
+            listFlowActions: notImplemented,
             listExecutions: notImplemented,
             getExecution: notImplemented,
             getExecutionMetrics: notImplemented,
