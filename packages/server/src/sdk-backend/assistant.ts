@@ -15,7 +15,7 @@ export function createAssistantBackend(client: Mobilerun): AssistantBackend {
             return { sessions: result.sessions.map(sessionSummary) };
         },
         async createSession(title, description) {
-            const result = await conversations.create({ title, description });
+            const result = await conversations.create({ title, description, 'Idempotency-Key': crypto.randomUUID() });
             return { session: sessionSummary(result.session) };
         },
         async updateSession(sessionId, params) {

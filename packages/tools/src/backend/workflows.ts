@@ -240,7 +240,8 @@ export interface FlowDto {
     // the older name/slug-based syntax. Optional/defensive: not yet typed by
     // @mobilerun/sdk's Flow response type, so treat as "present when the API
     // sends it" rather than assuming every flow has it.
-    templateResolutionVersion?: 1 | 2 | 3;
+    // @mobilerun/sdk declares this as number; known API values are 1, 2, and 3.
+    templateResolutionVersion?: number;
 }
 export interface FlowListDto {
     items: FlowDto[];

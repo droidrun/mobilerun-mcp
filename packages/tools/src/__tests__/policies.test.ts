@@ -369,4 +369,39 @@ describe('policyForProfile', () => {
             expect(backend.calls).toEqual([]);
         }
     });
+
+    test('"no-commerce" exposes assistant reads but denies assistant writes at dispatch time', async () => {
+        const backend = stubBackend();
+        const client = await connectedClient(backend, 'no-commerce');
+
+        for (const args of [
+            { operation: 'list_sessions' },
+            { operation: 'get_messages', sessionId: 's1' },
+        ]) {
+            const result = await client.callTool({ name: 'assistant', arguments: args });
+            expect(result.isError).not.toBe(true);
+        }
+        expect(backend.calls).toContain('assistant.listSessions');
+        expect(backend.calls).toContain('assistant.getMessages');
+
+        for (const args of [
+            { operation: 'send_message', sessionId: 's1', message: 'Hi' },
+            { operation: 'answer_permission', permissionId: 'p1', response: 'once' },
+            { operation: 'create_session', title: 'Chat' },
+        ]) {
+            backend.calls.length = 0;
+            const result = await client.callTool({ name: 'assistant', arguments: args });
+            expect(result.isError).toBe(true);
+            expect((result.content as Array<{ text?: string }>)[0]?.text).toContain('is not available');
+            expect(backend.calls).toEqual([]);
+        }
+    });
+
+    test('"full" allows assistant send_message', async () => {
+        const backend = stubBackend();
+        const client = await connectedClient(backend, 'full');
+        const result = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
+        expect(result.isError).not.toBe(true);
+        expect(backend.calls).toContain('assistant.sendMessage');
+    });
 });

@@ -39,13 +39,15 @@ const READONLY_TOOL_NAMES = new Set<string>([
     'platform_catalog',
 ]);
 
+const ASSISTANT_READ_OPERATIONS = new Set(['list_sessions', 'get_messages']);
+
 /** Bundle tools included in `readonly` with their surface narrowed to read
  * operations only via `operationAllowlist` — the tool itself stays visible
  * (registered, listed) but a mutating operation is rejected at dispatch. */
 const READONLY_BUNDLE_OPERATIONS = new Map<string, ReadonlySet<string>>([
     // create/update/rotate_secret/test are mutations.
     ['webhooks', new Set(['list', 'get', 'list_deliveries', 'get_delivery', 'delivery_stats', 'list_event_types'])],
-    ['assistant', new Set(['list_sessions', 'get_messages'])],
+    ['assistant', ASSISTANT_READ_OPERATIONS],
     // reboot/reset/rename are mutations.
     ['manage_device', new Set(['count', 'get_capabilities', 'wait_ready'])],
     // install/delete/start/stop are mutations.
@@ -119,9 +121,9 @@ function toolNames(filter: (name: string) => boolean): ReadonlySet<string> {
  *   `device_action` and `manage_credentials` have no read subset at all and
  *   are excluded outright.
  * - `no-commerce` (the required safe default) — everything
- *   except `create_device`/`terminate_device` (tool-level), and
- *   `connect`'s `buy_proxy`/`cancel_proxy` operations (operation-level —
- *   the `connect` tool itself stays visible).
+ *   except `create_device`/`terminate_device` (tool-level),
+ *   `connect`'s `buy_proxy`/`cancel_proxy` operations, and assistant
+ *   write operations (operation-level).
  * - `full` — `fullAccessPolicy()`, i.e. every tool, no operation gates.
  */
 export function policyForProfile(profile: PolicyProfile): Policy {
@@ -131,7 +133,10 @@ export function policyForProfile(profile: PolicyProfile): Policy {
         case 'no-commerce':
             return {
                 toolAllowlist: toolNames((name) => !COMMERCE_TOOL_NAMES.has(name)),
-                operationAllowlist: new Map([['connect', NO_COMMERCE_CONNECT_OPERATIONS]]),
+                operationAllowlist: new Map([
+                    ['connect', NO_COMMERCE_CONNECT_OPERATIONS],
+                    ['assistant', ASSISTANT_READ_OPERATIONS],
+                ]),
             };
         case 'readonly':
             return {

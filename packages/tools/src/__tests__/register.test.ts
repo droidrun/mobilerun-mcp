@@ -554,6 +554,11 @@ describe('buildMcpServer', () => {
         const sent = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
         expect(sent.isError).not.toBe(true);
         expect(sendCalls).toEqual([['s1', 'Hi', 45]]);
+
+        backend.calls.length = 0;
+        const always = await client.callTool({ name: 'assistant', arguments: { operation: 'answer_permission', permissionId: 'p1', response: 'always' } });
+        expect(always.isError).toBe(true);
+        expect(backend.calls).toEqual([]);
     });
 
     test('workflow_events requires eventType for ingest/dry_run', async () => {

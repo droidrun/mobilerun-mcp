@@ -9,6 +9,10 @@ function clientWithSend(send: (...args: unknown[]) => Promise<unknown>): Mobiler
     return { assistant: { conversations: { send } } } as unknown as Mobilerun;
 }
 
+function clientWithCreate(create: (...args: unknown[]) => Promise<unknown>): Mobilerun {
+    return { assistant: { conversations: { create } } } as unknown as Mobilerun;
+}
+
 describe('assistant send mapping', () => {
     test('returns completed reply and disables retries', async () => {
         const calls: unknown[][] = [];
@@ -78,5 +82,24 @@ describe('assistant send mapping', () => {
             expect((error as BackendError).status).toBe(402);
             expect((error as BackendError).message).toContain('Insufficient credits');
         }
+    });
+});
+
+describe('assistant session creation', () => {
+    test('sends a unique idempotency key', async () => {
+        const calls: unknown[][] = [];
+        const session = {
+            id: 's1', title: 'Chat', description: null, status: 'active', pinned: false,
+            turnActive: false, lastActiveAt: '2026-01-01T00:00:00Z', createdAt: '2026-01-01T00:00:00Z', costUsd: 0,
+        };
+        const backend = createAssistantBackend(clientWithCreate(async (...args) => {
+            calls.push(args);
+            return { session };
+        }));
+        await backend.createSession('Chat', 'Description');
+        const params = calls[0]?.[0] as Record<string, unknown>;
+        expect(params.title).toBe('Chat');
+        expect(params.description).toBe('Description');
+        expect(params['Idempotency-Key']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
     });
 });

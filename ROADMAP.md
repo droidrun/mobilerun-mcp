@@ -41,8 +41,8 @@ exposed as a set of well-scoped MCP tools an LLM agent can call.
   See the README's tool table for the full list and each bundle tool's
   operation enum.
 - **Three policy profiles**: `readonly` (25 tools), `no-commerce` (33 tools,
-  the default), `full` (35 tools). See the README for exactly what each
-  profile excludes.
+  the default; assistant restricted to `list_sessions`/`get_messages`), and
+  `full` (35 tools). See the README for exactly what each profile excludes.
 - **Two transports**: stateless Streamable HTTP (`POST /mcp`, `GET`/`DELETE`
   return `405`) and stdio.
 - **API-key auth** on the HTTP transport, via `Authorization: Bearer

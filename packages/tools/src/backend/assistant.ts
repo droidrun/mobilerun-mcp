@@ -35,7 +35,7 @@ export interface AssistantBackend {
     >;
     getMessages(sessionId: string, limit: number): Promise<AssistantHistory>;
     abort(sessionId: string, expectedTurnId?: string): Promise<{ ok: true }>;
-    answerPermission(permissionId: string, response: 'once' | 'always' | 'reject'): Promise<{ ok: true }>;
+    answerPermission(permissionId: string, response: 'once' | 'reject'): Promise<{ ok: true }>;
     answerQuestion(questionId: string, answers: AssistantAnswer): Promise<{ ok: true }>;
     rejectQuestion(questionId: string): Promise<{ ok: true }>;
 }

@@ -261,7 +261,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "response": {
           "enum": [
             "once",
-            "always",
             "reject",
           ],
           "type": "string",

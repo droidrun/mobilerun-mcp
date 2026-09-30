@@ -124,7 +124,7 @@ fails fast (`process.exit(1)`) rather than serving with a bad default.
 | `manage_flow` | Workflows | Bundle: `operation ∈ clone, unblock, add_action, remove_action, replace_actions, execution_metrics` |
 | `workflow_events` | Workflows | Bundle: `operation ∈ ingest, dry_run, list_event_types` (`list_event_types` reads the static app event catalog) |
 | `webhooks` | Webhooks | Bundle: `operation ∈ create, list, get, update, rotate_secret, test, list_deliveries, get_delivery, delivery_stats, list_event_types` |
-| `assistant` | Assistant | Bundle: `operation ∈ list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question` |
+| `assistant` | Assistant | Bundle: `operation ∈ list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question`; write operations require `full`, and `answer_permission` accepts only `once` or `reject` |
 | `list_credentials`, `list_credential_packages` | Credentials | |
 | `manage_credentials` | Credentials | Bundle write path: `operation ∈ init_package, create_credential, delete_credential, add_field, update_field, delete_field`. Never echoes a field value back |
 | `run_task`, `get_task`, `list_tasks`, `stop_task`, `send_task_message`, `get_task_media` | Tasks | `get_task(view ∈ summary, status, trajectory)`, `get_task_media(kind ∈ screenshot, ui_state)` |
@@ -154,7 +154,9 @@ exposed as tools; no SDK support exists for them yet).
 Create or select a chat session, then call `assistant` with `operation=send_message`.
 If it returns `running`, poll `get_messages` until `turnActive` is false. Use
 the matching answer operation for any pending permission or question in the
-history.
+history. The assistant is an agent that acts with the full authority of the API
+key (it can, for example, create billed devices), so chatting with it requires
+the `full` profile.
 
 ## Policy / allowlisting (fail-closed at registration)
 
@@ -189,7 +191,7 @@ The HTTP and stdio servers build their `Policy` via `policyForProfile(env.MCP_PO
 | Profile | Tool count | Notes |
 |---|---|---|
 | `readonly` | 25 | `list_*`/`get_*` tools, `platform_catalog`, plus 12 bundle tools narrowed to their read operations via `operationAllowlist` (`assistant`, `webhooks`, `manage_device`, `manage_device_apps`, `manage_device_files`, `configure_device`, `manage_esim`, `apps`, `proxies`, `connect`, `manage_flow`, `workflow_events`). `device_action` and `manage_credentials` are excluded outright — neither has a read-only operation. |
-| `no-commerce` (**default**) | 33 | Everything except `create_device`, `terminate_device` (tool-level), and `connect`'s `buy_proxy`/`cancel_proxy` operations (operation-level — the `connect` tool itself stays visible). The required safe default — a server that never sets `MCP_POLICY_PROFILE` must not fail open to `full`. |
+| `no-commerce` (**default**) | 33 | Everything except `create_device`, `terminate_device` (tool-level), `connect`'s `buy_proxy`/`cancel_proxy` operations, and assistant write operations (operation-level). The assistant remains available only for `list_sessions` and `get_messages`; the required safe default — a server that never sets `MCP_POLICY_PROFILE` must not fail open to `full`. |
 | `full` | 35 | Every tool, no operation gates — `fullAccessPolicy()`, opt-in only. |
 
 Set `MCP_POLICY_PROFILE=readonly|no-commerce|full` to choose; both the HTTP
