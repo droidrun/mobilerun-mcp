@@ -27,28 +27,18 @@ export function createTasksBackend(client: Mobilerun): TasksBackend {
         },
         async getTaskSummary(taskId: string) {
             const { task } = await client.tasks.retrieve(taskId);
-            // Drop `trajectory` — its own view (getTaskTrajectory), can be
-            // arbitrarily large; also drop `agentId`/`accessibility`/`reasoning`/
-            // `subagentModel`/`temperature`/`continueOnFailure`/`executionTimeout`/
-            // `memoryNamespace`/`tmpDevice`/`heartbeatAt`/`vpnCountry` — internal/
-            // tuning fields with no agentic read value in a curated summary,
-            // matching this port's TaskSummaryDto shape.
             const {
-                trajectory: _trajectory,
-                agentId: _agentId,
-                accessibility: _accessibility,
-                reasoning: _reasoning,
-                subagentModel: _subagentModel,
-                temperature: _temperature,
-                continueOnFailure: _continueOnFailure,
-                executionTimeout: _executionTimeout,
-                memoryNamespace: _memoryNamespace,
-                tmpDevice: _tmpDevice,
-                heartbeatAt: _heartbeatAt,
-                vpnCountry: _vpnCountry,
-                ...summary
+                id, deviceId, displayId, llmModel, userId, status, apps, credentials,
+                files, maxSteps, outputSchema, output, message, steps, succeeded,
+                creditsUsed, stealth, vision, createdAt, updatedAt, dispatchedAt,
+                claimedAt, finishedAt, cancelRequestedAt, streamUrl,
             } = task;
-            return summary;
+            return {
+                id, deviceId, displayId, llmModel, task: task.task, userId, status,
+                apps, credentials, files, maxSteps, outputSchema, output, message,
+                steps, succeeded, creditsUsed, stealth, vision, createdAt, updatedAt,
+                dispatchedAt, claimedAt, finishedAt, cancelRequestedAt, streamUrl,
+            };
         },
         async getTaskStatus(taskId: string) {
             return client.tasks.getStatus(taskId);
@@ -77,7 +67,9 @@ export function createTasksBackend(client: Mobilerun): TasksBackend {
                 page: opts.page,
                 pageSize: opts.pageSize,
                 query: opts.query,
-                status: opts.status,
+                // Preserve the legacy paused filter on the wire even though the
+                // 5.5 SDK type omits it. The server decides its compatibility.
+                status: opts.status as NonNullable<Parameters<typeof client.tasks.list>[0]>['status'],
             });
             return {
                 items: result.items,

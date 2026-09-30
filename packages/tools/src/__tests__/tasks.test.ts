@@ -58,7 +58,6 @@ function stubBackend(): Backend & { calls: Array<{ method: string; args: unknown
             listServiceMethods: record('workflows.listServiceMethods'),
             ingestEvent: record('workflows.ingestEvent', { eventId: 'evt_1' }),
             dryRunEvent: record('workflows.dryRunEvent'),
-            registerEventTypes: record('workflows.registerEventTypes'),
         },
         webhooks: {
             createWebhook: record('webhooks.createWebhook'),

@@ -22,7 +22,7 @@
 // `TaskListDto` below rather than silently downgrading the richer shape.
 import type { PageMeta } from './devices.js';
 
-export type TaskStatus = 'queued' | 'created' | 'running' | 'cancelling' | 'paused' | 'completed' | 'failed' | 'cancelled';
+export type TaskStatus = 'prepared' | 'queued' | 'created' | 'running' | 'cancelling' | 'paused' | 'completed' | 'failed' | 'cancelled';
 
 export interface PackageCredentialsDto {
     credentialNames: string[];

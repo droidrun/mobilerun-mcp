@@ -76,7 +76,7 @@ const READONLY_BUNDLE_OPERATIONS = new Map<string, ReadonlySet<string>>([
     // clone/unblock/add_action/remove_action/replace_actions are mutations
     // (flow structure edits) — execution_metrics is the only read.
     ['manage_flow', new Set(['execution_metrics'])],
-    // ingest/register_events are mutations; dry_run only simulates ingest,
+    // ingest is a mutation; dry_run only simulates ingest,
     // list_event_types is a read.
     ['workflow_events', new Set(['list_event_types', 'dry_run'])],
 ]);

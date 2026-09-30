@@ -1,6 +1,6 @@
 // Workflows port — see devices.ts's file header for the DTO philosophy.
 // DTOs mirror @mobilerun/sdk's action-catalog / actions / triggers / flows /
-// executions / events.catalog response shapes (verified against the SDK's
+// executions / appEvents.catalog response shapes (verified against the SDK's
 // shipped .d.ts), trimmed to what the tools surface.
 import type { PageMeta } from './devices.js';
 
@@ -41,12 +41,6 @@ export interface ExecutionMetricsOpts {
     from?: string | null;
     to?: string | null;
 }
-export interface ListAppEventCatalogOpts {
-    source?: 'device' | 'system' | 'webhook';
-    page?: number;
-    pageSize?: number;
-}
-
 export interface CreateActionParams {
     catalogEntryId: string;
     name: string;
@@ -131,16 +125,6 @@ export interface DryRunEventParams {
     eventType: string;
     payload?: Record<string, unknown>;
 }
-export interface RegisterEventTypesParams {
-    events: Array<{
-        eventType: string;
-        label: string;
-        description?: string;
-        payloadSchema?: Record<string, unknown>;
-        source?: 'device' | 'system' | 'webhook';
-    }>;
-}
-
 export interface ActionCatalogEntryDto {
     id: string;
     name: string;
@@ -255,7 +239,7 @@ export interface FlowExecutionDto {
     triggerId: string;
     triggerName: string | null;
     status: 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'skipped' | 'invalid' | null;
-    kind: 'live' | 'dry_run';
+    kind: 'live' | 'dry_run' | 'verification';
     error: string | null;
     eventId: string | null;
     startedAt: string | null;
@@ -361,14 +345,10 @@ export interface EventDryRunResultDto {
         };
     };
 }
-export interface RegisterEventTypesResultDto {
-    message: string;
-}
-
 export interface WorkflowsBackend {
     listActionCatalog(opts: ListActionCatalogOpts): Promise<ActionCatalogListDto>;
     getActionCatalogEntry(id: string): Promise<ActionCatalogEntryEnvelopeDto>;
-    listAppEventCatalog(opts?: ListAppEventCatalogOpts): Promise<AppEventCatalogListDto>;
+    listAppEventCatalog(): Promise<AppEventCatalogListDto>;
     listActions(opts: ListActionsOpts): Promise<ActionListDto>;
     getAction(id: string): Promise<ActionEnvelopeDto>;
     createAction(params: CreateActionParams): Promise<ActionEnvelopeDto>;
@@ -394,5 +374,4 @@ export interface WorkflowsBackend {
     listServiceMethods(service: string): Promise<ServiceMethodListDto>;
     ingestEvent(params: IngestEventParams): Promise<EventIngestResultDto>;
     dryRunEvent(params: DryRunEventParams): Promise<EventDryRunResultDto>;
-    registerEventTypes(params: RegisterEventTypesParams): Promise<RegisterEventTypesResultDto>;
 }
