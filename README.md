@@ -117,6 +117,8 @@ fails fast (`process.exit(1)`) rather than serving with a bad default.
 
 ## Tools (35 total)
 
+See the [CHANGELOG](CHANGELOG.md) for contract changes and release notes.
+
 | Tool | Domain | Notes |
 |---|---|---|
 | `list_devices`, `get_device`, `get_device_screenshot`, `get_device_ui_state`, `list_apps_on_device`, `create_device`, `terminate_device` | Devices | |

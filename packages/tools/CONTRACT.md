@@ -40,6 +40,11 @@ A tool or field is never removed in the same release it's deprecated:
    before the removal ships.
 3. The removal itself is a **major** release, per the rules above.
 
+When the upstream API removes an endpoint, the dependent tool, operation, or
+field may be removed without a deprecation window because it can no longer
+work. The removal still counts as breaking and is listed under **Removed** in
+`CHANGELOG.md`.
+
 ## Bundle tools (`operation`/`resource` enums)
 
 For bundle tools (`webhooks`, `list_workflow_resources`,
