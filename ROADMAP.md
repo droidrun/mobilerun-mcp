@@ -36,7 +36,7 @@ exposed as a set of well-scoped MCP tools an LLM agent can call.
 
 ## What exists today
 
-- **34 tools** across devices, workflows, webhooks, credentials, tasks,
+- **35 tools** across devices, workflows, webhooks, assistant, credentials, tasks,
   device-control, apps, proxies, connect, and platform catalog.
   See the README's tool table for the full list and each bundle tool's
   operation enum.
