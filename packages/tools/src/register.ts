@@ -5,6 +5,7 @@ import { BackendError } from './backend/errors.js';
 import type { AuthContext, Policy, ToolCtx } from './ctx.js';
 import { asErrorResult } from './text-result.js';
 import { registerAppsTools } from './tools/apps.js';
+import { registerAssistantTool } from './tools/assistant.js';
 import { registerConnectTools } from './tools/connect.js';
 import { registerCredentialTools, registerManageCredentialsTool } from './tools/credentials.js';
 import { registerDeviceControlTools } from './tools/device-control.js';
@@ -35,6 +36,7 @@ export const ALL_TOOL_NAMES = [
     'manage_flow',
     'workflow_events',
     'webhooks',
+    'assistant',
     'list_credentials',
     'list_credential_packages',
     'run_task',
@@ -76,6 +78,7 @@ export function fullAccessPolicy(): Policy {
  */
 const OPERATION_FIELD: Readonly<Record<string, string>> = {
     webhooks: 'operation',
+    assistant: 'operation',
     list_workflow_resources: 'resource',
     get_workflow_resource: 'resource',
     get_task: 'view',
@@ -239,6 +242,7 @@ export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): Mcp
     registerManageFlowTool(server, ctx);
     registerWorkflowEventsTool(server, ctx);
     registerWebhookTools(server, ctx);
+    registerAssistantTool(server, ctx);
     registerCredentialTools(server, ctx);
     registerTaskTools(server, ctx);
     registerDeviceControlTools(server, ctx);

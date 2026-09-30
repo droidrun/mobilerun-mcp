@@ -45,6 +45,7 @@ const READONLY_TOOL_NAMES = new Set<string>([
 const READONLY_BUNDLE_OPERATIONS = new Map<string, ReadonlySet<string>>([
     // create/update/rotate_secret/test are mutations.
     ['webhooks', new Set(['list', 'get', 'list_deliveries', 'get_delivery', 'delivery_stats', 'list_event_types'])],
+    ['assistant', new Set(['list_sessions', 'get_messages'])],
     // reboot/reset/rename are mutations.
     ['manage_device', new Set(['count', 'get_capabilities', 'wait_ready'])],
     // install/delete/start/stop are mutations.

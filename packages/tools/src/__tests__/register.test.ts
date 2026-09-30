@@ -69,6 +69,17 @@ function stubBackend(): Backend & { calls: string[] } {
             getWebhookDeliveryStats: () => record('webhooks.getWebhookDeliveryStats'),
             listWebhookEventTypes: () => record('webhooks.listWebhookEventTypes'),
         },
+        assistant: {
+            listSessions: () => record('assistant.listSessions', { sessions: [] }),
+            createSession: () => record('assistant.createSession'),
+            updateSession: () => record('assistant.updateSession'),
+            sendMessage: () => record('assistant.sendMessage'),
+            getMessages: () => record('assistant.getMessages', { turnActive: false, messages: [] }),
+            abort: () => record('assistant.abort'),
+            answerPermission: () => record('assistant.answerPermission'),
+            answerQuestion: () => record('assistant.answerQuestion'),
+            rejectQuestion: () => record('assistant.rejectQuestion'),
+        },
         credentials: {
             listCredentials: () => record('credentials.listCredentials'),
             listCredentialPackages: () => record('credentials.listCredentialPackages'),
@@ -191,7 +202,7 @@ async function connectedClient(ctx: ToolCtx, opts?: Parameters<typeof buildMcpSe
 const EXPECTED_TOOL_NAMES = [...ALL_TOOL_NAMES];
 
 describe('buildMcpServer', () => {
-    test('registers every tool in ALL_TOOL_NAMES (34 tools) under a full-access policy', async () => {
+    test('registers every tool in ALL_TOOL_NAMES (35 tools) under a full-access policy', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));
         const { tools } = await client.listTools();
@@ -514,6 +525,35 @@ describe('buildMcpServer', () => {
             expect(result.isError).not.toBe(true);
             expect(backend.calls).toEqual([expectMethod]);
         }
+    });
+
+    test('assistant dispatches every operation and defaults send wait to 45 seconds', async () => {
+        const backend = stubBackend();
+        const sendCalls: Array<[string, string, number]> = [];
+        backend.assistant.sendMessage = async (sessionId, message, waitSeconds) => {
+            sendCalls.push([sessionId, message, waitSeconds]);
+            return { status: 'completed', chatSessionId: sessionId, assistantText: 'done' };
+        };
+        const { client } = await connectedClient(ctxWith(backend));
+        const cases: Array<{ args: Record<string, unknown>; method: string }> = [
+            { args: { operation: 'list_sessions' }, method: 'assistant.listSessions' },
+            { args: { operation: 'create_session', title: 'Chat' }, method: 'assistant.createSession' },
+            { args: { operation: 'update_session', sessionId: 's1', pinned: true }, method: 'assistant.updateSession' },
+            { args: { operation: 'get_messages', sessionId: 's1' }, method: 'assistant.getMessages' },
+            { args: { operation: 'abort', sessionId: 's1' }, method: 'assistant.abort' },
+            { args: { operation: 'answer_permission', permissionId: 'p1', response: 'once' }, method: 'assistant.answerPermission' },
+            { args: { operation: 'answer_question', questionId: 'q1', answers: [[{ label: 'Yes' }]] }, method: 'assistant.answerQuestion' },
+            { args: { operation: 'reject_question', questionId: 'q1' }, method: 'assistant.rejectQuestion' },
+        ];
+        for (const { args, method } of cases) {
+            backend.calls.length = 0;
+            const result = await client.callTool({ name: 'assistant', arguments: args });
+            expect(result.isError).not.toBe(true);
+            expect(backend.calls).toEqual([method]);
+        }
+        const sent = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
+        expect(sent.isError).not.toBe(true);
+        expect(sendCalls).toEqual([['s1', 'Hi', 45]]);
     });
 
     test('workflow_events requires eventType for ingest/dry_run', async () => {

@@ -62,6 +62,17 @@ function noopBackend(): Backend {
             getWebhookDeliveryStats: notImplemented,
             listWebhookEventTypes: notImplemented,
         },
+        assistant: {
+            listSessions: notImplemented,
+            createSession: notImplemented,
+            updateSession: notImplemented,
+            sendMessage: notImplemented,
+            getMessages: notImplemented,
+            abort: notImplemented,
+            answerPermission: notImplemented,
+            answerQuestion: notImplemented,
+            rejectQuestion: notImplemented,
+        },
         credentials: {
             listCredentials: notImplemented,
             listCredentialPackages: notImplemented,
