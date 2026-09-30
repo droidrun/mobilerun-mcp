@@ -1777,69 +1777,17 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "eventType": {
           "type": "string",
         },
-        "events": {
-          "description": "New event types for operation=register_events.",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "description": {
-                "type": "string",
-              },
-              "eventType": {
-                "minLength": 1,
-                "type": "string",
-              },
-              "label": {
-                "minLength": 1,
-                "type": "string",
-              },
-              "payloadSchema": {
-                "additionalProperties": {},
-                "type": "object",
-              },
-              "source": {
-                "$ref": "#/properties/source",
-              },
-            },
-            "required": [
-              "eventType",
-              "label",
-            ],
-            "type": "object",
-          },
-          "minItems": 1,
-          "type": "array",
-        },
         "operation": {
           "enum": [
             "ingest",
             "dry_run",
             "list_event_types",
-            "register_events",
           ],
           "type": "string",
-        },
-        "page": {
-          "exclusiveMinimum": 0,
-          "type": "integer",
-        },
-        "pageSize": {
-          "exclusiveMinimum": 0,
-          "maximum": 100,
-          "type": "integer",
         },
         "payload": {
           "additionalProperties": {},
           "type": "object",
-        },
-        "source": {
-          "description": "Filter for operation=list_event_types.",
-          "enum": [
-            "device",
-            "system",
-            "webhook",
-          ],
-          "type": "string",
         },
       },
       "required": [

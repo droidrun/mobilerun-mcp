@@ -55,7 +55,6 @@ function stubBackend(): Backend & { calls: string[] } {
             listServiceMethods: () => record('workflows.listServiceMethods'),
             ingestEvent: () => record('workflows.ingestEvent', { eventId: 'evt_1' }),
             dryRunEvent: () => record('workflows.dryRunEvent'),
-            registerEventTypes: () => record('workflows.registerEventTypes'),
         },
         webhooks: {
             createWebhook: () => record('webhooks.createWebhook'),
@@ -391,10 +390,6 @@ describe('buildMcpServer', () => {
             { args: { operation: 'ingest', eventType: 'app.custom' }, expectMethod: 'workflows.ingestEvent' },
             { args: { operation: 'dry_run', eventType: 'app.custom' }, expectMethod: 'workflows.dryRunEvent' },
             { args: { operation: 'list_event_types' }, expectMethod: 'workflows.listAppEventCatalog' },
-            {
-                args: { operation: 'register_events', events: [{ eventType: 'app.custom', label: 'Custom' }] },
-                expectMethod: 'workflows.registerEventTypes',
-            },
         ];
 
         for (const { args, expectMethod } of cases) {

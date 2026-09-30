@@ -122,7 +122,7 @@ fails fast (`process.exit(1)`) rather than serving with a bad default.
 | `list_devices`, `get_device`, `get_device_screenshot`, `get_device_ui_state`, `list_apps_on_device`, `create_device`, `terminate_device` | Devices | |
 | `list_workflow_resources`, `get_workflow_resource`, `create_action`, `create_trigger`, `create_flow` | Workflows | |
 | `manage_flow` | Workflows | Bundle: `operation ∈ clone, unblock, add_action, remove_action, replace_actions, execution_metrics` |
-| `workflow_events` | Workflows | Bundle: `operation ∈ ingest, dry_run, list_event_types, register_events` |
+| `workflow_events` | Workflows | Bundle: `operation ∈ ingest, dry_run, list_event_types` (`list_event_types` reads the static app event catalog) |
 | `webhooks` | Webhooks | Bundle: `operation ∈ create, list, get, update, rotate_secret, test, list_deliveries, get_delivery, delivery_stats, list_event_types` |
 | `list_credentials`, `list_credential_packages` | Credentials | |
 | `manage_credentials` | Credentials | Bundle write path: `operation ∈ init_package, create_credential, delete_credential, add_field, update_field, delete_field`. Never echoes a field value back |

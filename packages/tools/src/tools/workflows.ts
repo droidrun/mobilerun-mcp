@@ -136,8 +136,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
                 'own filter subset — a filter only valid for a DIFFERENT resource is rejected naming what is ' +
                 'allowed here. `resource` values:\n' +
                 '- action_catalog (filters: service): the full reviewed workflow step surface.\n' +
-                '- app_event_catalog (no filters): every selectable app event and device event, each with its ' +
-                'app, source event and payload fields. Call this BEFORE create_trigger with activation ' +
+                '- app_event_catalog (no filters): the static selectable app event catalog with event type, label, and payload fields. Call this BEFORE create_trigger with activation ' +
                 '"event" — never guess an app.*/system.* type.\n' +
                 "- action (filters: service, search, page, pageSize): the user's saved actions (configured " +
                 'catalog instances) — slim overview; call get_workflow_resource(resource="action") for full params.\n' +

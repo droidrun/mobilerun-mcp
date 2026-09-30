@@ -48,7 +48,6 @@ function noopBackend(): Backend {
             listServiceMethods: notImplemented,
             ingestEvent: notImplemented,
             dryRunEvent: notImplemented,
-            registerEventTypes: notImplemented,
         },
         webhooks: {
             createWebhook: notImplemented,

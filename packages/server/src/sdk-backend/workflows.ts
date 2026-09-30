@@ -1,4 +1,5 @@
 import type Mobilerun from '@mobilerun/sdk';
+import { z } from 'zod';
 import type {
     AddFlowActionParams,
     CloneFlowParams,
@@ -10,16 +11,22 @@ import type {
     IngestEventParams,
     ListActionCatalogOpts,
     ListActionsOpts,
-    ListAppEventCatalogOpts,
     ListExecutionsOpts,
     ListFlowsOpts,
     ListTriggersOpts,
-    RegisterEventTypesParams,
     RemoveFlowActionParams,
     ReplaceFlowActionsParams,
     WorkflowService,
     WorkflowsBackend,
 } from '@mobilerun/mcp-tools';
+
+const scheduleRuleSchema = z.object({
+    type: z.enum(['once', 'cron', 'recurring']),
+    dateTime: z.string().optional(),
+    expression: z.string().optional(),
+    rrule: z.string().optional(),
+    jitter: z.object({ beforeMinutes: z.number().optional(), afterMinutes: z.number().optional() }).passthrough().optional(),
+}).passthrough().nullable();
 
 export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
     return {
@@ -31,8 +38,20 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         async getActionCatalogEntry(id: string) {
             return client.workflows.actionCatalog.retrieve(id);
         },
-        async listAppEventCatalog(opts: ListAppEventCatalogOpts = {}) {
-            return client.workflows.events.catalog.list({ source: opts.source, page: opts.page, pageSize: opts.pageSize });
+        async listAppEventCatalog() {
+            const { data } = await client.appEvents.catalog.list();
+            return {
+                items: data.map((item) => ({
+                    eventType: item.appEventType,
+                    label: item.label,
+                    description: null,
+                    source: item.category,
+                    createdAt: null,
+                    updatedAt: null,
+                    payloadSchema: item.payloadSchema,
+                })),
+                pagination: { page: 1, pages: 1, pageSize: data.length, total: data.length, hasNext: false, hasPrev: false },
+            };
         },
         async listActions(opts: ListActionsOpts) {
             return client.workflows.actions.list({
@@ -57,16 +76,18 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             });
         },
         async listTriggers(opts: ListTriggersOpts) {
-            return client.workflows.triggers.list({
+            const response = await client.workflows.triggers.list({
                 activation: opts.activation,
                 eventType: opts.eventType,
                 search: opts.search,
                 page: opts.page,
                 pageSize: opts.pageSize,
             });
+            return { ...response, items: response.items.map((item) => ({ ...item, scheduleRule: scheduleRuleSchema.parse(item.scheduleRule) })) };
         },
         async getTrigger(id: string) {
-            return client.workflows.triggers.retrieve(id);
+            const response = await client.workflows.triggers.retrieve(id);
+            return { data: { ...response.data, scheduleRule: scheduleRuleSchema.parse(response.data.scheduleRule) } };
         },
         async createTrigger(params: CreateTriggerParams) {
             // GAP: @mobilerun/sdk's TriggerCreateParams.scheduleRule has no
@@ -88,7 +109,7 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async listFlows(opts: ListFlowsOpts) {
             return client.workflows.flows.list({
-                enabled: opts.enabled,
+                enabled: opts.enabled === undefined ? undefined : opts.enabled ? 'true' : 'false',
                 search: opts.search,
                 triggerId: opts.triggerId,
                 page: opts.page,
@@ -173,10 +194,16 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             return client.workflows.events.ingest({ eventType: params.eventType, payload: params.payload });
         },
         async dryRunEvent(params: DryRunEventParams) {
-            return client.workflows.events.dryRun({ eventType: params.eventType, payload: params.payload });
-        },
-        async registerEventTypes(params: RegisterEventTypesParams) {
-            return client.workflows.events.catalog.register({ events: params.events });
+            const response = await client.workflows.events.dryRun({ eventType: params.eventType, payload: params.payload });
+            return {
+                data: {
+                    ...response.data,
+                    matchedFlows: response.data.matchedFlows.map((match) => ({
+                        ...match,
+                        trigger: { ...match.trigger, scheduleRule: scheduleRuleSchema.parse(match.trigger.scheduleRule) },
+                    })),
+                },
+            };
         },
     };
 }
