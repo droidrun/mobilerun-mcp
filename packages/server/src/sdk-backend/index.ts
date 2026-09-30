@@ -1,6 +1,7 @@
 import type Mobilerun from '@mobilerun/sdk';
 import type { Backend } from '@mobilerun/mcp-tools';
 import { createAppsBackend } from './apps.js';
+import { createAssistantBackend } from './assistant.js';
 import { createConnectBackend } from './connect.js';
 import { createCredentialsBackend } from './credentials.js';
 import { createDeviceControlBackend } from './device-control.js';
@@ -27,6 +28,7 @@ export function createSdkBackend(client: Mobilerun): Backend {
         devices: withBackendErrors(createDevicesBackend(client)),
         workflows: withBackendErrors(createWorkflowsBackend(client)),
         webhooks: withBackendErrors(createWebhooksBackend(client)),
+        assistant: withBackendErrors(createAssistantBackend(client)),
         credentials: withBackendErrors(createCredentialsBackend(client)),
         tasks: withBackendErrors(createTasksBackend(client)),
         deviceControl: withBackendErrors(createDeviceControlBackend(client)),

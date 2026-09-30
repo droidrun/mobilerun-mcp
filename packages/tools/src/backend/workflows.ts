@@ -1,7 +1,8 @@
 // Workflows port — see devices.ts's file header for the DTO philosophy.
 // DTOs mirror @mobilerun/sdk's action-catalog / actions / triggers / flows /
-// executions / events.catalog response shapes (verified against the SDK's
+// executions / appEvents.catalog response shapes (verified against the SDK's
 // shipped .d.ts), trimmed to what the tools surface.
+import { z } from 'zod';
 import type { PageMeta } from './devices.js';
 
 export type WorkflowService = 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks';
@@ -41,12 +42,6 @@ export interface ExecutionMetricsOpts {
     from?: string | null;
     to?: string | null;
 }
-export interface ListAppEventCatalogOpts {
-    source?: 'device' | 'system' | 'webhook';
-    page?: number;
-    pageSize?: number;
-}
-
 export interface CreateActionParams {
     catalogEntryId: string;
     name: string;
@@ -55,12 +50,26 @@ export interface CreateActionParams {
     params?: Record<string, unknown>;
 }
 
-export interface ScheduleRule {
-    type: 'once' | 'cron' | 'recurring';
-    dateTime?: string;
-    expression?: string;
-    rrule?: string;
-    jitter?: { beforeMinutes?: number; afterMinutes?: number };
+export const scheduleRuleSchema = z.object({
+    type: z.enum(['once', 'cron', 'recurring']),
+    dateTime: z.string().optional().describe('Required when type=once. ISO 8601.'),
+    expression: z.string().optional().describe('Required when type=cron. 5-field cron.'),
+    rrule: z.string().optional().describe('Required when type=recurring. RRULE string.'),
+    jitter: z
+        .object({
+            beforeMinutes: z.number().int().min(0).max(1440).optional(),
+            afterMinutes: z.number().int().min(0).max(1440).optional(),
+        })
+        .optional()
+        .describe(
+            'Random execution window in minutes around the nominal time (0-1440 each). Each occurrence gets a stable random offset within it.',
+        ),
+});
+
+export type ScheduleRule = z.infer<typeof scheduleRuleSchema>;
+
+export function isScheduleRule(value: unknown): value is ScheduleRule {
+    return scheduleRuleSchema.safeParse(value).success;
 }
 
 export interface CreateTriggerParams {
@@ -131,16 +140,6 @@ export interface DryRunEventParams {
     eventType: string;
     payload?: Record<string, unknown>;
 }
-export interface RegisterEventTypesParams {
-    events: Array<{
-        eventType: string;
-        label: string;
-        description?: string;
-        payloadSchema?: Record<string, unknown>;
-        source?: 'device' | 'system' | 'webhook';
-    }>;
-}
-
 export interface ActionCatalogEntryDto {
     id: string;
     name: string;
@@ -160,6 +159,9 @@ export interface ActionCatalogEntryEnvelopeDto {
 }
 
 export interface AppEventCatalogItemDto {
+    appName?: string;
+    sourceEventType?: string;
+    packageName?: string | null;
     eventType: string;
     label: string;
     description: string | null;
@@ -238,7 +240,8 @@ export interface FlowDto {
     // the older name/slug-based syntax. Optional/defensive: not yet typed by
     // @mobilerun/sdk's Flow response type, so treat as "present when the API
     // sends it" rather than assuming every flow has it.
-    templateResolutionVersion?: 1 | 2 | 3;
+    // @mobilerun/sdk declares this as number; known API values are 1, 2, and 3.
+    templateResolutionVersion?: number;
 }
 export interface FlowListDto {
     items: FlowDto[];
@@ -255,7 +258,7 @@ export interface FlowExecutionDto {
     triggerId: string;
     triggerName: string | null;
     status: 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'skipped' | 'invalid' | null;
-    kind: 'live' | 'dry_run';
+    kind: 'live' | 'dry_run' | 'verification';
     error: string | null;
     eventId: string | null;
     startedAt: string | null;
@@ -361,14 +364,10 @@ export interface EventDryRunResultDto {
         };
     };
 }
-export interface RegisterEventTypesResultDto {
-    message: string;
-}
-
 export interface WorkflowsBackend {
     listActionCatalog(opts: ListActionCatalogOpts): Promise<ActionCatalogListDto>;
     getActionCatalogEntry(id: string): Promise<ActionCatalogEntryEnvelopeDto>;
-    listAppEventCatalog(opts?: ListAppEventCatalogOpts): Promise<AppEventCatalogListDto>;
+    listAppEventCatalog(): Promise<AppEventCatalogListDto>;
     listActions(opts: ListActionsOpts): Promise<ActionListDto>;
     getAction(id: string): Promise<ActionEnvelopeDto>;
     createAction(params: CreateActionParams): Promise<ActionEnvelopeDto>;
@@ -394,5 +393,4 @@ export interface WorkflowsBackend {
     listServiceMethods(service: string): Promise<ServiceMethodListDto>;
     ingestEvent(params: IngestEventParams): Promise<EventIngestResultDto>;
     dryRunEvent(params: DryRunEventParams): Promise<EventDryRunResultDto>;
-    registerEventTypes(params: RegisterEventTypesParams): Promise<RegisterEventTypesResultDto>;
 }

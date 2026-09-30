@@ -58,7 +58,6 @@ function stubBackend(): Backend & { calls: Array<{ method: string; args: unknown
             listServiceMethods: record('workflows.listServiceMethods'),
             ingestEvent: record('workflows.ingestEvent', { eventId: 'evt_1' }),
             dryRunEvent: record('workflows.dryRunEvent'),
-            registerEventTypes: record('workflows.registerEventTypes'),
         },
         webhooks: {
             createWebhook: record('webhooks.createWebhook'),
@@ -71,6 +70,17 @@ function stubBackend(): Backend & { calls: Array<{ method: string; args: unknown
             getWebhookDelivery: record('webhooks.getWebhookDelivery'),
             getWebhookDeliveryStats: record('webhooks.getWebhookDeliveryStats'),
             listWebhookEventTypes: record('webhooks.listWebhookEventTypes'),
+        },
+        assistant: {
+            listSessions: record('assistant.listSessions'),
+            createSession: record('assistant.createSession'),
+            updateSession: record('assistant.updateSession'),
+            sendMessage: record('assistant.sendMessage'),
+            getMessages: record('assistant.getMessages'),
+            abort: record('assistant.abort'),
+            answerPermission: record('assistant.answerPermission'),
+            answerQuestion: record('assistant.answerQuestion'),
+            rejectQuestion: record('assistant.rejectQuestion'),
         },
         credentials: {
             listCredentials: record('credentials.listCredentials'),

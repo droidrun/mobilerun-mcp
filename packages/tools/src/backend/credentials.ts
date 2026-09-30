@@ -25,7 +25,7 @@ export interface CredentialFieldDto {
 export interface CredentialDto {
     credentialName: string;
     packageName: string;
-    userId: string;
+    userId: string | null;
     secretPath: string;
     fields: CredentialFieldDto[];
 }
@@ -64,7 +64,7 @@ export interface CredentialFieldMetaDto {
 export interface CredentialMetaDto {
     credentialName: string;
     packageName: string;
-    userId: string;
+    userId: string | null;
     secretPath: string;
     fields: CredentialFieldMetaDto[];
 }

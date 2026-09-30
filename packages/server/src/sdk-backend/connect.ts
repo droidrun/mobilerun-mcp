@@ -20,7 +20,7 @@ export function createConnectBackend(client: Mobilerun): ConnectBackend {
             return client.connect.proxies.retrieve(id);
         },
         async buyConnectProxy(params: BuyConnectProxyParams) {
-            return client.connect.proxies.buy({ country: params.country, type: params.type });
+            return client.connect.proxies.buy({ country: params.country, type: params.type ?? 'residential' });
         },
         async cancelConnectProxy(id: string) {
             await client.connect.proxies.cancel(id);

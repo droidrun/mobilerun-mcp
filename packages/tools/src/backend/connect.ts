@@ -54,7 +54,7 @@ export interface ListConnectionsOpts {
 export interface CountryDto {
     code: string;
     name: string;
-    proxyTypes: readonly 'residential'[];
+    proxyTypes: readonly ('residential' | 'dedicated_residential' | 'mobile')[];
 }
 export interface CountryListDto {
     items: CountryDto[];
@@ -66,7 +66,7 @@ export interface ListCountriesOpts {
     pageSize?: number;
 }
 
-export type ConnectProxyStatus = 'pending_payment' | 'provisioning' | 'active' | 'cancelling' | 'ended' | 'error';
+export type ConnectProxyStatus = 'checking' | 'pending_payment' | 'provisioning' | 'active' | 'cancelling' | 'ended' | 'error';
 
 /** Proxy including its password — returned only on buy/get (single-proxy reads). */
 export interface ConnectProxyDto {
@@ -77,7 +77,7 @@ export interface ConnectProxyDto {
     port: number;
     password: string;
     status: ConnectProxyStatus;
-    type: 'residential';
+    type: 'residential' | 'dedicated_residential' | 'mobile';
     username: string;
     paymentUrl?: string | null;
 }
@@ -89,7 +89,7 @@ export interface ConnectProxyListItemDto {
     host: string;
     port: number;
     status: ConnectProxyStatus;
-    type: 'residential';
+    type: 'residential' | 'dedicated_residential' | 'mobile';
     username: string;
 }
 export interface ConnectProxyListDto {

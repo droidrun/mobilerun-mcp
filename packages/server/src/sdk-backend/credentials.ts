@@ -22,7 +22,7 @@ import type {
 export function toCredentialMeta(cred: {
     credentialName: string;
     packageName: string;
-    userId: string;
+    userId: string | null;
     secretPath: string;
     fields: Array<{ fieldType: CredentialFieldDto['fieldType']; value: string }>;
 }): CredentialMetaDto {

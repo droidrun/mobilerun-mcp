@@ -49,7 +49,6 @@ function noopBackend(): Backend {
             listServiceMethods: notImplemented,
             ingestEvent: notImplemented,
             dryRunEvent: notImplemented,
-            registerEventTypes: notImplemented,
         },
         webhooks: {
             createWebhook: notImplemented,
@@ -62,6 +61,17 @@ function noopBackend(): Backend {
             getWebhookDelivery: notImplemented,
             getWebhookDeliveryStats: notImplemented,
             listWebhookEventTypes: notImplemented,
+        },
+        assistant: {
+            listSessions: notImplemented,
+            createSession: notImplemented,
+            updateSession: notImplemented,
+            sendMessage: notImplemented,
+            getMessages: notImplemented,
+            abort: notImplemented,
+            answerPermission: notImplemented,
+            answerQuestion: notImplemented,
+            rejectQuestion: notImplemented,
         },
         credentials: {
             listCredentials: notImplemented,

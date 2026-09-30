@@ -5,6 +5,10 @@ export type {
     DevicesBackend,
     WorkflowsBackend,
     WebhooksBackend,
+    AssistantBackend,
+    AssistantAnswer,
+    AssistantSession,
+    AssistantHistory,
     CredentialsBackend,
     AppsBackend,
     ProxiesBackend,
@@ -30,7 +34,6 @@ export type {
     ListFlowsOpts,
     ListExecutionsOpts,
     ExecutionMetricsOpts,
-    ListAppEventCatalogOpts,
     CreateActionParams,
     ScheduleRule,
     CreateTriggerParams,
@@ -44,7 +47,6 @@ export type {
     ReplaceFlowActionsParams,
     IngestEventParams,
     DryRunEventParams,
-    RegisterEventTypesParams,
     ListWebhooksOpts,
     CreateWebhookParams,
     UpdateWebhookParams,
@@ -111,6 +113,7 @@ export type {
     ListConnectionsOpts,
     ListConnectUsersOpts,
 } from './backend/index.js';
+export { isScheduleRule } from './backend/workflows.js';
 export { BackendError, type BackendErrorCode } from './backend/errors.js';
 export {
     buildMcpServer,

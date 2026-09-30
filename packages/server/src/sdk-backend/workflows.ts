@@ -1,4 +1,5 @@
 import type Mobilerun from '@mobilerun/sdk';
+import { isScheduleRule } from '@mobilerun/mcp-tools';
 import type {
     AddFlowActionParams,
     CloneFlowParams,
@@ -10,26 +11,24 @@ import type {
     IngestEventParams,
     ListActionCatalogOpts,
     ListActionsOpts,
-    ListAppEventCatalogOpts,
     ListExecutionsOpts,
     ListFlowsOpts,
     ListTriggersOpts,
-    RegisterEventTypesParams,
     RemoveFlowActionParams,
     ReplaceFlowActionsParams,
     WorkflowService,
     WorkflowsBackend,
 } from '@mobilerun/mcp-tools';
 
-// GAP: @mobilerun/sdk's flow-action types (ActionAddParams, ActionReplaceParams.Action,
-// FlowChildActionInput, and the FlowAction response type — see
-// workflows/flows/actions.d.ts) don't yet declare the `key` field the API added for
-// template resolution v3. The wire body/response is a plain JSON object, so `key` reaches
-// the API on write and is present on every flow action on read regardless of what the
-// SDK's shipped types say — forwarded/read through this one loose cast at each such call
-// site, same pattern as `scheduleRule.jitter` below. Remove once the SDK types include `key`.
+// GAP: @mobilerun/sdk's flow-action types do not yet declare the stable `key`
+// field added for template resolution v3. Keep it at this adapter boundary
+// until the SDK types include it.
 function withFlowActionKey<T extends object>(value: T): T & { key: string } {
     return value as T & { key: string };
+}
+
+function withScheduleRule<T extends { scheduleRule?: unknown }>(trigger: T) {
+    return { ...trigger, scheduleRule: isScheduleRule(trigger.scheduleRule) ? trigger.scheduleRule : null };
 }
 
 export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
@@ -42,8 +41,23 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         async getActionCatalogEntry(id: string) {
             return client.workflows.actionCatalog.retrieve(id);
         },
-        async listAppEventCatalog(opts: ListAppEventCatalogOpts = {}) {
-            return client.workflows.events.catalog.list({ source: opts.source, page: opts.page, pageSize: opts.pageSize });
+        async listAppEventCatalog() {
+            const { data } = await client.appEvents.catalog.list();
+            return {
+                items: data.map((item) => ({
+                    eventType: item.appEventType,
+                    appName: item.appName,
+                    sourceEventType: item.sourceEventType,
+                    packageName: item.packageName,
+                    label: item.label,
+                    description: null,
+                    source: item.category,
+                    createdAt: null,
+                    updatedAt: null,
+                    payloadSchema: item.payloadSchema,
+                })),
+                pagination: { page: 1, pages: 1, pageSize: data.length, total: data.length, hasNext: false, hasPrev: false },
+            };
         },
         async listActions(opts: ListActionsOpts) {
             return client.workflows.actions.list({
@@ -68,16 +82,18 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             });
         },
         async listTriggers(opts: ListTriggersOpts) {
-            return client.workflows.triggers.list({
+            const response = await client.workflows.triggers.list({
                 activation: opts.activation,
                 eventType: opts.eventType,
                 search: opts.search,
                 page: opts.page,
                 pageSize: opts.pageSize,
             });
+            return { ...response, items: response.items.map(withScheduleRule) };
         },
         async getTrigger(id: string) {
-            return client.workflows.triggers.retrieve(id);
+            const response = await client.workflows.triggers.retrieve(id);
+            return { data: withScheduleRule(response.data) };
         },
         async createTrigger(params: CreateTriggerParams) {
             // GAP: @mobilerun/sdk's TriggerCreateParams.scheduleRule has no
@@ -99,7 +115,7 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async listFlows(opts: ListFlowsOpts) {
             return client.workflows.flows.list({
-                enabled: opts.enabled,
+                enabled: opts.enabled === undefined ? undefined : opts.enabled ? 'true' : 'false',
                 search: opts.search,
                 triggerId: opts.triggerId,
                 page: opts.page,
@@ -166,7 +182,6 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             return { items: response.data.map(withFlowActionKey) };
         },
         async listFlowActions(flowId: string) {
-            // Same list-shape normalization as replaceFlowActions above.
             const response = await client.workflows.flows.actions.list(flowId);
             return { items: response.data.map(withFlowActionKey) };
         },
@@ -194,10 +209,16 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             return client.workflows.events.ingest({ eventType: params.eventType, payload: params.payload });
         },
         async dryRunEvent(params: DryRunEventParams) {
-            return client.workflows.events.dryRun({ eventType: params.eventType, payload: params.payload });
-        },
-        async registerEventTypes(params: RegisterEventTypesParams) {
-            return client.workflows.events.catalog.register({ events: params.events });
+            const response = await client.workflows.events.dryRun({ eventType: params.eventType, payload: params.payload });
+            return {
+                data: {
+                    ...response.data,
+                    matchedFlows: response.data.matchedFlows.map((match) => ({
+                        ...match,
+                        trigger: withScheduleRule(match.trigger),
+                    })),
+                },
+            };
         },
     };
 }

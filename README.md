@@ -8,7 +8,7 @@ and what's planned next).
 
 - `packages/tools` (`@mobilerun/mcp-tools`) — auth-agnostic tool core. No
   hono, no SDK dependency, only `zod` + MCP SDK types. Exports
-  `buildMcpServer(ctx, opts?)`, the `Backend` interface, and all 34 tools.
+  `buildMcpServer(ctx, opts?)`, the `Backend` interface, and all 35 tools.
 - `packages/server` (`@mobilerun/mcp-server`) — public composition: Bearer
   auth → `@mobilerun/sdk` client → `SdkBackend` → `ToolCtx` →
   `buildMcpServer`. Ships both an HTTP (Streamable HTTP, stateless) and a
@@ -107,7 +107,7 @@ HTTP envelope) — local-only fallback, not used by the HTTP transport.
 | `MCP_POLICY_PROFILE` | `no-commerce` | `readonly \| no-commerce \| full` — which tools/operations this deployment ever registers, before any per-credential scoping. Defaults to the safe `no-commerce` profile; an operator opts into `full` explicitly. See "Policy profiles" below. |
 | `MCP_RESOURCE_URL` | `http://localhost:8080` | Canonical resource identifier for the `WWW-Authenticate`/RFC 9728 URL. **Never** derived from request headers — set this to the server's real public URL in any non-local deployment. |
 | `MCP_BODY_LIMIT_BYTES` | `1048576` (1 MiB) | POST `/mcp` body size limit |
-| `MCP_REQUEST_TIMEOUT_MS` | `60000` | Hard per-request timeout around the MCP request handler |
+| `MCP_REQUEST_TIMEOUT_MS` | `60000` | Hard per-request timeout around the MCP request handler; must stay above 50 s because assistant `send_message` waits up to 50 s |
 | `MCP_RATE_LIMIT_PER_KEY_PER_MIN` | `60` | Token-bucket capacity+refill per API-key hash |
 | `MCP_RATE_LIMIT_PER_IP_PER_MIN` | `120` | Token-bucket capacity+refill per client IP |
 | `MCP_TRUST_PROXY` | `false` | Whether to trust `X-Forwarded-For`/`X-Real-IP` for IP rate limiting. Unguarded, those headers are caller-spoofable (bypass the IP limiter, or frame another IP's bucket) — only set `true` behind a proxy/LB that overwrites (never appends-to) them. When `false` (default), the IP limiter uses only the actual socket peer address (`Bun.serve`'s `server.requestIP`, wired via `index.ts`); if that's unavailable for a request, the IP limiter is skipped for it (never a shared `"unknown"` bucket) and per-key limiting still applies. |
@@ -115,15 +115,16 @@ HTTP envelope) — local-only fallback, not used by the HTTP transport.
 Validated with `zod` + `safeParse` at startup (`env.ts`) — an invalid config
 fails fast (`process.exit(1)`) rather than serving with a bad default.
 
-## Tools (34 total)
+## Tools (35 total)
 
 | Tool | Domain | Notes |
 |---|---|---|
 | `list_devices`, `get_device`, `get_device_screenshot`, `get_device_ui_state`, `list_apps_on_device`, `create_device`, `terminate_device` | Devices | |
 | `list_workflow_resources`, `get_workflow_resource`, `create_action`, `create_trigger`, `create_flow` | Workflows | |
 | `manage_flow` | Workflows | Bundle: `operation ∈ clone, unblock, add_action, remove_action, replace_actions, execution_metrics` |
-| `workflow_events` | Workflows | Bundle: `operation ∈ ingest, dry_run, list_event_types, register_events` |
+| `workflow_events` | Workflows | Bundle: `operation ∈ ingest, dry_run, list_event_types` (`list_event_types` reads the static app event catalog) |
 | `webhooks` | Webhooks | Bundle: `operation ∈ create, list, get, update, rotate_secret, test, list_deliveries, get_delivery, delivery_stats, list_event_types` |
+| `assistant` | Assistant | Bundle: `operation ∈ list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question`; write operations require `full`, and `answer_permission` accepts only `once` or `reject` |
 | `list_credentials`, `list_credential_packages` | Credentials | |
 | `manage_credentials` | Credentials | Bundle write path: `operation ∈ init_package, create_credential, delete_credential, add_field, update_field, delete_field`. Never echoes a field value back |
 | `run_task`, `get_task`, `list_tasks`, `stop_task`, `send_task_message`, `get_task_media` | Tasks | `get_task(view ∈ summary, status, trajectory)`, `get_task_media(kind ∈ screenshot, ui_state)` |
@@ -147,6 +148,15 @@ that are awaiting SDK support (recordings, deeplink, browser execute-script,
 app permissions, eSIM APN/roaming/connectivity, kiosk, location reset,
 `app_store`, apps storage-usage, `list_app_events` — none of these are
 exposed as tools; no SDK support exists for them yet).
+
+### Assistant
+
+Create or select a chat session, then call `assistant` with `operation=send_message`.
+If it returns `running`, poll `get_messages` until `turnActive` is false. Use
+the matching answer operation for any pending permission or question in the
+history. The assistant is an agent that acts with the full authority of the API
+key (it can, for example, create billed devices), so chatting with it requires
+the `full` profile.
 
 ## Policy / allowlisting (fail-closed at registration)
 
@@ -180,9 +190,9 @@ The HTTP and stdio servers build their `Policy` via `policyForProfile(env.MCP_PO
 
 | Profile | Tool count | Notes |
 |---|---|---|
-| `readonly` | 24 | `list_*`/`get_*` tools, `platform_catalog`, plus 11 bundle tools narrowed to their read operations via `operationAllowlist` (`webhooks`, `manage_device`, `manage_device_apps`, `manage_device_files`, `configure_device`, `manage_esim`, `apps`, `proxies`, `connect`, `manage_flow`, `workflow_events`). `device_action` and `manage_credentials` are excluded outright — neither has a read-only operation. |
-| `no-commerce` (**default**) | 32 | Everything except `create_device`, `terminate_device` (tool-level), and `connect`'s `buy_proxy`/`cancel_proxy` operations (operation-level — the `connect` tool itself stays visible). The required safe default — a server that never sets `MCP_POLICY_PROFILE` must not fail open to `full`. |
-| `full` | 34 | Every tool, no operation gates — `fullAccessPolicy()`, opt-in only. |
+| `readonly` | 25 | `list_*`/`get_*` tools, `platform_catalog`, plus 12 bundle tools narrowed to their read operations via `operationAllowlist` (`assistant`, `webhooks`, `manage_device`, `manage_device_apps`, `manage_device_files`, `configure_device`, `manage_esim`, `apps`, `proxies`, `connect`, `manage_flow`, `workflow_events`). `device_action` and `manage_credentials` are excluded outright — neither has a read-only operation. |
+| `no-commerce` (**default**) | 33 | Everything except `create_device`, `terminate_device` (tool-level), `connect`'s `buy_proxy`/`cancel_proxy` operations, and assistant write operations (operation-level). The assistant remains available only for `list_sessions` and `get_messages`; the required safe default — a server that never sets `MCP_POLICY_PROFILE` must not fail open to `full`. |
+| `full` | 35 | Every tool, no operation gates — `fullAccessPolicy()`, opt-in only. |
 
 Set `MCP_POLICY_PROFILE=readonly|no-commerce|full` to choose; both the HTTP
 and stdio transports read the same env var, so they stay in lockstep.

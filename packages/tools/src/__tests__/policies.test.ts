@@ -54,7 +54,6 @@ function stubBackend(): Backend & { calls: string[] } {
             listServiceMethods: () => record('workflows.listServiceMethods'),
             ingestEvent: () => record('workflows.ingestEvent', { eventId: 'evt_1' }),
             dryRunEvent: () => record('workflows.dryRunEvent'),
-            registerEventTypes: () => record('workflows.registerEventTypes'),
         },
         webhooks: {
             createWebhook: () => record('webhooks.createWebhook'),
@@ -67,6 +66,17 @@ function stubBackend(): Backend & { calls: string[] } {
             getWebhookDelivery: () => record('webhooks.getWebhookDelivery'),
             getWebhookDeliveryStats: () => record('webhooks.getWebhookDeliveryStats'),
             listWebhookEventTypes: () => record('webhooks.listWebhookEventTypes'),
+        },
+        assistant: {
+            listSessions: () => record('assistant.listSessions', { sessions: [] }),
+            createSession: () => record('assistant.createSession'),
+            updateSession: () => record('assistant.updateSession'),
+            sendMessage: () => record('assistant.sendMessage'),
+            getMessages: () => record('assistant.getMessages', { turnActive: false, messages: [] }),
+            abort: () => record('assistant.abort'),
+            answerPermission: () => record('assistant.answerPermission'),
+            answerQuestion: () => record('assistant.answerQuestion'),
+            rejectQuestion: () => record('assistant.rejectQuestion'),
         },
         credentials: {
             listCredentials: () => record('credentials.listCredentials'),
@@ -179,11 +189,11 @@ async function connectedClient(backend: Backend, profile: Parameters<typeof poli
 }
 
 describe('policyForProfile', () => {
-    test('"full" registers all 34 tools', async () => {
+    test('"full" registers all 35 tools', async () => {
         const backend = stubBackend();
         const client = await connectedClient(backend, 'full');
         const { tools } = await client.listTools();
-        expect(tools).toHaveLength(34);
+        expect(tools).toHaveLength(35);
         expect(tools.map((t) => t.name).sort()).toEqual([...ALL_TOOL_NAMES].sort());
     });
 
@@ -194,7 +204,7 @@ describe('policyForProfile', () => {
         const names = tools.map((t) => t.name).sort();
         expect(names).not.toContain('create_device');
         expect(names).not.toContain('terminate_device');
-        expect(tools).toHaveLength(32);
+        expect(tools).toHaveLength(33);
         expect(names).toEqual([...ALL_TOOL_NAMES].filter((n) => n !== 'create_device' && n !== 'terminate_device').sort());
 
         // Everything else, including other mutations, stays reachable.
@@ -226,6 +236,7 @@ describe('policyForProfile', () => {
 
         expect(names).toEqual(
             [
+                'assistant',
                 'apps',
                 'configure_device',
                 'connect',
@@ -273,6 +284,23 @@ describe('policyForProfile', () => {
             expect(text).toContain(`Operation "${mutating}" of tool "webhooks" is not available`);
             expect(backend.calls).toEqual([]);
         }
+    });
+
+    test('"readonly" narrows assistant to session listing and history', async () => {
+        const backend = stubBackend();
+        const client = await connectedClient(backend, 'readonly');
+        const listed = await client.callTool({ name: 'assistant', arguments: { operation: 'list_sessions' } });
+        expect(listed.isError).not.toBe(true);
+        const history = await client.callTool({ name: 'assistant', arguments: { operation: 'get_messages', sessionId: 's1' } });
+        expect(history.isError).not.toBe(true);
+        expect(backend.calls).toContain('assistant.listSessions');
+        expect(backend.calls).toContain('assistant.getMessages');
+
+        backend.calls.length = 0;
+        const denied = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
+        expect(denied.isError).toBe(true);
+        expect((denied.content as Array<{ text?: string }>)[0]?.text).toContain('Operation "send_message" of tool "assistant" is not available');
+        expect(backend.calls).toEqual([]);
     });
 
     test('"readonly" leaves list_workflow_resources / get_workflow_resource fully available (all resource values)', async () => {
@@ -340,5 +368,40 @@ describe('policyForProfile', () => {
             expect(text).toContain(`Operation "${denied}" of tool "connect" is not available`);
             expect(backend.calls).toEqual([]);
         }
+    });
+
+    test('"no-commerce" exposes assistant reads but denies assistant writes at dispatch time', async () => {
+        const backend = stubBackend();
+        const client = await connectedClient(backend, 'no-commerce');
+
+        for (const args of [
+            { operation: 'list_sessions' },
+            { operation: 'get_messages', sessionId: 's1' },
+        ]) {
+            const result = await client.callTool({ name: 'assistant', arguments: args });
+            expect(result.isError).not.toBe(true);
+        }
+        expect(backend.calls).toContain('assistant.listSessions');
+        expect(backend.calls).toContain('assistant.getMessages');
+
+        for (const args of [
+            { operation: 'send_message', sessionId: 's1', message: 'Hi' },
+            { operation: 'answer_permission', permissionId: 'p1', response: 'once' },
+            { operation: 'create_session', title: 'Chat' },
+        ]) {
+            backend.calls.length = 0;
+            const result = await client.callTool({ name: 'assistant', arguments: args });
+            expect(result.isError).toBe(true);
+            expect((result.content as Array<{ text?: string }>)[0]?.text).toContain('is not available');
+            expect(backend.calls).toEqual([]);
+        }
+    });
+
+    test('"full" allows assistant send_message', async () => {
+        const backend = stubBackend();
+        const client = await connectedClient(backend, 'full');
+        const result = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
+        expect(result.isError).not.toBe(true);
+        expect(backend.calls).toContain('assistant.sendMessage');
     });
 });

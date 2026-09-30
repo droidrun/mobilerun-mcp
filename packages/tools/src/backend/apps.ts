@@ -26,7 +26,7 @@ export interface AppVersionDto {
     versionName: string;
     sizeBytes: number | null;
     targetSdk: number | null;
-    source: 'user' | 'system' | 'portal';
+    source: 'user' | 'system' | 'portal' | 'catalog' | 'store';
     status: 'queued' | 'available' | 'failed';
     userId: string | null;
     createdAt: string | null;
