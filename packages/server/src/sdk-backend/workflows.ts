@@ -1,5 +1,5 @@
 import type Mobilerun from '@mobilerun/sdk';
-import { z } from 'zod';
+import { isScheduleRule } from '@mobilerun/mcp-tools';
 import type {
     AddFlowActionParams,
     CloneFlowParams,
@@ -20,13 +20,9 @@ import type {
     WorkflowsBackend,
 } from '@mobilerun/mcp-tools';
 
-const scheduleRuleSchema = z.object({
-    type: z.enum(['once', 'cron', 'recurring']),
-    dateTime: z.string().optional(),
-    expression: z.string().optional(),
-    rrule: z.string().optional(),
-    jitter: z.object({ beforeMinutes: z.number().optional(), afterMinutes: z.number().optional() }).passthrough().optional(),
-}).passthrough().nullable();
+function withScheduleRule<T extends { scheduleRule?: unknown }>(trigger: T) {
+    return { ...trigger, scheduleRule: isScheduleRule(trigger.scheduleRule) ? trigger.scheduleRule : null };
+}
 
 export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
     return {
@@ -43,6 +39,9 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             return {
                 items: data.map((item) => ({
                     eventType: item.appEventType,
+                    appName: item.appName,
+                    sourceEventType: item.sourceEventType,
+                    packageName: item.packageName,
                     label: item.label,
                     description: null,
                     source: item.category,
@@ -83,11 +82,11 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
                 page: opts.page,
                 pageSize: opts.pageSize,
             });
-            return { ...response, items: response.items.map((item) => ({ ...item, scheduleRule: scheduleRuleSchema.parse(item.scheduleRule) })) };
+            return { ...response, items: response.items.map(withScheduleRule) };
         },
         async getTrigger(id: string) {
             const response = await client.workflows.triggers.retrieve(id);
-            return { data: { ...response.data, scheduleRule: scheduleRuleSchema.parse(response.data.scheduleRule) } };
+            return { data: withScheduleRule(response.data) };
         },
         async createTrigger(params: CreateTriggerParams) {
             // GAP: @mobilerun/sdk's TriggerCreateParams.scheduleRule has no
@@ -200,7 +199,7 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
                     ...response.data,
                     matchedFlows: response.data.matchedFlows.map((match) => ({
                         ...match,
-                        trigger: { ...match.trigger, scheduleRule: scheduleRuleSchema.parse(match.trigger.scheduleRule) },
+                        trigger: withScheduleRule(match.trigger),
                     })),
                 },
             };

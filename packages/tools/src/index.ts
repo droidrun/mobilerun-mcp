@@ -113,6 +113,7 @@ export type {
     ListConnectionsOpts,
     ListConnectUsersOpts,
 } from './backend/index.js';
+export { isScheduleRule } from './backend/workflows.js';
 export { BackendError, type BackendErrorCode } from './backend/errors.js';
 export {
     buildMcpServer,

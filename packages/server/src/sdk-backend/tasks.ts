@@ -1,4 +1,5 @@
 import type Mobilerun from '@mobilerun/sdk';
+import { BackendError } from '@mobilerun/mcp-tools';
 import type { ListTasksOpts, RunTaskParams, TaskListDto, TaskMediaKind, TasksBackend } from '@mobilerun/mcp-tools';
 
 /**
@@ -48,6 +49,9 @@ export function createTasksBackend(client: Mobilerun): TasksBackend {
             return { events: trajectory };
         },
         async listTasks(opts: ListTasksOpts): Promise<TaskListDto> {
+            if (opts.status === 'paused') {
+                throw new BackendError('invalid_input', 'paused is no longer a filterable task status');
+            }
             if (opts.deviceId) {
                 const result = await client.devices.tasks.list(opts.deviceId, {
                     orderBy: opts.orderBy as 'id' | 'createdAt' | 'updatedAt' | 'assignedAt' | undefined,
@@ -67,9 +71,7 @@ export function createTasksBackend(client: Mobilerun): TasksBackend {
                 page: opts.page,
                 pageSize: opts.pageSize,
                 query: opts.query,
-                // Preserve the legacy paused filter on the wire even though the
-                // 5.5 SDK type omits it. The server decides its compatibility.
-                status: opts.status as NonNullable<Parameters<typeof client.tasks.list>[0]>['status'],
+                status: opts.status,
             });
             return {
                 items: result.items,

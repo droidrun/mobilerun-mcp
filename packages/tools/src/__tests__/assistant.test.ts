@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { curateAssistantHistory } from '../tools/assistant.js';
+import type { AssistantHistory } from '../backend/assistant.js';
 
 describe('curateAssistantHistory', () => {
     test('extracts pending actions and keeps only useful message parts', () => {
@@ -51,6 +52,39 @@ describe('curateAssistantHistory', () => {
             ] }],
         });
         expect(result.turn).toBeNull();
+        expect(result.pending).toEqual({ permissions: [], questions: [] });
+    });
+
+    test.each([
+        { type: 'tool-hitl-approval', state: 'input-available', toolCallId: 'p', input: 'x' },
+        { type: 'tool-hitl-approval', state: 'input-available', toolCallId: 'p' },
+    ])('keeps the permission id when approval input is not an object', (part) => {
+        const result = curateAssistantHistory({
+            turnActive: true,
+            messages: [{ id: 'm1', role: 'assistant', parts: [part] }],
+        });
+        expect(result.pending.permissions).toEqual([{
+            permissionId: 'p', action: undefined, title: undefined, params: undefined,
+        }]);
+        expect(result.messages[0]?.parts).toEqual([part]);
+    });
+
+    test('tolerates missing or non-array parts and null parts', () => {
+        // Exercise malformed upstream JSON despite the declared history type.
+        const history = {
+            turnActive: true,
+            messages: [
+                { id: 'm1', role: 'assistant' },
+                { id: 'm2', role: 'assistant', parts: 'x' },
+                { id: 'm3', role: 'assistant', parts: null },
+                { id: 'm4', role: 'assistant', parts: [null, { type: 'text', text: 'Hello' }] },
+            ],
+        } as unknown as AssistantHistory;
+        const result = curateAssistantHistory(history);
+        expect(result.messages.map((message) => message.parts)).toEqual([
+            [], [], [],
+            [{ type: undefined, toolCallId: undefined, state: undefined }, { type: 'text', text: 'Hello' }],
+        ]);
         expect(result.pending).toEqual({ permissions: [], questions: [] });
     });
 });

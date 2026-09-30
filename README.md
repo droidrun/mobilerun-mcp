@@ -107,7 +107,7 @@ HTTP envelope) — local-only fallback, not used by the HTTP transport.
 | `MCP_POLICY_PROFILE` | `no-commerce` | `readonly \| no-commerce \| full` — which tools/operations this deployment ever registers, before any per-credential scoping. Defaults to the safe `no-commerce` profile; an operator opts into `full` explicitly. See "Policy profiles" below. |
 | `MCP_RESOURCE_URL` | `http://localhost:8080` | Canonical resource identifier for the `WWW-Authenticate`/RFC 9728 URL. **Never** derived from request headers — set this to the server's real public URL in any non-local deployment. |
 | `MCP_BODY_LIMIT_BYTES` | `1048576` (1 MiB) | POST `/mcp` body size limit |
-| `MCP_REQUEST_TIMEOUT_MS` | `60000` | Hard per-request timeout around the MCP request handler |
+| `MCP_REQUEST_TIMEOUT_MS` | `60000` | Hard per-request timeout around the MCP request handler; must stay above 50 s because assistant `send_message` waits up to 50 s |
 | `MCP_RATE_LIMIT_PER_KEY_PER_MIN` | `60` | Token-bucket capacity+refill per API-key hash |
 | `MCP_RATE_LIMIT_PER_IP_PER_MIN` | `120` | Token-bucket capacity+refill per client IP |
 | `MCP_TRUST_PROXY` | `false` | Whether to trust `X-Forwarded-For`/`X-Real-IP` for IP rate limiting. Unguarded, those headers are caller-spoofable (bypass the IP limiter, or frame another IP's bucket) — only set `true` behind a proxy/LB that overwrites (never appends-to) them. When `false` (default), the IP limiter uses only the actual socket peer address (`Bun.serve`'s `server.requestIP`, wired via `index.ts`); if that's unavailable for a request, the IP limiter is skipped for it (never a shared `"unknown"` bucket) and per-key limiting still applies. |
