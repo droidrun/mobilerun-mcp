@@ -77,7 +77,7 @@ export function curateAssistantHistory(history: AssistantHistory) {
     };
 }
 
-export async function executeAssistantOperation(input: AssistantToolInput, ctx: ToolCtx): Promise<unknown> {
+async function executeAssistantOperation(input: AssistantToolInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.assistant;
     if (operation === 'list_sessions') return backend.listSessions(input.mine);

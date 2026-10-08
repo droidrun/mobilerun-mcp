@@ -7,10 +7,10 @@
 // individually without touching the rest of this bundle; see tools/connect.ts.
 import type { PageMeta } from './devices.js';
 
-export type ConnectionStatus = 'active' | 'closed';
-export type ConnectionProtocol = 'tcp' | 'udp' | 'unknown';
+type ConnectionStatus = 'active' | 'closed';
+type ConnectionProtocol = 'tcp' | 'udp' | 'unknown';
 
-export interface ConnectionDto {
+interface ConnectionDto {
     sessionId: string;
     proxyId: string;
     userId: string;
@@ -29,7 +29,7 @@ export interface ConnectionDto {
     endedAt: string;
     closeReason?: string | null;
 }
-export interface ConnectionListDto {
+interface ConnectionListDto {
     items: ConnectionDto[];
     pagination: PageMeta;
 }
@@ -51,12 +51,12 @@ export interface ListConnectionsOpts {
     pageSize?: number;
 }
 
-export interface CountryDto {
+interface CountryDto {
     code: string;
     name: string;
     proxyTypes: readonly ('residential' | 'dedicated_residential' | 'mobile')[];
 }
-export interface CountryListDto {
+interface CountryListDto {
     items: CountryDto[];
     pagination: PageMeta;
 }
@@ -66,10 +66,10 @@ export interface ListCountriesOpts {
     pageSize?: number;
 }
 
-export type ConnectProxyStatus = 'checking' | 'pending_payment' | 'provisioning' | 'active' | 'cancelling' | 'ended' | 'error';
+type ConnectProxyStatus = 'checking' | 'pending_payment' | 'provisioning' | 'active' | 'cancelling' | 'ended' | 'error';
 
 /** Proxy including its password — returned only on buy/get (single-proxy reads). */
-export interface ConnectProxyDto {
+interface ConnectProxyDto {
     id: string;
     country: string;
     createdAt: string;
@@ -82,7 +82,7 @@ export interface ConnectProxyDto {
     paymentUrl?: string | null;
 }
 /** Proxy without credentials — list projection. */
-export interface ConnectProxyListItemDto {
+interface ConnectProxyListItemDto {
     id: string;
     country: string;
     createdAt: string;
@@ -92,7 +92,7 @@ export interface ConnectProxyListItemDto {
     type: 'residential' | 'dedicated_residential' | 'mobile';
     username: string;
 }
-export interface ConnectProxyListDto {
+interface ConnectProxyListDto {
     items: ConnectProxyListItemDto[];
     pagination: PageMeta;
 }
@@ -105,7 +105,7 @@ export interface BuyConnectProxyParams {
     country: string;
     type?: 'residential';
 }
-export interface ConnectProxyPingDto {
+interface ConnectProxyPingDto {
     proxyId: string;
     latency: {
         avgMs: number;
@@ -120,7 +120,7 @@ export interface ConnectProxyPingDto {
 }
 
 /** SOCKS5 user including its password — returned only on create/get (single-user reads). */
-export interface ConnectUserDto {
+interface ConnectUserDto {
     id: string;
     createdAt: string;
     username: string;
@@ -128,13 +128,13 @@ export interface ConnectUserDto {
     proxyId?: string | null;
 }
 /** SOCKS5 user without its password. */
-export interface ConnectUserListItemDto {
+interface ConnectUserListItemDto {
     id: string;
     createdAt: string;
     username: string;
     proxyId?: string | null;
 }
-export interface ConnectUserListDto {
+interface ConnectUserListDto {
     items: ConnectUserListItemDto[];
     pagination: PageMeta;
 }

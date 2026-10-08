@@ -22,7 +22,7 @@ export interface CredentialFieldDto {
     value: string;
 }
 
-export interface CredentialDto {
+interface CredentialDto {
     credentialName: string;
     packageName: string;
     userId: string | null;
@@ -34,15 +34,15 @@ export interface CredentialDto {
  * shapes for "all credentials" vs "credentials in one package" (verified
  * against credentials/credentials.d.ts vs credentials/packages/packages.d.ts);
  * this port exposes one consistent shape regardless of the `packageName` filter. */
-export interface CredentialListDto {
+interface CredentialListDto {
     items: CredentialDto[];
     pagination?: PageMeta;
 }
 
-export interface CredentialPackageDto {
+interface CredentialPackageDto {
     packageName: string;
 }
-export interface CredentialPackageListDto {
+interface CredentialPackageListDto {
     items: CredentialPackageDto[];
     /** True: derived client-side from paginated credentials.list (no direct SDK endpoint) — see SdkBackend. */
     derived: true;
@@ -58,7 +58,7 @@ export interface CredentialPackageListDto {
 // implementation can accidentally echo a plaintext value back, because the
 // return type has nowhere to put it.
 
-export interface CredentialFieldMetaDto {
+interface CredentialFieldMetaDto {
     fieldType: CredentialFieldDto['fieldType'];
 }
 export interface CredentialMetaDto {
@@ -68,7 +68,7 @@ export interface CredentialMetaDto {
     secretPath: string;
     fields: CredentialFieldMetaDto[];
 }
-export interface CredentialMetaEnvelopeDto {
+interface CredentialMetaEnvelopeDto {
     data: CredentialMetaDto;
     message: string;
     success: true;
@@ -77,13 +77,13 @@ export interface CredentialMetaEnvelopeDto {
 export interface InitPackageParams {
     packageName: string;
 }
-export interface InitPackageResultDto {
+interface InitPackageResultDto {
     data: { packageName: string };
     message: string;
     success: true;
 }
 
-export interface CreateCredentialFieldParams {
+interface CreateCredentialFieldParams {
     fieldType: CredentialFieldDto['fieldType'];
     value: string;
 }

@@ -29,7 +29,7 @@ export interface WebhookDeliveryStatsOpts {
     since?: string;
 }
 
-export interface WebhookDto {
+interface WebhookDto {
     id: string;
     url: string;
     description: string | null;
@@ -47,20 +47,20 @@ export interface WebhookDto {
      * `secret` field, verified against the shipped .d.ts). */
     secret?: string;
 }
-export interface WebhookEnvelopeDto {
+interface WebhookEnvelopeDto {
     data: WebhookDto;
 }
-export interface WebhookListDto {
+interface WebhookListDto {
     items: WebhookDto[];
     pagination: PageMeta;
     counts?: { total: number; active: number; failing: number; blocked: number; disabled: number };
 }
 
-export interface WebhookTestResultDto {
+interface WebhookTestResultDto {
     data: { success: boolean; statusCode: number | null; error: string | null };
 }
 
-export interface WebhookDeliveryDto {
+interface WebhookDeliveryDto {
     id: string;
     endpointId: string;
     eventId: string;
@@ -76,12 +76,12 @@ export interface WebhookDeliveryDto {
     completedAt: string | null;
     createdAt: string;
 }
-export interface WebhookDeliveryListDto {
+interface WebhookDeliveryListDto {
     items: WebhookDeliveryDto[];
     pagination: PageMeta;
 }
 
-export interface WebhookDeliveryAttemptDto {
+interface WebhookDeliveryAttemptDto {
     attemptNo: number;
     requestMethod: string;
     requestUrl: string;
@@ -95,12 +95,12 @@ export interface WebhookDeliveryAttemptDto {
 // Note: the single-delivery detail's `attempts` field REPLACES the list
 // item's `attempts` count with the actual attempt records (verified against
 // DeliveryRetrieveAttemptsResponse.Data) — not an extension of it.
-export type WebhookDeliveryDetailDto = Omit<WebhookDeliveryDto, 'attempts'> & { attempts: WebhookDeliveryAttemptDto[] };
-export interface WebhookDeliveryDetailEnvelopeDto {
+type WebhookDeliveryDetailDto = Omit<WebhookDeliveryDto, 'attempts'> & { attempts: WebhookDeliveryAttemptDto[] };
+interface WebhookDeliveryDetailEnvelopeDto {
     data: WebhookDeliveryDetailDto;
 }
 
-export interface WebhookDeliveryStatsDto {
+interface WebhookDeliveryStatsDto {
     data: {
         byStatus: { dead: number; pending: number; skipped: number; success: number };
         successRate: number | null;
@@ -108,7 +108,7 @@ export interface WebhookDeliveryStatsDto {
     };
 }
 
-export interface WebhookEventTypesDto {
+interface WebhookEventTypesDto {
     data: {
         schemaVersion: number;
         sources: Array<{ source: string; events: Array<{ type: string; description: string }> }>;

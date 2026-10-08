@@ -6,10 +6,12 @@
     "typecheck": "pnpm -r run typecheck",
     "test": "bun test",
     "build": "pnpm -r run build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "knip": "knip"
   },
   "devDependencies": {
     "@typescript-eslint/parser": "8.44.1",
-    "eslint": "9.36.0"
+    "eslint": "9.36.0",
+    "knip": "6.40.0"
   }
 }

@@ -48,7 +48,7 @@ function buildProxyParams(input: ProxiesToolInput, operation: string) {
     };
 }
 
-export async function executeProxiesOperation(input: ProxiesToolInput, ctx: ToolCtx): Promise<unknown> {
+async function executeProxiesOperation(input: ProxiesToolInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.proxies;
 

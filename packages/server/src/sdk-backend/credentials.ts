@@ -19,7 +19,7 @@ import type {
  * type has no `value` field to begin with — see backend/credentials.ts's
  * SECRETS note). Exported for the "no value echo" test.
  */
-export function toCredentialMeta(cred: {
+function toCredentialMeta(cred: {
     credentialName: string;
     packageName: string;
     userId: string | null;

@@ -3,13 +3,13 @@
 // configs — distinct from `connect` (connect.ts), which is droidrun-connect's
 // residential SOCKS5 proxies/users; verified against the SDK's shipped
 // proxies.d.ts).
-export type ProxyProtocol = 'socks5' | 'wireguard';
+type ProxyProtocol = 'socks5' | 'wireguard';
 
-export type ProxyConfigDto =
+type ProxyConfigDto =
     | { protocol: 'socks5'; proxyId: string; name: string; host: string; port: number; user: string; password: string }
     | { protocol: 'wireguard'; proxyId: string; name: string; config: string };
 
-export interface CreateSocks5ProxyParams {
+interface CreateSocks5ProxyParams {
     protocol: 'socks5';
     name: string;
     host: string;
@@ -17,7 +17,7 @@ export interface CreateSocks5ProxyParams {
     user: string;
     password: string;
 }
-export interface CreateWireguardProxyParams {
+interface CreateWireguardProxyParams {
     protocol: 'wireguard';
     name: string;
     config: string;
@@ -35,7 +35,7 @@ export interface ProxyLookupParams {
     user?: string;
     password?: string;
 }
-export interface ProxyLookupDto {
+interface ProxyLookupDto {
     ip: string;
     isMobile: boolean;
     latitude: number;
@@ -48,12 +48,12 @@ export interface ProxyLookupDto {
     carrier?: { mcc?: string; mnc?: string; name?: string };
 }
 
-export interface ProxyEnvelopeDto {
+interface ProxyEnvelopeDto {
     data: ProxyConfigDto;
     message?: string;
     success?: true;
 }
-export interface ProxyListDto {
+interface ProxyListDto {
     data: ProxyConfigDto[];
 }
 
