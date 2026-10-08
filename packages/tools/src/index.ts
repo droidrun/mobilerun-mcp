@@ -2,18 +2,9 @@ export type { ToolCtx, AuthContext, Policy } from './ctx.js';
 export { createAuthContext } from './ctx.js';
 export type {
     Backend,
+} from './backend/index.js';
+export type {
     DevicesBackend,
-    WorkflowsBackend,
-    WebhooksBackend,
-    AssistantBackend,
-    AssistantAnswer,
-    AssistantSession,
-    AssistantHistory,
-    CredentialsBackend,
-    AppsBackend,
-    ProxiesBackend,
-    ConnectBackend,
-    PlatformCatalogBackend,
     DeviceState,
     DeviceType,
     ListDevicesOpts,
@@ -27,6 +18,9 @@ export type {
     DeviceAppListDto,
     DeviceTerminateResultDto,
     PageMeta,
+} from './backend/devices.js';
+export type {
+    WorkflowsBackend,
     WorkflowService,
     ListActionCatalogOpts,
     ListActionsOpts,
@@ -47,11 +41,56 @@ export type {
     ReplaceFlowActionsParams,
     IngestEventParams,
     DryRunEventParams,
+} from './backend/workflows.js';
+export type {
+    WebhooksBackend,
     ListWebhooksOpts,
     CreateWebhookParams,
     UpdateWebhookParams,
     ListWebhookDeliveriesOpts,
     WebhookDeliveryStatsOpts,
+} from './backend/webhooks.js';
+export type {
+    AssistantBackend,
+    AssistantAnswer,
+    AssistantSession,
+    AssistantHistory,
+} from './backend/assistant.js';
+export type {
+    CredentialsBackend,
+    InitPackageParams,
+    CreateCredentialParams,
+    DeleteCredentialParams,
+    AddFieldParams,
+    UpdateFieldParams,
+    DeleteFieldParams,
+    CredentialFieldDto,
+    CredentialMetaDto,
+} from './backend/credentials.js';
+export type {
+    AppsBackend,
+    ListAppsOpts,
+    CreateUploadUrlParams,
+} from './backend/apps.js';
+export type {
+    ProxiesBackend,
+    ListProxiesOpts,
+    CreateProxyParams,
+    UpdateProxyParams,
+    ProxyLookupParams,
+} from './backend/proxies.js';
+export type {
+    ConnectBackend,
+    ListCountriesOpts,
+    ListConnectProxiesOpts,
+    BuyConnectProxyParams,
+    ListConnectionsOpts,
+    ListConnectUsersOpts,
+} from './backend/connect.js';
+export type {
+    PlatformCatalogBackend,
+} from './backend/platform-catalog.js';
+export type {
     TasksBackend,
     TaskStatus,
     PackageCredentialsDto,
@@ -71,6 +110,8 @@ export type {
     TaskMediaKind,
     TaskMediaUrlDto,
     TaskMediaListDto,
+} from './backend/tasks.js';
+export type {
     DeviceControlBackend,
     DeviceCapabilitiesDto,
     DeviceCountDto,
@@ -93,26 +134,7 @@ export type {
     EsimSubscriptionDto,
     EsimListDto,
     EsimActivateOpts,
-    InitPackageParams,
-    CreateCredentialParams,
-    DeleteCredentialParams,
-    AddFieldParams,
-    UpdateFieldParams,
-    DeleteFieldParams,
-    CredentialFieldDto,
-    CredentialMetaDto,
-    ListAppsOpts,
-    CreateUploadUrlParams,
-    ListProxiesOpts,
-    CreateProxyParams,
-    UpdateProxyParams,
-    ProxyLookupParams,
-    ListCountriesOpts,
-    ListConnectProxiesOpts,
-    BuyConnectProxyParams,
-    ListConnectionsOpts,
-    ListConnectUsersOpts,
-} from './backend/index.js';
+} from './backend/device-control.js';
 export { isScheduleRule } from './backend/workflows.js';
 export { BackendError, type BackendErrorCode } from './backend/errors.js';
 export {

@@ -1,21 +1,4 @@
-// Barrel composing the domain ports into the one `Backend` type ToolCtx
-// consumes. Adding a new domain is: add
-// `backend/<domain>.ts` with its DTOs + `<Domain>Backend` interface, then
-// register it here (one import + one field) — a deliberately low-conflict
-// surface so parallel domain work doesn't collide beyond a one-line addition.
-export * from './errors.js';
-export * from './devices.js';
-export * from './workflows.js';
-export * from './webhooks.js';
-export * from './assistant.js';
-export * from './credentials.js';
-export * from './tasks.js';
-export * from './device-control.js';
-export * from './apps.js';
-export * from './proxies.js';
-export * from './connect.js';
-export * from './platform-catalog.js';
-
+// Composes the domain ports into the Backend type consumed by ToolCtx.
 import type { DevicesBackend } from './devices.js';
 import type { WorkflowsBackend } from './workflows.js';
 import type { WebhooksBackend } from './webhooks.js';
