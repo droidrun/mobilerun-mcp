@@ -10,7 +10,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY packages/server/package.json packages/server/package.json
 COPY packages/tools/package.json packages/tools/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --prod
 
 COPY . .
 
