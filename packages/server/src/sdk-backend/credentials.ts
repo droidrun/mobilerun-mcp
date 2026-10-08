@@ -17,7 +17,7 @@ import type {
  * a write response is handled, and it is dropped here before the result
  * ever reaches the tools-package Backend port (whose `CredentialMetaDto`
  * type has no `value` field to begin with — see backend/credentials.ts's
- * SECRETS note). Exported for the "no value echo" test.
+ * SECRETS note).
  */
 function toCredentialMeta(cred: {
     credentialName: string;
