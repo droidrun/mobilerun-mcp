@@ -103,7 +103,7 @@ function registerManageDevice(server: McpServer, ctx: ToolCtx): void {
         'manage_device',
         {
             description:
-                'Device lifecycle operations. Operations: reboot, reset (factory-reset to a fresh state — destructive), rename (needs name), wait_ready (blocks until state=ready), get_capabilities (fingerprint: carrier/display/identifiers/model snapshot), count (claimed-device counts by state — no deviceId).' +
+                'Device lifecycle operations. Operations: reboot, reset (factory-reset to a fresh state — destructive), rename (needs name), wait_ready (blocks until state=ready), get_capabilities (device profile: carrier, display, identifiers, model), count (claimed-device counts by state — no deviceId).' +
                 allowedValuesNote(values, MANAGE_DEVICE_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_DEVICE_OPERATIONS),
@@ -166,7 +166,7 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
         'device_action',
         {
             description:
-                'Low-level device input. Operations: tap (x, y), swipe (startX, startY, endX, endY, duration ms), keyboard_write (text, clear?, errorRate?, wpm?, stealth?), keyboard_key (key: Android keycode), keyboard_clear, global_action (action: Android global-action code, e.g. back/home/recents). stealth (tap/swipe/keyboard_write) requests human-like timing where the endpoint supports it. Per-call `displayId` targets a specific display on multi-display devices.' +
+                'Low-level device input. Operations: tap (x, y), swipe (startX, startY, endX, endY, duration ms), keyboard_write (text, clear?, errorRate?, wpm?, stealth?), keyboard_key (key: Android keycode), keyboard_clear, global_action (action: Android global-action code, e.g. back/home/recents). `stealth` (tap/swipe/keyboard_write) enables natural input timing and motion where the endpoint supports it. Per-call `displayId` targets a specific display on multi-display devices.' +
                 allowedValuesNote(values, DEVICE_ACTION_OPERATIONS),
             inputSchema: {
                 operation: z.enum(DEVICE_ACTION_OPERATIONS),
@@ -182,8 +182,8 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
                 stealth: z.boolean().optional(),
                 text: z.string().optional(),
                 clear: z.boolean().optional().describe('keyboard_write: clear existing input before typing.'),
-                errorRate: z.number().optional().describe('keyboard_write stealth typing: per-character mistake rate. -1 uses server default.'),
-                wpm: z.number().optional().describe('keyboard_write stealth typing: words per minute. 0 uses portal default.'),
+                errorRate: z.number().optional().describe('keyboard_write with stealth: per-character rate of characters typed and then corrected. -1 uses the server default.'),
+                wpm: z.number().optional().describe('keyboard_write with stealth: typing speed in words per minute. 0 uses the default.'),
                 key: z.number().int().optional().describe('keyboard_key: Android keycode.'),
                 action: z.number().int().optional().describe('global_action: Android global-action code.'),
             },
@@ -325,7 +325,7 @@ function registerManageDeviceFiles(server: McpServer, ctx: ToolCtx): void {
         'manage_device_files',
         {
             description:
-                `Device filesystem access. Operations: list (directory entries at \`path\`), upload (write \`contentBase64\` to \`path\`; decoded payload capped at ${MAX_INLINE_FILE_BYTES / 1024}KB — larger files are rejected, no presigned-URL path exists on this SDK), download (read \`path\`; oversized results are rejected the same way — the raw SDK response has no documented base64-vs-text contract), delete (\`path\`). \`path\` is required for every operation.` +
+                `Device filesystem access. Operations: list (directory entries at \`path\`), upload (write \`contentBase64\` to \`path\`; decoded payload capped at ${MAX_INLINE_FILE_BYTES / 1024}KB — larger files are rejected), download (read \`path\`; oversized results are rejected the same way), delete (\`path\`). \`path\` is required for every operation.` +
                 allowedValuesNote(values, MANAGE_FILES_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_FILES_OPERATIONS),
@@ -423,7 +423,7 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
         'configure_device',
         {
             description:
-                'Read/write device settings. Operations: get_language/set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), get_timezone/set_timezone (IANA tz), get_location/set_location (latitude, longitude — no reset; use set_location again to change), get_time (read-only device clock), get_overlay/set_overlay (visible: the on-device debug/annotation overlay), proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy; smartIp defaults to true — match the device GPS/time zone/locale/carrier to the proxy exit IP, so the phone appears where the proxy exits; pass false to bind without changing device settings), proxy_disconnect, get_proxy_status.' +
+                'Read/write device settings. Operations: get_language/set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), get_timezone/set_timezone (IANA tz), get_location/set_location (latitude, longitude — no reset; use set_location again to change), get_time (read-only device clock), get_overlay/set_overlay (visible: the on-device debug/annotation overlay), proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy; smartIp defaults to true — aligns the device location, time zone, locale, and carrier settings with the proxy region; pass false to connect without changing device settings), proxy_disconnect, get_proxy_status.' +
                 allowedValuesNote(values, CONFIGURE_DEVICE_OPERATIONS),
             inputSchema: {
                 operation: z.enum(CONFIGURE_DEVICE_OPERATIONS),
@@ -482,8 +482,7 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
                     const socks5Port = input.socks5Port as number | undefined;
                     await backend.connectProxy(deviceId, {
                         name: input.proxyName as string | undefined,
-                        // Default smart-IP on: align device GPS/time zone/locale/carrier
-                        // to the proxy exit IP unless the caller explicitly opts out.
+                        // Default smart-IP on: align device location, time zone, locale, and carrier with the proxy region unless the caller explicitly opts out.
                         smartIp: (input.smartIp as boolean | undefined) ?? true,
                         socks5:
                             socks5Host && socks5Port !== undefined
@@ -522,7 +521,7 @@ function registerManageEsim(server: McpServer, ctx: ToolCtx): void {
         'manage_esim',
         {
             description:
-                'eSIM subscription management. Operations: list, activate (smDpAddr required, enable: whether to also enable the downloaded profile, confirmationCode?/matchingId? — confirmationCode requires matchingId, only needed when the SM-DP+ challenges for it), enable (subId), remove (subId). No APN, roaming, or connectivity-status operations exist on this SDK.' +
+                'eSIM subscription management. Operations: list, activate (smDpAddr required, enable: whether to also enable the downloaded profile, confirmationCode?/matchingId? — confirmationCode requires matchingId, only needed when the SM-DP+ challenges for it), enable (subId), remove (subId).' +
                 allowedValuesNote(values, MANAGE_ESIM_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_ESIM_OPERATIONS),

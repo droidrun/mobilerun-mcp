@@ -1,8 +1,6 @@
 # Mobilerun
 
-Connect Cursor to the [Mobilerun](https://mobilerun.ai) cloud platform. The Mobilerun
-MCP server lets the agent control real Android device fleets, provision phone numbers,
-manage apps, and run automation workflows.
+Connect Cursor to the [Mobilerun](https://mobilerun.ai) cloud platform. The Mobilerun MCP server lets the agent control Android devices, run agent tasks, manage apps, and build automation workflows.
 
 ## Install
 
@@ -30,7 +28,7 @@ required. Cursor discovers the authorization server from the endpoint and handle
 ## Capabilities
 
 - **Devices** — list, control, and inspect Android devices in your fleet
-- **Phone numbers** — provision, list, and manage numbers
+- **Tasks** — run AI agent tasks on devices and follow their progress
 - **Apps** — browse and install apps onto devices
 - **Workflows** — create and run automation workflows
 

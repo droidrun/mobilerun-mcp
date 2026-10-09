@@ -1,5 +1,5 @@
 // proxies bundle — device-bound socks5/wireguard proxy configs (distinct
-// from the `connect` tool's droidrun-connect residential proxies).
+// from the `connect` tool's purchasable residential proxies).
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';

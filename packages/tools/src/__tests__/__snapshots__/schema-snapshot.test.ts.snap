@@ -740,7 +740,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "number",
         },
         "errorRate": {
-          "description": "keyboard_write stealth typing: per-character mistake rate. -1 uses server default.",
+          "description": "keyboard_write with stealth: per-character rate of characters typed and then corrected. -1 uses the server default.",
           "type": "number",
         },
         "key": {
@@ -771,7 +771,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "wpm": {
-          "description": "keyboard_write stealth typing: words per minute. 0 uses portal default.",
+          "description": "keyboard_write with stealth: typing speed in words per minute. 0 uses the default.",
           "type": "number",
         },
         "x": {

@@ -83,7 +83,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         'run_task',
         {
             description:
-                'Dispatch a new agent task on a device. Standalone (non-streamed) variant of POST /tasks — the SSE-streamed variant is not exposed as an MCP tool (see get_task for the polling substitute). Returns immediately with the task id and its initial status (queued or created); poll get_task(view: "status") or get_task(view: "trajectory") to follow progress.',
+                'Dispatch a new agent task on a device. Returns immediately with the task id and its initial status (queued or created); poll get_task(view: "status") or get_task(view: "trajectory") to follow progress.',
             inputSchema: {
                 deviceId: z.string(),
                 task: z.string().min(1).describe('Natural-language task instruction.'),
@@ -107,7 +107,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         'get_task',
         {
             description:
-                'Fetch one task by id, chosen via `view`: summary (full record, minus trajectory), status (lightweight polling: status/message/output/steps/succeeded), trajectory (paged agent event log — capped per call, page with `offset`/the returned `nextOffset`). No SSE attach/follow — poll status or trajectory instead.',
+                'Fetch one task by id, chosen via `view`: summary (full record, minus trajectory), status (lightweight polling: status/message/output/steps/succeeded), trajectory (paged agent event log — capped per call, page with `offset`/the returned `nextOffset`). Poll status or trajectory to follow a running task.',
             inputSchema: {
                 view: z.enum(TASK_VIEWS),
                 taskId: z.string(),
@@ -139,7 +139,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         'list_tasks',
         {
             description:
-                'List tasks, optionally filtered to one device. Without `deviceId`: global listing (all owned tasks), supports `query` (search in task description) and `status`. With `deviceId`: device-scoped listing — thinner item shape (id/createdAt/updatedAt only, no `query`/`status`, different `orderBy` set) since that endpoint mirrors devices-api\'s task index rather than the tasks service\'s own. Response carries `deviceScoped` so callers can tell which item shape they got.',
+                'List tasks, optionally filtered to one device. Without `deviceId`: global listing (all owned tasks), supports `query` (search in task description) and `status`. With `deviceId`: device-scoped listing with a slimmer item shape (taskId/createdAt/updatedAt only, no `query`/`status`, different `orderBy` set). Response carries `deviceScoped` so callers can tell which item shape they got.',
             inputSchema: {
                 deviceId: z.string().optional(),
                 orderBy: z.enum(LIST_TASKS_ORDER_BY).optional(),

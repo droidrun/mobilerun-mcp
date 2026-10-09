@@ -2,7 +2,7 @@
   "name": "mobilerun",
   "owner": {
     "name": "Mobilerun",
-    "email": "lucius@droidrun.ai"
+    "email": "contact@mobilerun.ai"
   },
   "metadata": {
     "description": "Cursor plugin for the Mobilerun cloud platform",
@@ -12,7 +12,7 @@
     {
       "name": "mobilerun",
       "source": "./plugins/mobilerun",
-      "description": "Control Android device fleets, phone numbers, apps, and automation workflows via the Mobilerun MCP."
+      "description": "Control Android devices, run agent tasks, manage apps, and build automation workflows via the Mobilerun MCP."
     }
   ]
 }

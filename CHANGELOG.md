@@ -2,6 +2,12 @@
 
 All notable changes to `@mobilerun/mcp-tools` are documented here.
 
+## [0.3.1] - 2026-10-09
+
+### Changed
+
+- Tool and input descriptions reworded for clarity; no schema or behavior change.
+
 ## [0.3.0] - 2026-09-30
 
 ### Added

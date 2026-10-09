@@ -1,16 +1,6 @@
-// Workflows bundle tools. Design notes:
-//   - No hidden step-type filtering: a chat-harness-style curated catalog
-//     that hides internal step types (e.g. file/upload steps) is a
-//     different, host-specific concern. The public @mobilerun/sdk action
-//     catalog is already a public-facing surface — nothing to filter out here.
-//   - No active-session binding: chat-session concepts like an
-//     auto-bound "current conversation" don't exist in this auth-agnostic
-//     ToolCtx. create_flow returns the flow as-is.
-//   - `service` filter enum is @mobilerun/sdk's actual union — verified
-//     against the SDK's shipped action-catalog.d.ts / actions/actions.d.ts.
-//   - get_workflow_resource / list_workflow_resources wrap backend errors
-//     with `${resource} ${id}: ${msg}` context; there is no special-cased
-//     rethrow for internal step-surface errors (nothing produces one here).
+// Workflow tools expose the public action catalog without step-type filtering.
+// Flows are returned as-is, without binding them to a chat session.
+// Service filters match the public SDK; resource errors include resource/id context.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BackendError } from '../backend/errors.js';
@@ -125,7 +115,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
                 'List one kind of workflow resource, chosen via `resource`. Each resource accepts only its ' +
                 'own filter subset — a filter only valid for a DIFFERENT resource is rejected naming what is ' +
                 'allowed here. `resource` values:\n' +
-                '- action_catalog (filters: service): the full reviewed workflow step surface.\n' +
+                '- action_catalog (filters: service): every available workflow step.\n' +
                 '- app_event_catalog (no filters): the static selectable app event catalog with event type, label, app, source event, and payload fields. Call this BEFORE create_trigger with activation ' +
                 '"event" — never guess an app.*/system.* type.\n' +
                 "- action (filters: service, search, page, pageSize): the user's saved actions (configured " +

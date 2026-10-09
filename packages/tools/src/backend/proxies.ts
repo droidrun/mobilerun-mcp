@@ -1,6 +1,6 @@
 // Proxies port — see devices.ts's file header for the DTO philosophy.
 // Mirrors @mobilerun/sdk's proxies.* (device-bound socks5/wireguard proxy
-// configs — distinct from `connect` (connect.ts), which is droidrun-connect's
+// configs — distinct from `connect` (connect.ts), which exposes purchasable
 // residential SOCKS5 proxies/users; verified against the SDK's shipped
 // proxies.d.ts).
 export type ProxyProtocol = 'socks5' | 'wireguard';
