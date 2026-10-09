@@ -208,7 +208,7 @@ describe('tasks tools', () => {
         }
     });
 
-    test('run_task passes every param through to backend.tasks.runTask unchanged', async () => {
+    test('run_task passes every param through to backend.tasks.runTask, mapping pacedInput to stealth', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));
 
@@ -218,7 +218,7 @@ describe('tasks tools', () => {
             llmModel: 'gemini/gemini-2.5-flash',
             maxSteps: 20,
             outputSchema: { type: 'object' },
-            stealth: true,
+            pacedInput: true,
             vision: false,
             apps: ['com.android.settings'],
             credentials: [{ credentialNames: ['login'], packageName: 'com.example' }],
@@ -229,7 +229,8 @@ describe('tasks tools', () => {
 
         const call = backend.calls.find((c) => c.method === 'tasks.runTask');
         expect(call).toBeDefined();
-        expect(call?.args[0]).toEqual(args);
+        const { pacedInput, ...rest } = args;
+        expect(call?.args[0]).toEqual({ ...rest, stealth: pacedInput });
     });
 
     test('get_task view=summary/status/trajectory dispatch to the right backend method', async () => {

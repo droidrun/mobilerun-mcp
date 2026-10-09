@@ -5,7 +5,7 @@ import type { Backend } from '../backend/index.js';
 import { createAuthContext } from '../ctx.js';
 import { ALL_TOOL_NAMES, buildMcpServer, fullAccessPolicy } from '../register.js';
 
-const BANNED_WORDING = /\bR2\b|orchestrator|harness|internal|droidrun-connect|(?<!no-)\bCOMMERCE\b|fingerprint|appears where|mistake|\bSDK\b|[a-z]+-api\b|spoof|undetect|evad|human-?like|humantouch/i;
+const BANNED_WORDING = /\bR2\b|orchestrator|harness|internal|droidrun-connect|(?<!no-)\bCOMMERCE\b|fingerprint|appears where|mistake|\bSDK\b|[a-z]+-api\b|spoof|undetect|evad|human-?like|humantouch|stealth/i;
 
 function* schemaDescriptions(value: unknown): Generator<string> {
     if (Array.isArray(value)) {

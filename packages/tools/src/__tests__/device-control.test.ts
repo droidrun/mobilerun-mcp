@@ -261,6 +261,16 @@ describe('device-control bundle tools', () => {
         }
     });
 
+    test('device_action maps pacedInput to the API stealth parameter', async () => {
+        const backend = stubBackend();
+        const captured: unknown[] = [];
+        backend.deviceControl.tap = async (params: unknown) => void captured.push(params);
+        const { client } = await connectedClient(ctxWith(backend));
+        const result = await client.callTool({ name: 'device_action', arguments: { operation: 'tap', deviceId: DEVICE_ID, x: 1, y: 2, pacedInput: true } });
+        expect(result.isError).not.toBe(true);
+        expect(captured[0]).toMatchObject({ deviceId: DEVICE_ID, x: 1, y: 2, stealth: true });
+    });
+
     test('device_action: field allowlist rejects a field foreign to the chosen operation', async () => {
         const backend = stubBackend();
         const { client } = await connectedClient(ctxWith(backend));

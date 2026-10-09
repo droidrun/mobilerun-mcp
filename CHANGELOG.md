@@ -2,11 +2,12 @@
 
 All notable changes to `@mobilerun/mcp-tools` are documented here.
 
-## [0.3.1] - 2026-10-09
+## [0.4.0] - 2026-10-09
 
 ### Changed
 
-- Tool and input descriptions reworded for clarity; no schema or behavior change.
+- **Breaking:** `device_action` and `run_task` input `stealth` renamed to `pacedInput`. The value is still sent to the API as `stealth`; task results keep their `stealth` field. Shipped without a deprecation window so the old name no longer appears in tool descriptions.
+- Tool and input descriptions reworded for clarity.
 
 ## [0.3.0] - 2026-09-30
 

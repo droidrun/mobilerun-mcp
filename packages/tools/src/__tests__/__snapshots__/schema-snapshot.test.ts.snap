@@ -740,7 +740,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "number",
         },
         "errorRate": {
-          "description": "keyboard_write with stealth: per-character rate of characters typed and then corrected. -1 uses the server default.",
+          "description": "keyboard_write with pacedInput: correction rate per character (backspace and retype). -1 uses the default.",
           "type": "number",
         },
         "key": {
@@ -758,20 +758,21 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           ],
           "type": "string",
         },
+        "pacedInput": {
+          "description": "tap/swipe/keyboard_write: send input with variable timing and gesture paths.",
+          "type": "boolean",
+        },
         "startX": {
           "type": "number",
         },
         "startY": {
           "type": "number",
         },
-        "stealth": {
-          "type": "boolean",
-        },
         "text": {
           "type": "string",
         },
         "wpm": {
-          "description": "keyboard_write with stealth: typing speed in words per minute. 0 uses the default.",
+          "description": "keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.",
           "type": "number",
         },
         "x": {
@@ -1761,7 +1762,8 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           ],
           "description": "JSON Schema for structured output.",
         },
-        "stealth": {
+        "pacedInput": {
+          "description": "Run the agent with paced device input (variable timing and gesture paths).",
           "type": "boolean",
         },
         "task": {
