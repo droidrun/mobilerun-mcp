@@ -251,3 +251,22 @@ describe('device-control bundle tools', () => {
         expect(backend.calls).toContain('deviceControl.countDevices');
     });
 });
+
+
+test('device validation preserves field ordering and legacy repeated allowlist text', async () => {
+    const backend = stubBackend();
+    const { client } = await connectedClient(ctxWith(backend));
+    try {
+        const result = await client.callTool({
+            name: 'device_action',
+            arguments: { operation: 'clipboard_get', deviceId: DEVICE_ID, x: 1, text: 'extra' },
+        });
+        expect(result.isError).toBe(true);
+        expect(textOf(result)).toBe(
+            'field text, x is not valid for operation=clipboard_get; allowed fields: displayId, displayId',
+        );
+        expect(backend.calls).toHaveLength(0);
+    } finally {
+        await client.close();
+    }
+});

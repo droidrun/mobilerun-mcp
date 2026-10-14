@@ -1,4 +1,11 @@
-import { type Operation, operationValues, operationInput, selectInput, operationDescription, runOperation } from './operation-table.js';
+import {
+    type Operation,
+    operationValues,
+    operationInput,
+    selectInput,
+    operationDescription,
+    runOperation,
+} from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 // Tasks tools (the platform's core product) — built directly against
 // @mobilerun/sdk's public surface.
@@ -27,7 +34,11 @@ export interface CompactTrajectory {
     nextOffset?: number;
     events: RawTaskTrajectoryDto['events'];
 }
-export function compactTrajectory(raw: RawTaskTrajectoryDto, offset = 0, limit = MAX_TRAJECTORY_EVENTS): CompactTrajectory {
+export function compactTrajectory(
+    raw: RawTaskTrajectoryDto,
+    offset = 0,
+    limit = MAX_TRAJECTORY_EVENTS,
+): CompactTrajectory {
     const start = Math.max(0, Math.floor(offset));
     const cappedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_TRAJECTORY_EVENTS);
     const total = raw.events.length;
@@ -43,7 +54,8 @@ export function compactTrajectory(raw: RawTaskTrajectoryDto, offset = 0, limit =
         events,
     };
 }
-const GET_TASK_INPUT_FIELDS = { taskId: z.string(),
+const GET_TASK_INPUT_FIELDS = {
+    taskId: z.string(),
     offset: z.number().int().min(0).optional().describe('view=trajectory only. 0-based event index to start from.'),
     limit: z
         .number()
@@ -51,34 +63,75 @@ const GET_TASK_INPUT_FIELDS = { taskId: z.string(),
         .positive()
         .max(MAX_TRAJECTORY_EVENTS)
         .optional()
-        .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`) };
-type GET_TASK_INPUT = z.infer<z.ZodObject<typeof GET_TASK_INPUT_FIELDS>> & {
+        .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
+};
+type GetTaskInput = z.infer<z.ZodObject<typeof GET_TASK_INPUT_FIELDS>> & {
     view: string;
 };
 export const GET_TASK_TABLE = [
-    { op: "summary", input: selectInput(GET_TASK_INPUT_FIELDS, ["taskId", "offset", "limit"]), readonly: true, billed: false, describe: { "order": 0, "text": "Fetch one task by id, chosen via `view`: summary (full record, minus " }, run: async (ctx, input) => {
+    {
+        op: 'summary',
+        input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
+        readonly: true,
+        billed: false,
+        describe: { order: 0, text: 'Fetch one task by id, chosen via `view`: summary (full record, minus ' },
+        run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             return asTextResult(await ctx.backend.tasks.getTaskSummary(taskId));
-        } },
-    { op: "status", input: selectInput(GET_TASK_INPUT_FIELDS, ["taskId", "offset", "limit"]), readonly: true, billed: false, describe: { "order": 2, "text": "status (lightweight polling: status/message/output/steps/succeeded), trajectory (paged agent event log — capped per call, page with `offset`/the returned `nextOffset`). Poll status or trajectory to follow a running task." }, run: async (ctx, input) => {
+        },
+    },
+    {
+        op: 'status',
+        input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
+        readonly: true,
+        billed: false,
+        describe: {
+            order: 2,
+            text: 'status (lightweight polling: status/message/output/steps/succeeded), trajectory (paged agent event log — capped per call, page with `offset`/the returned `nextOffset`). Poll status or trajectory to follow a running task.',
+        },
+        run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             return asTextResult(await ctx.backend.tasks.getTaskStatus(taskId));
-        } },
-    { op: "trajectory", input: selectInput(GET_TASK_INPUT_FIELDS, ["taskId", "offset", "limit"]), readonly: true, billed: false, describe: { "order": 1, "text": "trajectory), " }, run: async (ctx, input) => {
+        },
+    },
+    {
+        op: 'trajectory',
+        input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
+        readonly: true,
+        billed: false,
+        describe: { order: 1, text: 'trajectory), ' },
+        run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             const raw = await ctx.backend.tasks.getTaskTrajectory(taskId);
             return asTextResult(compactTrajectory(raw, offset, limit));
-        } },
-] as const satisfies readonly Operation<GET_TASK_INPUT, CallToolResult>[];
-const GET_TASK_MEDIA_INPUT_FIELDS = { taskId: z.string(),
-    index: z.number().int().nonnegative().optional() };
-type GET_TASK_MEDIA_INPUT = z.infer<z.ZodObject<typeof GET_TASK_MEDIA_INPUT_FIELDS>> & {
+        },
+    },
+] as const satisfies readonly Operation<GetTaskInput, CallToolResult>[];
+const GET_TASK_MEDIA_INPUT_FIELDS = { taskId: z.string(), index: z.number().int().nonnegative().optional() };
+type GetTaskMediaInput = z.infer<z.ZodObject<typeof GET_TASK_MEDIA_INPUT_FIELDS>> & {
     kind: TaskMediaKind;
 };
 export const GET_TASK_MEDIA_TABLE = [
-    { op: "screenshot", input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']), readonly: true, billed: false, describe: { "order": 0, "text": "Fetch a task's captured media, chosen via `kind` (screenshot | " }, run: executeTaskMediaOperation },
-    { op: "ui_state", input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']), readonly: true, billed: false, describe: { "order": 1, "text": "ui_state). Omit `index` to list all available URLs for that kind; pass `index` to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs." }, run: executeTaskMediaOperation },
-] as const satisfies readonly Operation<GET_TASK_MEDIA_INPUT, CallToolResult>[];
+    {
+        op: 'screenshot',
+        input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']),
+        readonly: true,
+        billed: false,
+        describe: { order: 0, text: "Fetch a task's captured media, chosen via `kind` (screenshot | " },
+        run: executeTaskMediaOperation,
+    },
+    {
+        op: 'ui_state',
+        input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']),
+        readonly: true,
+        billed: false,
+        describe: {
+            order: 1,
+            text: "ui_state). Omit `index` to list all available URLs for that kind; pass `index` to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.",
+        },
+        run: executeTaskMediaOperation,
+    },
+] as const satisfies readonly Operation<GetTaskMediaInput, CallToolResult>[];
 const TASK_VIEWS = operationValues(GET_TASK_TABLE);
 const TASK_MEDIA_KINDS = operationValues(GET_TASK_MEDIA_TABLE);
 // Union of the global (client.tasks.list) and device-scoped
@@ -91,7 +144,16 @@ const TASK_MEDIA_KINDS = operationValues(GET_TASK_MEDIA_TABLE);
 const LIST_TASKS_ORDER_BY = ['id', 'createdAt', 'finishedAt', 'status', 'updatedAt', 'assignedAt'] as const;
 const GLOBAL_ONLY_ORDER_BY = new Set(['finishedAt', 'status']);
 const DEVICE_ONLY_ORDER_BY = new Set(['updatedAt', 'assignedAt']);
-const TASK_STATUSES = ['queued', 'created', 'running', 'cancelling', 'paused', 'completed', 'failed', 'cancelled'] as const;
+const TASK_STATUSES = [
+    'queued',
+    'created',
+    'running',
+    'cancelling',
+    'paused',
+    'completed',
+    'failed',
+    'cancelled',
+] as const;
 function listTasksValidationError(input: {
     deviceId?: string;
     orderBy?: string;
@@ -106,72 +168,117 @@ function listTasksValidationError(input: {
         if (input.orderBy && GLOBAL_ONLY_ORDER_BY.has(input.orderBy)) {
             return `list_tasks: orderBy="${input.orderBy}" is only valid without \`deviceId\`; device-scoped orderBy is one of id, createdAt, updatedAt, assignedAt.`;
         }
-    }
-    else if (input.orderBy && DEVICE_ONLY_ORDER_BY.has(input.orderBy)) {
+    } else if (input.orderBy && DEVICE_ONLY_ORDER_BY.has(input.orderBy)) {
         return `list_tasks: orderBy="${input.orderBy}" is only valid with \`deviceId\` set; global orderBy is one of id, createdAt, finishedAt, status.`;
     }
     return null;
 }
 export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
-    server.registerTool('run_task', {
-        description: 'Dispatch a new agent task on a device. Returns immediately with the task id and its initial status (queued or created); poll get_task(view: "status") or get_task(view: "trajectory") to follow progress.',
-        inputSchema: {
-            deviceId: z.string(),
-            task: z.string().min(1).describe('Natural-language task instruction.'),
-            llmModel: z.string().optional().describe("e.g. 'gemini/gemini-2.5-flash'."),
-            maxSteps: z.number().int().positive().optional(),
-            outputSchema: z.record(z.string(), z.unknown()).nullable().optional().describe('JSON Schema for structured output.'),
-            pacedInput: z.boolean().optional().describe('Run the agent with paced device input (variable timing and gesture paths).'),
-            vision: z.boolean().optional(),
-            apps: z.array(z.string()).optional().describe('Package names the task may use.'),
-            credentials: z
-                .array(z.object({ credentialNames: z.array(z.string()), packageName: z.string() }))
-                .optional()
-                .describe('Credential packages the task may use.'),
-            files: z.array(z.string()).optional(),
+    server.registerTool(
+        'run_task',
+        {
+            description:
+                'Dispatch a new agent task on a device. Returns immediately with the task id and its initial status (queued or created); poll get_task(view: "status") or get_task(view: "trajectory") to follow progress.',
+            inputSchema: {
+                deviceId: z.string(),
+                task: z.string().min(1).describe('Natural-language task instruction.'),
+                llmModel: z.string().optional().describe("e.g. 'gemini/gemini-2.5-flash'."),
+                maxSteps: z.number().int().positive().optional(),
+                outputSchema: z
+                    .record(z.string(), z.unknown())
+                    .nullable()
+                    .optional()
+                    .describe('JSON Schema for structured output.'),
+                pacedInput: z
+                    .boolean()
+                    .optional()
+                    .describe('Run the agent with paced device input (variable timing and gesture paths).'),
+                vision: z.boolean().optional(),
+                apps: z.array(z.string()).optional().describe('Package names the task may use.'),
+                credentials: z
+                    .array(z.object({ credentialNames: z.array(z.string()), packageName: z.string() }))
+                    .optional()
+                    .describe('Credential packages the task may use.'),
+                files: z.array(z.string()).optional(),
+            },
         },
-    }, 
-    // The API names `pacedInput` `stealth`.
-    async ({ pacedInput, ...params }) => asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })));
-    server.registerTool('get_task', {
-        description: operationDescription(GET_TASK_TABLE),
-        inputSchema: { view: z.enum(TASK_VIEWS), ...operationInput(GET_TASK_TABLE, GET_TASK_INPUT_FIELDS) },
-    }, async ({ view, taskId, offset, limit }: {
-        view: TaskView;
-        taskId: string;
-        offset?: number;
-        limit?: number;
-    }) => {
-        return runOperation(GET_TASK_TABLE, view, ctx, { view, taskId, offset, limit });
-    });
-    server.registerTool('list_tasks', {
-        description: 'List tasks, optionally filtered to one device. Without `deviceId`: global listing (all owned tasks), supports `query` (search in task description) and `status`. With `deviceId`: device-scoped listing with a slimmer item shape (taskId/createdAt/updatedAt only, no `query`/`status`, different `orderBy` set). Response carries `deviceScoped` so callers can tell which item shape they got.',
-        inputSchema: {
-            deviceId: z.string().optional(),
-            orderBy: z.enum(LIST_TASKS_ORDER_BY).optional(),
-            orderByDirection: z.enum(['asc', 'desc']).optional(),
-            page: z.number().int().positive().optional(),
-            pageSize: z.number().int().positive().optional(),
-            query: z.string().optional().describe('Search in task description. Only valid without deviceId.'),
-            status: z.enum(TASK_STATUSES).optional().describe('Only valid without deviceId.'),
+        // The API names `pacedInput` `stealth`.
+        async ({ pacedInput, ...params }) =>
+            asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })),
+    );
+    server.registerTool(
+        'get_task',
+        {
+            description: operationDescription(GET_TASK_TABLE),
+            inputSchema: { view: z.enum(TASK_VIEWS), ...operationInput(GET_TASK_TABLE, GET_TASK_INPUT_FIELDS) },
         },
-    }, async (input) => {
-        const err = listTasksValidationError(input);
-        if (err)
-            throw new Error(err);
-        return asTextResult(await ctx.backend.tasks.listTasks(input));
-    });
-    server.registerTool('stop_task', {
-        description: 'Cancel a running task. Errors if the task is already in a terminal state.',
-        inputSchema: { taskId: z.string() },
-    }, async ({ taskId }) => asTextResult(await ctx.backend.tasks.stopTask(taskId)));
-    server.registerTool('send_task_message', {
-        description: 'Send a message to a running agent task (e.g. extra instructions or an answer to a question it raised). Delivery is queued, not synchronous — the trajectory records a UserMessageEvent (queued -> applied|dropped) once the agent picks it up.',
-        inputSchema: { taskId: z.string(), message: z.string().min(1) },
-    }, async ({ taskId, message }) => asTextResult(await ctx.backend.tasks.sendTaskMessage(taskId, message)));
-    server.registerTool('get_task_media', {
-        description: operationDescription(GET_TASK_MEDIA_TABLE),
-        inputSchema: { kind: z.enum(TASK_MEDIA_KINDS), ...operationInput(GET_TASK_MEDIA_TABLE, GET_TASK_MEDIA_INPUT_FIELDS) },
-    }, async (input) => runOperation(GET_TASK_MEDIA_TABLE, input.kind, ctx, input));
+        async ({
+            view,
+            taskId,
+            offset,
+            limit,
+        }: {
+            view: TaskView;
+            taskId: string;
+            offset?: number;
+            limit?: number;
+        }) => {
+            return runOperation(GET_TASK_TABLE, view, ctx, { view, taskId, offset, limit });
+        },
+    );
+    server.registerTool(
+        'list_tasks',
+        {
+            description:
+                'List tasks, optionally filtered to one device. Without `deviceId`: global listing (all owned tasks), supports `query` (search in task description) and `status`. With `deviceId`: device-scoped listing with a slimmer item shape (taskId/createdAt/updatedAt only, no `query`/`status`, different `orderBy` set). Response carries `deviceScoped` so callers can tell which item shape they got.',
+            inputSchema: {
+                deviceId: z.string().optional(),
+                orderBy: z.enum(LIST_TASKS_ORDER_BY).optional(),
+                orderByDirection: z.enum(['asc', 'desc']).optional(),
+                page: z.number().int().positive().optional(),
+                pageSize: z.number().int().positive().optional(),
+                query: z.string().optional().describe('Search in task description. Only valid without deviceId.'),
+                status: z.enum(TASK_STATUSES).optional().describe('Only valid without deviceId.'),
+            },
+        },
+        async (input) => {
+            const err = listTasksValidationError(input);
+            if (err) throw new Error(err);
+            return asTextResult(await ctx.backend.tasks.listTasks(input));
+        },
+    );
+    server.registerTool(
+        'stop_task',
+        {
+            description: 'Cancel a running task. Errors if the task is already in a terminal state.',
+            inputSchema: { taskId: z.string() },
+        },
+        async ({ taskId }) => asTextResult(await ctx.backend.tasks.stopTask(taskId)),
+    );
+    server.registerTool(
+        'send_task_message',
+        {
+            description:
+                'Send a message to a running agent task (e.g. extra instructions or an answer to a question it raised). Delivery is queued, not synchronous — the trajectory records a UserMessageEvent (queued -> applied|dropped) once the agent picks it up.',
+            inputSchema: { taskId: z.string(), message: z.string().min(1) },
+        },
+        async ({ taskId, message }) => asTextResult(await ctx.backend.tasks.sendTaskMessage(taskId, message)),
+    );
+    server.registerTool(
+        'get_task_media',
+        {
+            description: operationDescription(GET_TASK_MEDIA_TABLE),
+            inputSchema: {
+                kind: z.enum(TASK_MEDIA_KINDS),
+                ...operationInput(GET_TASK_MEDIA_TABLE, GET_TASK_MEDIA_INPUT_FIELDS),
+            },
+        },
+        async (input) => runOperation(GET_TASK_MEDIA_TABLE, input.kind, ctx, input),
+    );
 }
-async function executeTaskMediaOperation(ctx: ToolCtx, { kind, taskId, index }: GET_TASK_MEDIA_INPUT): Promise<CallToolResult> { return asTextResult(await ctx.backend.tasks.getTaskMedia(kind, taskId, index)); }
+async function executeTaskMediaOperation(
+    ctx: ToolCtx,
+    { kind, taskId, index }: GetTaskMediaInput,
+): Promise<CallToolResult> {
+    return asTextResult(await ctx.backend.tasks.getTaskMedia(kind, taskId, index));
+}
