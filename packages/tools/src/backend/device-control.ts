@@ -1,8 +1,9 @@
-// Device-control port — see devices.ts's file header for the DTO
-// philosophy. Backs the device-control bundle tools:
-// manage_device, device_action, manage_device_apps, manage_device_files,
-// configure_device, manage_esim.
-//
+// Semantic port for the six device-control bundles, including lifecycle,
+// input, apps, files, configuration, eSIMs, recordings, screenshots and
+// traffic/media sessions. DTOs contain only the fields surfaced by tools;
+// operation tables live in tools/*-operations.ts, while the server adapter
+// maps these capabilities to the public SDK.
+
 import { z } from 'zod';
 
 export interface DeviceCapabilitiesDto {

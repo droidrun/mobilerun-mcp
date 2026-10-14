@@ -92,10 +92,19 @@ and the no-commerce profile registers 37. Bundle schemas retain their full
 operation enums; descriptions advertise the credential's allowed subset,
 and dispatch rejects excluded values before invoking a backend.
 
-New tools use flat inputs. Additional operations on existing bundles use
-an operation-specific `params` object; device bundles keep `deviceId` at the
-top level. For example, `manage_flow` update accepts
-`{ "operation": "update", "params": { "flowId": "...", "name": "..." } }`.
+Bundle inputs use flat top-level fields. For example, `manage_flow` update
+accepts `{ "operation": "update", "flowId": "...", "name": "..." }`;
+device bundles also keep `deviceId` at the top level.
+
+Each bundle declares its operations once in a per-tool operation table.
+An entry contains the operation's flat input fields, dispatch function,
+unchanged description fragments, and required `readonly` and `billed`
+classifications. The enum, registered schema, field allowlists and policy
+profiles derive from these tables; shared field definitions retain the
+existing constraints and JSON Schema traversal order. Add operations to
+the relevant table and register new bundles in `src/tools/bundle-tools.ts`;
+standalone tools may retain their direct registrations.
+
 Saved media downloads return short-lived signed URLs. Screenshot capture
 returns PNG bytes as base64, capped at 2 MB. Upload bytes are sent
 to signed upload URLs outside the tools. Credential retrieval exposes only
