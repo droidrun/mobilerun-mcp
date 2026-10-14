@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { type AssistantAnswer, type AssistantHistory } from '../backend/assistant.js';
@@ -41,10 +42,6 @@ type AssistantToolInput = {
     answers?: AssistantAnswer;
 };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`assistant operation=${operation} requires ${name}`);
-    return value;
-}
 
 function objectValue(value: unknown): Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -97,23 +94,23 @@ async function executeAssistantOperation(input: AssistantToolInput, ctx: ToolCtx
     const backend = ctx.backend.assistant;
     if (operation === 'list_sessions') return backend.listSessions(input.mine);
     if (operation === 'create_session')
-        return backend.createSession(requireValue(input.title, 'title', operation), input.description);
+        return backend.createSession(requireValue(input.title, 'title', operation, 'assistant'), input.description);
     if (operation === 'answer_permission') {
         return backend.answerPermission(
-            requireValue(input.permissionId, 'permissionId', operation),
-            requireValue(input.response, 'response', operation),
+            requireValue(input.permissionId, 'permissionId', operation, 'assistant'),
+            requireValue(input.response, 'response', operation, 'assistant'),
         );
     }
     if (operation === 'answer_question') {
         return backend.answerQuestion(
-            requireValue(input.questionId, 'questionId', operation),
-            requireValue(input.answers, 'answers', operation),
+            requireValue(input.questionId, 'questionId', operation, 'assistant'),
+            requireValue(input.answers, 'answers', operation, 'assistant'),
         );
     }
     if (operation === 'reject_question')
-        return backend.rejectQuestion(requireValue(input.questionId, 'questionId', operation));
+        return backend.rejectQuestion(requireValue(input.questionId, 'questionId', operation, 'assistant'));
 
-    const sessionId = requireValue(input.sessionId, 'sessionId', operation);
+    const sessionId = requireValue(input.sessionId, 'sessionId', operation, 'assistant');
     if (operation === 'update_session') {
         const params = {
             title: input.title,
@@ -129,7 +126,7 @@ async function executeAssistantOperation(input: AssistantToolInput, ctx: ToolCtx
     if (operation === 'send_message')
         return backend.sendMessage(
             sessionId,
-            requireValue(input.message, 'message', operation),
+            requireValue(input.message, 'message', operation, 'assistant'),
             input.waitSeconds ?? 45,
         );
     if (operation === 'get_messages')

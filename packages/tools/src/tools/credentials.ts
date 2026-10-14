@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 // Credentials read and mutation tools use separate policy operation gates.
 
 import { manageCredentialsGetSchema } from '../backend/credentials.js';
@@ -69,10 +70,6 @@ type ManageCredentialsInput = {
     fields?: Array<{ fieldType: z.infer<typeof fieldTypeSchema>; value: string }>;
 };
 
-function requireCredentialValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`manage_credentials operation=${operation} requires ${name}`);
-    return value;
-}
 
 async function executeManageCredentialsOperation(input: ManageCredentialsInput, ctx: ToolCtx): Promise<unknown> {
     if (input.operation === 'get')
@@ -82,34 +79,34 @@ async function executeManageCredentialsOperation(input: ManageCredentialsInput, 
 
     if (operation === 'init_package') {
         return backend.initPackage({
-            packageName: requireCredentialValue(input.packageName, 'packageName', operation),
+            packageName: requireValue(input.packageName, 'packageName', operation, 'manage_credentials'),
         });
     }
 
-    const packageName = requireCredentialValue(input.packageName, 'packageName', operation);
+    const packageName = requireValue(input.packageName, 'packageName', operation, 'manage_credentials');
 
     if (operation === 'create_credential') {
         return backend.createCredential({
             packageName,
-            credentialName: requireCredentialValue(input.credentialName, 'credentialName', operation),
-            fields: requireCredentialValue(input.fields, 'fields', operation),
+            credentialName: requireValue(input.credentialName, 'credentialName', operation, 'manage_credentials'),
+            fields: requireValue(input.fields, 'fields', operation, 'manage_credentials'),
         });
     }
 
-    const credentialName = requireCredentialValue(input.credentialName, 'credentialName', operation);
+    const credentialName = requireValue(input.credentialName, 'credentialName', operation, 'manage_credentials');
 
     if (operation === 'delete_credential') {
         return backend.deleteCredential({ packageName, credentialName });
     }
 
-    const fieldType = requireCredentialValue(input.fieldType, 'fieldType', operation);
+    const fieldType = requireValue(input.fieldType, 'fieldType', operation, 'manage_credentials');
 
     if (operation === 'add_field') {
         return backend.addField({
             packageName,
             credentialName,
             fieldType,
-            value: requireCredentialValue(input.value, 'value', operation),
+            value: requireValue(input.value, 'value', operation, 'manage_credentials'),
         });
     }
     if (operation === 'update_field') {
@@ -117,7 +114,7 @@ async function executeManageCredentialsOperation(input: ManageCredentialsInput, 
             packageName,
             credentialName,
             fieldType,
-            value: requireCredentialValue(input.value, 'value', operation),
+            value: requireValue(input.value, 'value', operation, 'manage_credentials'),
         });
     }
     return backend.deleteField({ packageName, credentialName, fieldType });

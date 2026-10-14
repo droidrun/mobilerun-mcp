@@ -1,3 +1,4 @@
+import { disallowedFilterError } from './op-helpers.js';
 // Workflow tools expose the public action catalog without step-type filtering.
 // Flows are returned as-is, without binding them to a chat session.
 // Service filters match the public SDK; resource errors include resource/id context.
@@ -69,19 +70,6 @@ const FILTER_KEYS: readonly (keyof ListFilters)[] = [
     'limit',
 ];
 
-function disallowedFilterError(resource: ListResource, filters: ListFilters): string | null {
-    const allowed = ALLOWED_FILTERS[resource];
-    const extra = FILTER_KEYS.filter((k) => filters[k] !== undefined && !allowed.includes(k));
-    if (extra.length > 0) {
-        return `filter ${extra.join(', ')} is not valid for resource=${resource}; allowed filters: ${allowed.join(', ') || '(none)'}`;
-    }
-    const required = REQUIRED_FILTERS[resource];
-    const missing = required?.filter((k) => filters[k] === undefined) ?? [];
-    if (missing.length > 0) {
-        return `resource=${resource} requires filter: ${missing.join(', ')}`;
-    }
-    return null;
-}
 
 const flowActionBindingSchema = z
     .object({
@@ -154,7 +142,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
             },
         },
         async ({ resource, ...filters }: { resource: ListResource } & ListFilters) => {
-            const filterError = disallowedFilterError(resource, filters);
+            const filterError = disallowedFilterError(resource, ALLOWED_FILTERS[resource], FILTER_KEYS, REQUIRED_FILTERS[resource], filters);
             if (filterError) return asErrorResult(filterError);
 
             switch (resource) {

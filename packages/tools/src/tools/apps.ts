@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 // apps bundle. Upload is a 3-step flow: (1) create_upload_url returns
 // pre-signed object-storage PUT URLs per file — the actual file bytes are
 // PUT directly to those URLs by the caller, OUTSIDE this MCP tool (binary
@@ -56,10 +57,6 @@ type AppsToolInput = {
     targetSdk?: number;
 };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`apps operation=${operation} requires ${name}`);
-    return value;
-}
 
 async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise<unknown> {
     if (input.operation === 'storage_usage') return ctx.backend.apps.appsStorageUsage();
@@ -80,12 +77,12 @@ async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise
 
     if (operation === 'create_upload_url') {
         return backend.createAppUploadUrl({
-            bundleId: requireValue(input.bundleId, 'bundleId', operation),
-            displayName: requireValue(input.displayName, 'displayName', operation),
-            versionCode: requireValue(input.versionCode, 'versionCode', operation),
-            versionName: requireValue(input.versionName, 'versionName', operation),
-            sizeBytes: requireValue(input.sizeBytes, 'sizeBytes', operation),
-            files: requireValue(input.files, 'files', operation),
+            bundleId: requireValue(input.bundleId, 'bundleId', operation, 'apps'),
+            displayName: requireValue(input.displayName, 'displayName', operation, 'apps'),
+            versionCode: requireValue(input.versionCode, 'versionCode', operation, 'apps'),
+            versionName: requireValue(input.versionName, 'versionName', operation, 'apps'),
+            sizeBytes: requireValue(input.sizeBytes, 'sizeBytes', operation, 'apps'),
+            files: requireValue(input.files, 'files', operation, 'apps'),
             platform: input.uploadPlatform,
             country: input.country,
             description: input.description,
@@ -95,7 +92,7 @@ async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise
         });
     }
 
-    const id = requireValue(input.id, 'id', operation);
+    const id = requireValue(input.id, 'id', operation, 'apps');
     if (operation === 'get') return backend.getApp(id);
     if (operation === 'versions') return backend.listAppVersions(id);
     if (operation === 'confirm_upload') return backend.confirmAppUpload(id);

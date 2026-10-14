@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 // Webhooks bundle tool. Dispatch goes through Backend.webhooks (one method
 // per operation), which the public SdkBackend implements over
 // @mobilerun/sdk's typed client — never a raw fetch with trust headers.
@@ -49,10 +50,6 @@ type WebhookToolInput = {
     since?: string;
 };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`webhooks operation=${operation} requires ${name}`);
-    return value;
-}
 
 function withSecretHandling(result: unknown, secretHandling: string): Record<string, unknown> {
     if (result !== null && typeof result === 'object' && !Array.isArray(result)) {
@@ -74,7 +71,7 @@ async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): P
 
     if (operation === 'create') {
         const result = await backend.createWebhook({
-            url: requireValue(input.url, 'url', operation),
+            url: requireValue(input.url, 'url', operation, 'webhooks'),
             eventTypes: input.eventTypes,
             description: input.description,
         });
@@ -96,7 +93,7 @@ async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): P
     // requirement below.
     if (operation === 'delivery_stats') return backend.getWebhookDeliveryStats({ since: input.since });
 
-    const endpointId = requireValue(input.endpointId, 'endpointId', operation);
+    const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
 
     // get/list/update never return the signing secret — the WebhookDto.secret
     // field is only populated by create/rotate_secret's own SDK response
@@ -131,7 +128,7 @@ async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): P
         return backend.listWebhookDeliveries(endpointId, { page: input.page, pageSize: input.pageSize });
     }
 
-    const deliveryId = requireValue(input.deliveryId, 'deliveryId', operation);
+    const deliveryId = requireValue(input.deliveryId, 'deliveryId', operation, 'webhooks');
     return backend.getWebhookDelivery(endpointId, deliveryId);
 }
 

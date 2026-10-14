@@ -1,3 +1,4 @@
+import { requireValue, disallowedFieldError } from './op-helpers.js';
 // Device-control bundle tools, including device media and connectivity operations.
 
 import {
@@ -70,22 +71,7 @@ function redactTrafficStream(value: unknown, ctx: ToolCtx): unknown {
     return redact(value);
 }
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`operation=${operation} requires ${name}`);
-    return value;
-}
 
-/** Rejects any input key not on `allowed` for the chosen operation — fail-closed field allowlist, mirrors tools/workflows.ts's ALLOWED_FILTERS pattern. */
-function disallowedFieldError(
-    operation: string,
-    allowed: readonly string[],
-    allKeys: readonly string[],
-    input: Record<string, unknown>,
-): string | null {
-    const extra = allKeys.filter((k) => input[k] !== undefined && !allowed.includes(k));
-    if (extra.length === 0) return null;
-    return `field ${extra.join(', ')} is not valid for operation=${operation}; allowed fields: ${allowed.join(', ') || '(none)'}`;
-}
 
 // Inline base64 payload cap for manage_device_files upload/download — the
 // SDK has no presigned-URL alternative for device files (unlike this

@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 // Flow lifecycle, configuration, validation and execution operations.
 
 import {
@@ -110,10 +111,6 @@ type ManageFlowInput = {
     to?: string | null;
 };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`manage_flow operation=${operation} requires ${name}`);
-    return value;
-}
 
 async function executeManageFlowOperation(input: ManageFlowInput, ctx: ToolCtx): Promise<unknown> {
     if (input.operation === 'execution_screenshot')
@@ -165,20 +162,20 @@ async function executeManageFlowOperation(input: ManageFlowInput, ctx: ToolCtx):
     }
 
     if (operation === 'clone') {
-        const flowId = requireValue(input.flowId, 'flowId', operation);
+        const flowId = requireValue(input.flowId, 'flowId', operation, 'manage_flow');
         return backend.cloneFlow({ flowId, name: input.name, deviceIds: input.deviceIds });
     }
 
     if (operation === 'unblock') {
-        return backend.unblockFlow(requireValue(input.flowId, 'flowId', operation));
+        return backend.unblockFlow(requireValue(input.flowId, 'flowId', operation, 'manage_flow'));
     }
 
     if (operation === 'add_action') {
-        const flowId = requireValue(input.flowId, 'flowId', operation);
+        const flowId = requireValue(input.flowId, 'flowId', operation, 'manage_flow');
         return backend.addFlowAction({
             flowId,
-            actionId: requireValue(input.actionId, 'actionId', operation),
-            position: requireValue(input.position, 'position', operation),
+            actionId: requireValue(input.actionId, 'actionId', operation, 'manage_flow'),
+            position: requireValue(input.position, 'position', operation, 'manage_flow'),
             key: input.key,
             continueOnError: input.continueOnError,
             nameOverride: input.nameOverride,
@@ -190,14 +187,14 @@ async function executeManageFlowOperation(input: ManageFlowInput, ctx: ToolCtx):
 
     if (operation === 'remove_action') {
         return backend.removeFlowAction({
-            flowActionId: requireValue(input.flowActionId, 'flowActionId', operation),
-            flowId: requireValue(input.flowId, 'flowId', operation),
+            flowActionId: requireValue(input.flowActionId, 'flowActionId', operation, 'manage_flow'),
+            flowId: requireValue(input.flowId, 'flowId', operation, 'manage_flow'),
         });
     }
 
     // operation === 'replace_actions'
-    const flowId = requireValue(input.flowId, 'flowId', operation);
-    const actions = z.array(flowActionBindingSchema).parse(requireValue(input.actions, 'actions', operation));
+    const flowId = requireValue(input.flowId, 'flowId', operation, 'manage_flow');
+    const actions = z.array(flowActionBindingSchema).parse(requireValue(input.actions, 'actions', operation, 'manage_flow'));
     // Every node needs a key on a flow whose templateResolutionVersion is 3
     // (the server rejects a full replace missing one there; harmless on
     // v1/v2 flows, which still derive missing keys server-side). A caller-

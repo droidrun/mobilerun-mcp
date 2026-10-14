@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -13,16 +14,12 @@ type WorkflowEventsInput = {
     payload?: Record<string, unknown>;
 };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`workflow_events operation=${operation} requires ${name}`);
-    return value;
-}
 
 async function executeWorkflowEventsOperation(input: WorkflowEventsInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.workflows;
 
-    const eventType = requireValue(input.eventType, 'eventType', operation);
+    const eventType = requireValue(input.eventType, 'eventType', operation, 'workflow_events');
     if (operation === 'ingest') return backend.ingestEvent({ eventType, payload: input.payload });
     // operation === 'dry_run'
     return backend.dryRunEvent({ eventType, payload: input.payload });

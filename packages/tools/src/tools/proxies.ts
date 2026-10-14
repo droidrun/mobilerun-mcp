@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 // proxies bundle — device-bound socks5/wireguard proxy configs (distinct
 // from the `connect` tool's purchasable residential proxies).
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -22,27 +23,23 @@ type ProxiesToolInput = {
     config?: string;
 };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`proxies operation=${operation} requires ${name}`);
-    return value;
-}
 
 function buildProxyParams(input: ProxiesToolInput, operation: string) {
-    const protocol = requireValue(input.protocol, 'protocol', operation);
+    const protocol = requireValue(input.protocol, 'protocol', operation, 'proxies');
     if (protocol === 'socks5') {
         return {
             protocol: 'socks5' as const,
-            name: requireValue(input.name, 'name', operation),
-            host: requireValue(input.host, 'host', operation),
-            port: requireValue(input.port, 'port', operation),
-            user: requireValue(input.user, 'user', operation),
-            password: requireValue(input.password, 'password', operation),
+            name: requireValue(input.name, 'name', operation, 'proxies'),
+            host: requireValue(input.host, 'host', operation, 'proxies'),
+            port: requireValue(input.port, 'port', operation, 'proxies'),
+            user: requireValue(input.user, 'user', operation, 'proxies'),
+            password: requireValue(input.password, 'password', operation, 'proxies'),
         };
     }
     return {
         protocol: 'wireguard' as const,
-        name: requireValue(input.name, 'name', operation),
-        config: requireValue(input.config, 'config', operation),
+        name: requireValue(input.name, 'name', operation, 'proxies'),
+        config: requireValue(input.config, 'config', operation, 'proxies'),
     };
 }
 
@@ -54,7 +51,7 @@ async function executeProxiesOperation(input: ProxiesToolInput, ctx: ToolCtx): P
 
     if (operation === 'create') return backend.createProxy(buildProxyParams(input, operation));
 
-    const proxyId = requireValue(input.proxyId, 'proxyId', operation);
+    const proxyId = requireValue(input.proxyId, 'proxyId', operation, 'proxies');
 
     if (operation === 'get') return backend.getProxy(proxyId);
     if (operation === 'update') return backend.updateProxy(proxyId, buildProxyParams(input, operation));

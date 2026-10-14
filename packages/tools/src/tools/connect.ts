@@ -1,3 +1,4 @@
+import { requireValue } from './op-helpers.js';
 // connect bundle — residential SOCKS5 proxies + bound users (distinct from
 // the device-bound `proxies` tool). Operations: list_countries,
 // list_proxies, get_proxy, buy_proxy, cancel_proxy, ping_proxy,
@@ -57,10 +58,6 @@ type ConnectToolInput = {
     pageSize?: number;
 } & { [K in keyof typeof connectionFilterShape]?: z.infer<(typeof connectionFilterShape)[K]> };
 
-function requireValue<T>(value: T | undefined, name: string, operation: string): T {
-    if (value === undefined) throw new Error(`connect operation=${operation} requires ${name}`);
-    return value;
-}
 
 function connectionOpts(input: ConnectToolInput) {
     return {
@@ -96,29 +93,29 @@ async function executeConnectOperation(input: ConnectToolInput, ctx: ToolCtx): P
         case 'list_proxies':
             return backend.listConnectProxies({ country: input.country, page: input.page, pageSize: input.pageSize });
         case 'get_proxy':
-            return backend.getConnectProxy(requireValue(input.proxyId, 'proxyId', operation));
+            return backend.getConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
         case 'buy_proxy':
             return backend.buyConnectProxy({
-                country: requireValue(input.country, 'country', operation),
+                country: requireValue(input.country, 'country', operation, 'connect'),
                 type: input.type,
             });
         case 'cancel_proxy':
-            await backend.cancelConnectProxy(requireValue(input.proxyId, 'proxyId', operation));
+            await backend.cancelConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
             return { success: true };
         case 'ping_proxy':
-            return backend.pingConnectProxy(requireValue(input.proxyId, 'proxyId', operation));
+            return backend.pingConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
         case 'list_connections':
             return backend.listConnectProxyConnections(
-                requireValue(input.proxyId, 'proxyId', operation),
+                requireValue(input.proxyId, 'proxyId', operation, 'connect'),
                 connectionOpts(input),
             );
         case 'list_users':
             return backend.listConnectUsers({ proxyId: input.proxyId, page: input.page, pageSize: input.pageSize });
         case 'get_user':
-            return backend.getConnectUser(requireValue(input.userId, 'userId', operation));
+            return backend.getConnectUser(requireValue(input.userId, 'userId', operation, 'connect'));
         case 'list_user_connections':
             return backend.listConnectUserConnections(
-                requireValue(input.userId, 'userId', operation),
+                requireValue(input.userId, 'userId', operation, 'connect'),
                 connectionOpts(input),
             );
     }
