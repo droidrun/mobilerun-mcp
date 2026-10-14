@@ -19,6 +19,48 @@ function stubBackend(): Backend & { calls: string[] } {
     };
     return {
         calls,
+        files: {
+            filesDownload: () => record('files.filesDownload'),
+            filesList: () => record('files.filesList'),
+            filesUpdate: () => record('files.filesUpdate'),
+            filesDelete: () => record('files.filesDelete'),
+            filesCancelPending: () => record('files.filesCancelPending'),
+            filesConfirm: () => record('files.filesConfirm'),
+            filesUploadUrl: () => record('files.filesUploadUrl'),
+        },
+        mailboxes: {
+            mailboxesList: () => record('mailboxes.mailboxesList'),
+            mailboxesCapacity: () => record('mailboxes.mailboxesCapacity'),
+            mailboxesCreate: () => record('mailboxes.mailboxesCreate'),
+            mailboxesGet: () => record('mailboxes.mailboxesGet'),
+            mailboxesUpdate: () => record('mailboxes.mailboxesUpdate'),
+            mailboxesDelete: () => record('mailboxes.mailboxesDelete'),
+            mailboxesUncancel: () => record('mailboxes.mailboxesUncancel'),
+            mailboxesRestart: () => record('mailboxes.mailboxesRestart'),
+            mailboxesDisconnect: () => record('mailboxes.mailboxesDisconnect'),
+            mailboxesOtp: () => record('mailboxes.mailboxesOtp'),
+            mailboxesMessages: () => record('mailboxes.mailboxesMessages'),
+            mailboxesMessage: () => record('mailboxes.mailboxesMessage'),
+            mailboxesConnect: () => record('mailboxes.mailboxesConnect'),
+            mailboxesConnection: () => record('mailboxes.mailboxesConnection'),
+        },
+        messages: {
+            messagesList: () => record('messages.messagesList'),
+            messagesGet: () => record('messages.messagesGet'),
+            messagesConversations: () => record('messages.messagesConversations'),
+            messagesMarkRead: () => record('messages.messagesMarkRead'),
+        },
+        numbers: {
+            numbersCountries: () => record('numbers.numbersCountries'),
+            numbersCapacity: () => record('numbers.numbersCapacity'),
+            numbersList: () => record('numbers.numbersList'),
+            numbersGet: () => record('numbers.numbersGet'),
+            numbersCreate: () => record('numbers.numbersCreate'),
+            numbersUpdate: () => record('numbers.numbersUpdate'),
+            numbersDelete: () => record('numbers.numbersDelete'),
+            numbersMessages: () => record('numbers.numbersMessages'),
+            numbersSend: () => record('numbers.numbersSend'),
+        },
         devices: {
             listDevices: () => record('devices.listDevices'),
             getDevice: () => record('devices.getDevice'),
@@ -29,9 +71,27 @@ function stubBackend(): Backend & { calls: string[] } {
             terminateDevice: () => record('devices.terminateDevice'),
         },
         workflows: {
+            manageFlowExecutionScreenshot: () => record('workflows.manageFlowExecutionScreenshot'),
+            manageFlowUpdate: () => record('workflows.manageFlowUpdate'),
+            manageFlowDelete: () => record('workflows.manageFlowDelete'),
+            manageFlowActivate: () => record('workflows.manageFlowActivate'),
+            manageFlowRun: () => record('workflows.manageFlowRun'),
+            manageFlowValidate: () => record('workflows.manageFlowValidate'),
+            manageFlowVerify: () => record('workflows.manageFlowVerify'),
+            manageFlowDryRun: () => record('workflows.manageFlowDryRun'),
+            manageFlowCapacity: () => record('workflows.manageFlowCapacity'),
+            manageFlowDeliveryOptions: () => record('workflows.manageFlowDeliveryOptions'),
+            manageFlowTemplateContext: () => record('workflows.manageFlowTemplateContext'),
+            manageFlowListRepairs: () => record('workflows.manageFlowListRepairs'),
+            manageFlowUpdateAction: () => record('workflows.manageFlowUpdateAction'),
+            manageFlowDeleteAction: () => record('workflows.manageFlowDeleteAction'),
+            manageFlowUpdateTrigger: () => record('workflows.manageFlowUpdateTrigger'),
+            manageFlowDeleteTrigger: () => record('workflows.manageFlowDeleteTrigger'),
+            manageFlowFireTrigger: () => record('workflows.manageFlowFireTrigger'),
+            manageFlowAbortExecution: () => record('workflows.manageFlowAbortExecution'),
             listActionCatalog: () => record('workflows.listActionCatalog'),
             getActionCatalogEntry: () => record('workflows.getActionCatalogEntry'),
-            listAppEventCatalog: () => record('workflows.listAppEventCatalog'),
+
             listActions: () => record('workflows.listActions'),
             getAction: () => record('workflows.getAction'),
             createAction: () => record('workflows.createAction'),
@@ -56,6 +116,10 @@ function stubBackend(): Backend & { calls: string[] } {
             dryRunEvent: () => record('workflows.dryRunEvent'),
         },
         webhooks: {
+            webhooksDelete: () => record('webhooks.webhooksDelete'),
+            webhooksDeliveries: () => record('webhooks.webhooksDeliveries'),
+            webhooksIntegrations: () => record('webhooks.webhooksIntegrations'),
+            webhooksIntegrationTargets: () => record('webhooks.webhooksIntegrationTargets'),
             createWebhook: () => record('webhooks.createWebhook'),
             listWebhooks: () => record('webhooks.listWebhooks'),
             getWebhook: () => record('webhooks.getWebhook'),
@@ -65,7 +129,7 @@ function stubBackend(): Backend & { calls: string[] } {
             listWebhookDeliveries: () => record('webhooks.listWebhookDeliveries'),
             getWebhookDelivery: () => record('webhooks.getWebhookDelivery'),
             getWebhookDeliveryStats: () => record('webhooks.getWebhookDeliveryStats'),
-            listWebhookEventTypes: () => record('webhooks.listWebhookEventTypes'),
+
         },
         assistant: {
             listSessions: () => record('assistant.listSessions', { sessions: [] }),
@@ -79,6 +143,7 @@ function stubBackend(): Backend & { calls: string[] } {
             rejectQuestion: () => record('assistant.rejectQuestion'),
         },
         credentials: {
+            manageCredentialsGet: () => record('credentials.manageCredentialsGet'),
             listCredentials: () => record('credentials.listCredentials'),
             listCredentialPackages: () => record('credentials.listCredentialPackages'),
             initPackage: () => record('credentials.initPackage', { data: { packageName: 'p' }, message: 'ok', success: true }),
@@ -94,6 +159,7 @@ function stubBackend(): Backend & { calls: string[] } {
                 record('credentials.deleteField', { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] }, message: 'ok', success: true }),
         },
         apps: {
+            appsStorageUsage: () => record('apps.appsStorageUsage'),
             listApps: () => record('apps.listApps'),
             getApp: () => record('apps.getApp'),
             listAppVersions: () => record('apps.listAppVersions'),
@@ -108,9 +174,11 @@ function stubBackend(): Backend & { calls: string[] } {
             createProxy: () => record('proxies.createProxy'),
             updateProxy: () => record('proxies.updateProxy'),
             deleteProxy: () => record('proxies.deleteProxy'),
-            lookupProxy: () => record('proxies.lookupProxy'),
+
         },
         connect: {
+            connectUpdateProxy: () => record('connect.connectUpdateProxy'),
+            connectEnsureHealthy: () => record('connect.connectEnsureHealthy'),
             listCountries: () => record('connect.listCountries'),
             listConnectProxies: () => record('connect.listConnectProxies'),
             getConnectProxy: () => record('connect.getConnectProxy'),
@@ -137,6 +205,46 @@ function stubBackend(): Backend & { calls: string[] } {
             getTaskMedia: () => record('tasks.getTaskMedia'),
         },
         deviceControl: {
+            manageDeviceRecordingsTrajectory: () => record('deviceControl.manageDeviceRecordingsTrajectory'),
+            manageDeviceRecordingsVideo: () => record('deviceControl.manageDeviceRecordingsVideo'),
+            manageDeviceScreenshotsImage: () => record('deviceControl.manageDeviceScreenshotsImage'),
+            manageDeviceStop: () => record('deviceControl.manageDeviceStop'),
+            manageDeviceResume: () => record('deviceControl.manageDeviceResume'),
+            manageDeviceSummary: () => record('deviceControl.manageDeviceSummary'),
+            manageDeviceRetrieveCapabilities: () => record('deviceControl.manageDeviceRetrieveCapabilities'),
+            deviceActionClipboardGet: () => record('deviceControl.deviceActionClipboardGet'),
+            deviceActionClipboardSet: () => record('deviceControl.deviceActionClipboardSet'),
+            deviceActionDeepLink: () => record('deviceControl.deviceActionDeepLink'),
+            deviceActionBrowserScript: () => record('deviceControl.deviceActionBrowserScript'),
+            manageDeviceAppsGrantPermission: () => record('deviceControl.manageDeviceAppsGrantPermission'),
+            manageDeviceAppsRevokePermission: () => record('deviceControl.manageDeviceAppsRevokePermission'),
+            manageDeviceAppsListInstalls: () => record('deviceControl.manageDeviceAppsListInstalls'),
+            configureDeviceResetLocation: () => record('deviceControl.configureDeviceResetLocation'),
+            configureDeviceKioskEnable: () => record('deviceControl.configureDeviceKioskEnable'),
+            configureDeviceKioskDisable: () => record('deviceControl.configureDeviceKioskDisable'),
+            configureDeviceUpdateProfile: () => record('deviceControl.configureDeviceUpdateProfile'),
+            manageEsimSetRoaming: () => record('deviceControl.manageEsimSetRoaming'),
+            manageEsimStatus: () => record('deviceControl.manageEsimStatus'),
+            manageEsimApnList: () => record('deviceControl.manageEsimApnList'),
+            manageEsimApnSelect: () => record('deviceControl.manageEsimApnSelect'),
+            manageEsimApnSet: () => record('deviceControl.manageEsimApnSet'),
+            manageDeviceRecordingsList: () => record('deviceControl.manageDeviceRecordingsList'),
+            manageDeviceRecordingsDelete: () => record('deviceControl.manageDeviceRecordingsDelete'),
+            manageDeviceRecordingsScreenshots: () => record('deviceControl.manageDeviceRecordingsScreenshots'),
+            manageDeviceRecordingsStart: () => record('deviceControl.manageDeviceRecordingsStart'),
+            manageDeviceRecordingsStatus: () => record('deviceControl.manageDeviceRecordingsStatus'),
+            manageDeviceRecordingsStop: () => record('deviceControl.manageDeviceRecordingsStop'),
+            manageDeviceScreenshotsList: () => record('deviceControl.manageDeviceScreenshotsList'),
+            manageDeviceScreenshotsDelete: () => record('deviceControl.manageDeviceScreenshotsDelete'),
+            manageDeviceScreenshotsCapture: () => record('deviceControl.manageDeviceScreenshotsCapture'),
+            manageDeviceTrafficSessionsCreate: () => record('deviceControl.manageDeviceTrafficSessionsCreate'),
+            manageDeviceTrafficSessionsRetrieve: () => record('deviceControl.manageDeviceTrafficSessionsRetrieve'),
+            manageDeviceTrafficSessionsList: () => record('deviceControl.manageDeviceTrafficSessionsList'),
+            manageDeviceTrafficSessionsDelete: () => record('deviceControl.manageDeviceTrafficSessionsDelete'),
+            manageDeviceMediaSessionsCreate: () => record('deviceControl.manageDeviceMediaSessionsCreate'),
+            manageDeviceMediaSessionsDelete: () => record('deviceControl.manageDeviceMediaSessionsDelete'),
+            manageDeviceMediaSessionsActivate: () => record('deviceControl.manageDeviceMediaSessionsActivate'),
+            manageDeviceMediaSessionsRetrieveCurrent: () => record('deviceControl.manageDeviceMediaSessionsRetrieveCurrent'),
             rebootDevice: () => record('deviceControl.rebootDevice'),
             resetDevice: () => record('deviceControl.resetDevice'),
             renameDevice: () => record('deviceControl.renameDevice'),
@@ -189,11 +297,11 @@ async function connectedClient(backend: Backend, profile: Parameters<typeof poli
 }
 
 describe('policyForProfile', () => {
-    test('"full" registers all 35 tools', async () => {
+    test('"full" registers all 39 tools', async () => {
         const backend = stubBackend();
         const client = await connectedClient(backend, 'full');
         const { tools } = await client.listTools();
-        expect(tools).toHaveLength(35);
+        expect(tools).toHaveLength(39);
         expect(tools.map((t) => t.name).sort()).toEqual([...ALL_TOOL_NAMES].sort());
     });
 
@@ -204,7 +312,7 @@ describe('policyForProfile', () => {
         const names = tools.map((t) => t.name).sort();
         expect(names).not.toContain('create_device');
         expect(names).not.toContain('terminate_device');
-        expect(tools).toHaveLength(33);
+        expect(tools).toHaveLength(37);
         expect(names).toEqual([...ALL_TOOL_NAMES].filter((n) => n !== 'create_device' && n !== 'terminate_device').sort());
 
         // Everything else, including other mutations, stays reachable.
@@ -213,7 +321,7 @@ describe('policyForProfile', () => {
         expect(backend.calls).toContain('workflows.createAction');
     });
 
-    test('"readonly" hides create_* tools, device lifecycle tools, device_action, and manage_credentials', async () => {
+    test('"readonly" hides standalone mutations and narrows mixed bundles', async () => {
         const backend = stubBackend();
         const client = await connectedClient(backend, 'readonly');
         const { tools } = await client.listTools();
@@ -225,8 +333,6 @@ describe('policyForProfile', () => {
             'create_action',
             'create_trigger',
             'create_flow',
-            'device_action',
-            'manage_credentials',
             'run_task',
             'stop_task',
             'send_task_message',
@@ -261,6 +367,12 @@ describe('policyForProfile', () => {
                 'proxies',
                 'webhooks',
                 'workflow_events',
+                'numbers',
+                'mailboxes',
+                'messages',
+                'files',
+                'device_action',
+                'manage_credentials',
             ].sort(),
         );
     });

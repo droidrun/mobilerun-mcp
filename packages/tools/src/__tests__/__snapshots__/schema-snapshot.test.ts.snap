@@ -73,6 +73,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "confirm_upload",
             "mark_failed",
             "delete",
+            "storage_usage",
           ],
           "type": "string",
         },
@@ -91,6 +92,11 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "exclusiveMinimum": 0,
           "maximum": 100,
           "type": "integer",
+        },
+        "params": {
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object",
         },
         "platform": {
           "description": "Filter for operation=list.",
@@ -124,6 +130,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "queued",
             "available",
             "failed",
+            "pruned",
           ],
           "type": "string",
         },
@@ -325,8 +332,69 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "proxy_connect",
             "proxy_disconnect",
             "get_proxy_status",
+            "reset_location",
+            "kiosk_enable",
+            "kiosk_disable",
+            "update_profile",
           ],
           "type": "string",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "packageName": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "packageName",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "profileId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "profileId",
+              ],
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
         "proxyName": {
           "type": "string",
@@ -400,6 +468,8 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "list_users",
             "get_user",
             "list_user_connections",
+            "update_proxy",
+            "ensure_healthy",
           ],
           "type": "string",
         },
@@ -429,6 +499,41 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "exclusiveMinimum": 0,
           "maximum": 100,
           "type": "integer",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+              },
+              "required": [
+                "id",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "id",
+              ],
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
         "protocol": {
           "enum": [
@@ -523,9 +628,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "deviceType": {
           "enum": [
-            "dedicated_physical_device",
-            "dedicated_premium_device",
-            "dedicated_ios_device",
+            "android_cloud_phone",
+            "android_physical_phone",
+            "ios_stealth_phone",
+            "android_emulator",
+            "ios_simulator",
+            "device_slot",
           ],
           "type": "string",
         },
@@ -755,12 +863,88 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "keyboard_key",
             "keyboard_clear",
             "global_action",
+            "clipboard_get",
+            "clipboard_set",
+            "deep_link",
+            "browser_script",
           ],
           "type": "string",
         },
         "pacedInput": {
           "description": "tap/swipe/keyboard_write: send input with variable timing and gesture paths.",
           "type": "boolean",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "text": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "text",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "action": {
+                  "type": "string",
+                },
+                "bundleId": {
+                  "type": "string",
+                },
+                "deepLink": {
+                  "type": "string",
+                },
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "packageName": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "deepLink",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "script": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "script",
+              ],
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
         "startX": {
           "type": "number",
@@ -789,6 +973,64 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "type": "object",
     },
     "name": "device_action",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "enabled": {
+          "type": "boolean",
+        },
+        "fileId": {
+          "description": "Required for update/delete/cancel_pending/confirm/download.",
+          "type": "string",
+        },
+        "filename": {
+          "description": "Required for upload_url.",
+          "type": "string",
+        },
+        "mimeType": {
+          "description": "Required for upload_url.",
+          "type": "string",
+        },
+        "operation": {
+          "enum": [
+            "download",
+            "list",
+            "update",
+            "delete",
+            "cancel_pending",
+            "confirm",
+            "upload_url",
+          ],
+          "type": "string",
+        },
+        "sizeBytes": {
+          "description": "Required for upload_url.",
+          "type": "number",
+        },
+        "zone": {
+          "enum": [
+            "user",
+            "skills",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "files",
   },
   {
     "hasDescription": true,
@@ -1038,9 +1280,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "type": {
           "enum": [
-            "dedicated_physical_device",
-            "dedicated_premium_device",
-            "dedicated_ios_device",
+            "android_cloud_phone",
+            "android_physical_phone",
+            "ios_stealth_phone",
+            "android_emulator",
+            "ios_simulator",
+            "device_slot",
           ],
           "type": "string",
         },
@@ -1147,7 +1392,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "resource": {
           "enum": [
             "action_catalog",
-            "app_event_catalog",
             "action",
             "trigger",
             "flow",
@@ -1167,6 +1411,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "devices_api",
             "agents_api",
             "webhooks",
+            "integrations_api",
           ],
           "type": "string",
         },
@@ -1189,6 +1434,114 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "type": "object",
     },
     "name": "list_workflow_resources",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "description": "otp/messages: record this timestamp before requesting a fresh email code.",
+          "type": "string",
+        },
+        "billingPreference": {
+          "description": "create/restart: included may fall back to paid service; included_only refuses paid fallback; rent requests paid service.",
+          "enum": [
+            "included",
+            "included_only",
+            "rent",
+          ],
+          "type": "string",
+        },
+        "bindingHash": {
+          "type": "string",
+        },
+        "clientRequestId": {
+          "description": "Optional stable request key for create/connect retries.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string",
+        },
+        "connectionId": {
+          "description": "Required for connection. Identifier returned by connect.",
+          "type": "string",
+        },
+        "cursor": {
+          "type": "string",
+        },
+        "domainId": {
+          "type": "string",
+        },
+        "hasOtp": {
+          "type": "boolean",
+        },
+        "label": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "limit": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "localPart": {
+          "type": "string",
+        },
+        "mailboxId": {
+          "description": "Required for get/update/delete/uncancel/restart/disconnect/otp/messages/message.",
+          "type": "string",
+        },
+        "maxLength": {
+          "type": "number",
+        },
+        "messageId": {
+          "description": "Required for message. Opaque identifier from messages.",
+          "type": "string",
+        },
+        "minLength": {
+          "type": "number",
+        },
+        "operation": {
+          "enum": [
+            "list",
+            "capacity",
+            "create",
+            "get",
+            "update",
+            "delete",
+            "uncancel",
+            "restart",
+            "disconnect",
+            "otp",
+            "messages",
+            "message",
+            "connect",
+            "connection",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "sender": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "mailboxes",
   },
   {
     "hasDescription": true,
@@ -1243,6 +1596,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "add_field",
             "update_field",
             "delete_field",
+            "get",
           ],
           "type": "string",
         },
@@ -1250,6 +1604,22 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "maxLength": 256,
           "minLength": 1,
           "type": "string",
+        },
+        "params": {
+          "additionalProperties": false,
+          "properties": {
+            "credentialName": {
+              "type": "string",
+            },
+            "packageName": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "credentialName",
+            "packageName",
+          ],
+          "type": "object",
         },
         "value": {
           "maxLength": 4096,
@@ -1271,7 +1641,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "additionalProperties": false,
       "properties": {
         "deviceId": {
-          "description": "Required for every operation except count.",
+          "description": "Required for every operation except count and summary.",
           "type": "string",
         },
         "name": {
@@ -1280,14 +1650,361 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "operation": {
           "enum": [
+            "recordings_trajectory",
+            "recordings_video",
+            "screenshots_image",
             "reboot",
             "reset",
             "rename",
             "wait_ready",
             "get_capabilities",
             "count",
+            "stop",
+            "resume",
+            "summary",
+            "retrieve_capabilities",
+            "recordings_list",
+            "recordings_delete",
+            "recordings_screenshots",
+            "recordings_start",
+            "recordings_status",
+            "recordings_stop",
+            "screenshots_list",
+            "screenshots_delete",
+            "screenshots_capture",
+            "traffic_sessions_create",
+            "traffic_sessions_retrieve",
+            "traffic_sessions_list",
+            "traffic_sessions_delete",
+            "media_sessions_create",
+            "media_sessions_delete",
+            "media_sessions_activate",
+            "media_sessions_retrieve_current",
           ],
           "type": "string",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "recordingId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "recordingId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "recordingId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "recordingId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "screenshotId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "screenshotId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "state": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "enum": [
+                          "creating",
+                          "assigned",
+                          "ready",
+                          "rebooting",
+                          "migrating",
+                          "resetting",
+                          "terminated",
+                          "maintenance",
+                          "stopped",
+                          "unknown",
+                        ],
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "type": "string",
+                },
+                "type": {
+                  "type": "string",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "recordingId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "recordingId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "recordingId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "recordingId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                },
+                "quality": {
+                  "type": "number",
+                },
+                "retentionDays": {
+                  "type": "number",
+                },
+                "types": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "recordingId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "recordingId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "recordingId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "recordingId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "cursor": {
+                  "type": "string",
+                },
+                "limit": {
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "screenshotId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "screenshotId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "hideOverlay": {
+                  "type": "boolean",
+                },
+                "save": {
+                  "type": "boolean",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "expiresInSeconds": {
+                  "type": "number",
+                },
+                "maxBodyBytes": {
+                  "type": "number",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "sessionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "sessionId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "page": {
+                  "exclusiveMinimum": 0,
+                  "type": "integer",
+                },
+                "pageSize": {
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "sessionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "sessionId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "camera": {
+                  "type": "boolean",
+                },
+                "microphone": {
+                  "type": "boolean",
+                },
+              },
+              "required": [
+                "camera",
+                "microphone",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "controlToken": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+                "sessionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "sessionId",
+                "controlToken",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "controlToken": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+                "sessionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "sessionId",
+                "controlToken",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
       },
       "required": [
@@ -1327,11 +2044,71 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "start",
             "stop",
             "list_packages",
+            "grant_permission",
+            "revoke_permission",
+            "list_installs",
           ],
           "type": "string",
         },
         "packageName": {
           "type": "string",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "packageName": {
+                  "type": "string",
+                },
+                "permission": {
+                  "const": "POST_NOTIFICATIONS",
+                  "type": "string",
+                },
+              },
+              "required": [
+                "permission",
+                "packageName",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "packageName": {
+                  "type": "string",
+                },
+                "permission": {
+                  "const": "POST_NOTIFICATIONS",
+                  "type": "string",
+                },
+              },
+              "required": [
+                "permission",
+                "packageName",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
       },
       "required": [
@@ -1408,8 +2185,118 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "activate",
             "enable",
             "remove",
+            "set_roaming",
+            "status",
+            "apn_list",
+            "apn_select",
+            "apn_set",
           ],
           "type": "string",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "enabled": {
+                  "type": "boolean",
+                },
+              },
+              "required": [
+                "enabled",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "apnId": {
+                  "type": "number",
+                },
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "subId": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "apnId",
+                "subId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "apn": {
+                  "type": "string",
+                },
+                "displayId": {
+                  "minimum": 0,
+                  "type": "integer",
+                },
+                "mcc": {
+                  "type": "string",
+                },
+                "mnc": {
+                  "type": "string",
+                },
+                "name": {
+                  "type": "string",
+                },
+                "protocol": {
+                  "type": "string",
+                },
+                "roamingProtocol": {
+                  "type": "string",
+                },
+                "subId": {
+                  "type": "number",
+                },
+                "type": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "apn",
+                "mcc",
+                "mnc",
+                "name",
+                "protocol",
+                "roamingProtocol",
+                "subId",
+                "type",
+              ],
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
         "smDpAddr": {
           "type": "string",
@@ -1551,12 +2438,30 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "operation": {
           "enum": [
+            "execution_screenshot",
             "clone",
             "unblock",
             "add_action",
             "remove_action",
             "replace_actions",
             "execution_metrics",
+            "update",
+            "delete",
+            "activate",
+            "run",
+            "validate",
+            "verify",
+            "dry_run",
+            "capacity",
+            "delivery_options",
+            "template_context",
+            "list_repairs",
+            "update_action",
+            "delete_action",
+            "update_trigger",
+            "delete_trigger",
+            "fire_trigger",
+            "abort_execution",
           ],
           "type": "string",
         },
@@ -1576,6 +2481,750 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "type": "null",
             },
           ],
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "executionId": {
+                  "type": "string",
+                },
+                "screenshotId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "executionId",
+                "screenshotId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "cooldownScope": {
+                  "enum": [
+                    "flow",
+                    "device",
+                  ],
+                  "type": "string",
+                },
+                "cooldownSeconds": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "delivery": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "destination": {
+                          "enum": [
+                            "mobilerun",
+                            "one_drive",
+                            "google_drive",
+                          ],
+                          "type": "string",
+                        },
+                        "folder": {
+                          "type": "string",
+                        },
+                        "recording": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "filename": {
+                              "type": "string",
+                            },
+                          },
+                          "required": [
+                            "filename",
+                          ],
+                          "type": "object",
+                        },
+                        "screenshots": {},
+                      },
+                      "required": [
+                        "destination",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "description": {
+                  "type": "string",
+                },
+                "deviceIds": {
+                  "items": {
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+                "enabled": {
+                  "type": "boolean",
+                },
+                "flowId": {
+                  "type": "string",
+                },
+                "healthMonitoringEnabled": {
+                  "type": "boolean",
+                },
+                "lifecycleStatus": {
+                  "enum": [
+                    "enabled",
+                    "disabled",
+                  ],
+                  "type": "string",
+                },
+                "name": {
+                  "type": "string",
+                },
+                "notifyOnFailure": {
+                  "type": "boolean",
+                },
+                "notifyOnSuccess": {
+                  "type": "boolean",
+                },
+                "notifyWebhookId": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "recordingEnabled": {
+                  "type": "boolean",
+                },
+                "recordingPolicy": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "enum": [
+                        "off",
+                        "flow",
+                        "selected_steps",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "mode",
+                  ],
+                  "type": "object",
+                },
+                "selfHealingEnabled": {
+                  "type": "boolean",
+                },
+                "selfHealingMaxAttempts": {
+                  "type": "number",
+                },
+                "triggerId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "flowId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "flowId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "flowId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "flowId": {
+                  "type": "string",
+                },
+                "verificationExecutionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "flowId",
+                "verificationExecutionId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "captureScreenshots": {
+                  "type": "boolean",
+                },
+                "flowId": {
+                  "type": "string",
+                },
+                "payload": {
+                  "additionalProperties": {},
+                  "type": "object",
+                },
+              },
+              "required": [
+                "flowId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "actions": {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "actionId": {
+                            "type": "string",
+                          },
+                          "children": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "actionId": {
+                                  "type": "string",
+                                },
+                                "continueOnError": {
+                                  "type": "boolean",
+                                },
+                                "key": {
+                                  "type": "string",
+                                },
+                                "nameOverride": {
+                                  "type": "string",
+                                },
+                                "overrides": {
+                                  "anyOf": [
+                                    {
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "params": {
+                                          "additionalProperties": {},
+                                          "type": "object",
+                                        },
+                                      },
+                                      "type": "object",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "position": {
+                                  "type": "number",
+                                },
+                                "recordingEnabled": {
+                                  "type": "boolean",
+                                },
+                              },
+                              "required": [
+                                "actionId",
+                                "position",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
+                          "continueOnError": {
+                            "type": "boolean",
+                          },
+                          "key": {
+                            "type": "string",
+                          },
+                          "nameOverride": {
+                            "type": "string",
+                          },
+                          "overrides": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "params": {
+                                    "additionalProperties": {},
+                                    "type": "object",
+                                  },
+                                },
+                                "type": "object",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "position": {
+                            "type": "number",
+                          },
+                          "recordingEnabled": {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": [
+                          "actionId",
+                          "position",
+                        ],
+                        "type": "object",
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "continueOnError": {
+                            "type": "boolean",
+                          },
+                          "draft": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "method": {
+                                "type": "string",
+                              },
+                              "name": {
+                                "type": "string",
+                              },
+                              "params": {
+                                "additionalProperties": {},
+                                "type": "object",
+                              },
+                              "service": {
+                                "type": "string",
+                              },
+                            },
+                            "required": [
+                              "method",
+                              "name",
+                              "service",
+                            ],
+                            "type": "object",
+                          },
+                          "key": {
+                            "type": "string",
+                          },
+                          "nameOverride": {
+                            "type": "string",
+                          },
+                          "overrides": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "params": {
+                                    "additionalProperties": {},
+                                    "type": "object",
+                                  },
+                                },
+                                "type": "object",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "position": {
+                            "type": "number",
+                          },
+                          "recordingEnabled": {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": [
+                          "draft",
+                          "position",
+                        ],
+                        "type": "object",
+                      },
+                    ],
+                  },
+                  "type": "array",
+                },
+                "cooldownScope": {
+                  "enum": [
+                    "flow",
+                    "device",
+                  ],
+                  "type": "string",
+                },
+                "cooldownSeconds": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "delivery": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "destination": {
+                      "enum": [
+                        "mobilerun",
+                        "one_drive",
+                        "google_drive",
+                      ],
+                      "type": "string",
+                    },
+                    "folder": {
+                      "type": "string",
+                    },
+                    "recording": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "filename": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "filename",
+                      ],
+                      "type": "object",
+                    },
+                    "screenshots": {},
+                  },
+                  "required": [
+                    "destination",
+                  ],
+                  "type": "object",
+                },
+                "description": {
+                  "type": "string",
+                },
+                "deviceIds": {
+                  "items": {
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+                "enabled": {
+                  "type": "boolean",
+                },
+                "healthMonitoringEnabled": {
+                  "type": "boolean",
+                },
+                "name": {
+                  "type": "string",
+                },
+                "notifyOnFailure": {
+                  "type": "boolean",
+                },
+                "notifyOnSuccess": {
+                  "type": "boolean",
+                },
+                "notifyWebhookId": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "recordingEnabled": {
+                  "type": "boolean",
+                },
+                "recordingPolicy": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "enum": [
+                        "off",
+                        "flow",
+                        "selected_steps",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "mode",
+                  ],
+                  "type": "object",
+                },
+                "selfHealingEnabled": {
+                  "type": "boolean",
+                },
+                "selfHealingMaxAttempts": {
+                  "type": "number",
+                },
+                "triggerId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "actions",
+                "name",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "deviceId": {
+                  "type": "string",
+                },
+                "flowId": {
+                  "type": "string",
+                },
+                "invocationId": {
+                  "type": "string",
+                },
+                "payload": {
+                  "additionalProperties": {},
+                  "type": "object",
+                },
+              },
+              "required": [
+                "flowId",
+                "invocationId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "flowId": {
+                  "type": "string",
+                },
+                "payload": {
+                  "additionalProperties": {},
+                  "type": "object",
+                },
+              },
+              "required": [
+                "flowId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "flowId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "flowId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "templateResolutionVersion": {
+                  "type": "number",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "flowId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "flowId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "actionId": {
+                  "type": "string",
+                },
+                "description": {
+                  "type": "string",
+                },
+                "name": {
+                  "type": "string",
+                },
+                "params": {
+                  "additionalProperties": {},
+                  "type": "object",
+                },
+              },
+              "required": [
+                "actionId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "actionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "actionId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "activation": {
+                  "enum": [
+                    "event",
+                    "schedule",
+                    "custom",
+                  ],
+                  "type": "string",
+                },
+                "conditions": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "all": {
+                          "items": {},
+                          "type": "array",
+                        },
+                        "any": {
+                          "items": {},
+                          "type": "array",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "customPayloadSchema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "description": {
+                  "type": "string",
+                },
+                "eventType": {
+                  "type": "string",
+                },
+                "name": {
+                  "type": "string",
+                },
+                "scheduleRule": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "dateTime": {
+                          "type": "string",
+                        },
+                        "expression": {
+                          "type": "string",
+                        },
+                        "jitter": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "afterMinutes": {
+                              "type": "number",
+                            },
+                            "beforeMinutes": {
+                              "type": "number",
+                            },
+                          },
+                          "type": "object",
+                        },
+                        "rrule": {
+                          "type": "string",
+                        },
+                        "type": {
+                          "enum": [
+                            "once",
+                            "cron",
+                            "recurring",
+                          ],
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "type",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "timezone": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "triggerId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "triggerId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "triggerId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "triggerId",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "payload": {
+                  "additionalProperties": {},
+                  "type": "object",
+                },
+                "triggerId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "triggerId",
+                "payload",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "executionId": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "executionId",
+              ],
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
         "parentFlowActionId": {
           "description": "Nest under this flow-action id (loop/branch parent) for operation=add_action.",
@@ -1613,11 +3262,179 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "cursorLastMessageId": {
+          "type": "string",
+        },
+        "cursorLastOccurredAt": {
+          "type": "string",
+        },
+        "direction": {
+          "enum": [
+            "all",
+            "inbound",
+            "outbound",
+          ],
+          "type": "string",
+        },
+        "esimId": {
+          "type": "string",
+        },
+        "limit": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "messageId": {
+          "description": "Required for get.",
+          "type": "string",
+        },
+        "numberId": {
+          "type": "string",
+        },
+        "operation": {
+          "enum": [
+            "list",
+            "get",
+            "conversations",
+            "mark_read",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "peerKey": {
+          "description": "Required for mark_read; canonical conversation key.",
+          "type": "string",
+        },
+        "peerNumber": {
+          "type": "string",
+        },
+        "status": {
+          "enum": [
+            "all",
+            "received",
+            "queued",
+            "claimed",
+            "sending",
+            "sent",
+            "sent_unconfirmed",
+            "delivered",
+            "failed",
+          ],
+          "type": "string",
+        },
+        "upToMessageId": {
+          "description": "Required for mark_read; inclusive cursor message id.",
+          "type": "string",
+        },
+        "upToOccurredAt": {
+          "description": "Required for mark_read; cursor timestamp paired with upToMessageId.",
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "messages",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "description": "Required SMS text for send.",
+          "type": "string",
+        },
+        "clientRequestId": {
+          "description": "Optional stable purchase request key; reuse it for retries.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string",
+        },
+        "country": {
+          "description": "Country code from countries. Required for capacity.",
+          "type": "string",
+        },
+        "deliveryReport": {
+          "type": "boolean",
+        },
+        "direction": {
+          "enum": [
+            "all",
+            "inbound",
+            "outbound",
+          ],
+          "type": "string",
+        },
+        "label": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "numberId": {
+          "description": "Required for get/update/delete/messages/send.",
+          "type": "string",
+        },
+        "operation": {
+          "enum": [
+            "countries",
+            "capacity",
+            "list",
+            "get",
+            "create",
+            "update",
+            "delete",
+            "messages",
+            "send",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "since": {
+          "type": "string",
+        },
+        "to": {
+          "description": "Required destination phone number for send.",
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "numbers",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
         "catalog": {
           "enum": [
             "models",
             "timezones",
-            "app_event_types",
           ],
           "type": "string",
         },
@@ -1640,15 +3457,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "host": {
-          "description": "Required for protocol=socks5 on create/update, or for operation=lookup.",
-          "type": "string",
-        },
-        "lookupPassword": {
-          "description": "Optional socks5 auth for operation=lookup.",
-          "type": "string",
-        },
-        "lookupUser": {
-          "description": "Optional socks5 auth for operation=lookup.",
+          "description": "Required for protocol=socks5 on create/update.",
           "type": "string",
         },
         "name": {
@@ -1662,7 +3471,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "create",
             "update",
             "delete",
-            "lookup",
           ],
           "type": "string",
         },
@@ -1671,7 +3479,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "port": {
-          "description": "Required for protocol=socks5 on create/update, or for operation=lookup.",
+          "description": "Required for protocol=socks5 on create/update.",
           "exclusiveMinimum": 0,
           "type": "integer",
         },
@@ -1884,7 +3692,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "list_deliveries",
             "get_delivery",
             "delivery_stats",
-            "list_event_types",
+            "delete",
+            "deliveries",
+            "integrations",
+            "integration_targets",
           ],
           "type": "string",
         },
@@ -1896,6 +3707,81 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "exclusiveMinimum": 0,
           "maximum": 100,
           "type": "integer",
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "id",
+              ],
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "eventId": {
+                  "type": "string",
+                },
+                "kind": {
+                  "enum": [
+                    "http",
+                    "integration",
+                  ],
+                  "type": "string",
+                },
+                "page": {
+                  "exclusiveMinimum": 0,
+                  "type": "integer",
+                },
+                "pageSize": {
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "type": "integer",
+                },
+                "since": {
+                  "type": "string",
+                },
+                "status": {
+                  "enum": [
+                    "pending",
+                    "success",
+                    "skipped",
+                    "dead",
+                  ],
+                  "type": "string",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object",
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "capabilityId": {
+                  "type": "string",
+                },
+                "revision": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "capabilityId",
+                "revision",
+              ],
+              "type": "object",
+            },
+          ],
+          "description": "Parameters for additional operations; the matching object shape is required.",
         },
         "since": {
           "description": "ISO 8601 timestamp filter for operation=delivery_stats.",
@@ -1944,7 +3830,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "enum": [
             "ingest",
             "dry_run",
-            "list_event_types",
           ],
           "type": "string",
         },
