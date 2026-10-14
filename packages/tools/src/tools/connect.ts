@@ -57,8 +57,7 @@ export const CONNECT_TABLE = [
     {
         op: 'list_countries',
         input: selectInput(CONNECT_INPUT_FIELDS, ['type', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 0,
             text: 'Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound `proxies` tool). Operations: list_countries, ',
@@ -71,8 +70,7 @@ export const CONNECT_TABLE = [
     {
         op: 'list_proxies',
         input: selectInput(CONNECT_INPUT_FIELDS, ['country', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'list_proxies, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
@@ -82,8 +80,7 @@ export const CONNECT_TABLE = [
     {
         op: 'get_proxy',
         input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'get_proxy, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -94,8 +91,7 @@ export const CONNECT_TABLE = [
     {
         op: 'buy_proxy',
         input: selectInput(CONNECT_INPUT_FIELDS, ['country', 'type']),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 3, text: 'buy_proxy (billed — provisions and bills a residential proxy), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -109,8 +105,7 @@ export const CONNECT_TABLE = [
     {
         op: 'cancel_proxy',
         input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId']),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 4, text: 'cancel_proxy (ends a billed proxy), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -122,8 +117,7 @@ export const CONNECT_TABLE = [
     {
         op: 'ping_proxy',
         input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 5, text: 'ping_proxy (cached latency), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -140,8 +134,7 @@ export const CONNECT_TABLE = [
             'pageSize',
             ...Object.keys(connectionFilterShape),
         ]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 6, text: "list_connections (a proxy's connection history), " },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -155,8 +148,7 @@ export const CONNECT_TABLE = [
     {
         op: 'list_users',
         input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 7, text: 'list_users, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
@@ -166,8 +158,7 @@ export const CONNECT_TABLE = [
     {
         op: 'get_user',
         input: selectInput(CONNECT_INPUT_FIELDS, ['userId']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 8, text: 'get_user, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -184,8 +175,7 @@ export const CONNECT_TABLE = [
             'pageSize',
             ...Object.keys(connectionFilterShape),
         ]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 9, text: "list_user_connections (a user's connection history). Additional operations: " },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -199,8 +189,7 @@ export const CONNECT_TABLE = [
     {
         op: 'update_proxy',
         input: selectInput(CONNECT_INPUT_FIELDS, [...Object.keys(connectUpdateProxySchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 10, text: 'update_proxy: Update a residential proxy label. ' },
         run: async (ctx, input) => {
             return ctx.backend.connect.connectUpdateProxy(connectUpdateProxySchema.strip().parse(input));
@@ -209,8 +198,7 @@ export const CONNECT_TABLE = [
     {
         op: 'ensure_healthy',
         input: selectInput(CONNECT_INPUT_FIELDS, [...Object.keys(connectEnsureHealthySchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 11, text: 'ensure_healthy: Repair an unhealthy residential proxy.' },
         run: async (ctx, input) => {
             return ctx.backend.connect.connectEnsureHealthy(connectEnsureHealthySchema.strip().parse(input));

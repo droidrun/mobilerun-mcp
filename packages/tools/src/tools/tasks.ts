@@ -72,8 +72,7 @@ export const GET_TASK_TABLE = [
     {
         op: 'summary',
         input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'Fetch one task by id, chosen via `view`: summary (full record, minus ' },
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
@@ -83,8 +82,7 @@ export const GET_TASK_TABLE = [
     {
         op: 'status',
         input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 2,
             text: 'status (lightweight polling: status/message/output/steps/succeeded), trajectory (paged agent event log — capped per call, page with `offset`/the returned `nextOffset`). Poll status or trajectory to follow a running task.',
@@ -97,8 +95,7 @@ export const GET_TASK_TABLE = [
     {
         op: 'trajectory',
         input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'trajectory), ' },
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
@@ -115,16 +112,14 @@ export const GET_TASK_MEDIA_TABLE = [
     {
         op: 'screenshot',
         input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: "Fetch a task's captured media, chosen via `kind` (screenshot | " },
         run: executeTaskMediaOperation,
     },
     {
         op: 'ui_state',
         input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 1,
             text: "ui_state). Omit `index` to list all available URLs for that kind; pass `index` to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.",

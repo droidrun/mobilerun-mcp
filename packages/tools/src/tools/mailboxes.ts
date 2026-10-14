@@ -67,8 +67,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'list',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesListSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'list: List owned mailboxes. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -79,8 +78,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'capacity',
         input: selectInput(MAILBOXES_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'capacity: Read included mailbox capacity. ' },
         run: async (ctx, raw) => {
             const backend = ctx.backend.mailboxes;
@@ -90,8 +88,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'create',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesCreateSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 2, text: 'create: Create a mailbox; may start paid service. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -108,8 +105,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'get',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesGetSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 3, text: 'get: Read a mailbox. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -120,8 +116,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'update',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesUpdateSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'update: Update the mailbox label. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -132,8 +127,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'delete',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesDeleteSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 5, text: 'delete: Cancel a pending mailbox or schedule paid cancellation. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -144,8 +138,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'uncancel',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesUncancelSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 6, text: 'uncancel: Withdraw a scheduled cancellation and continue service. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -156,8 +149,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'restart',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesRestartSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 7, text: 'restart: Restart an archived mailbox; may start paid service. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -168,8 +160,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'disconnect',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesDisconnectSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 8, text: 'disconnect: Disconnect an external inbox link. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -180,8 +171,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'otp',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesOtpSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 9, text: 'otp: Read a recent email code; set after before requesting the code. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -192,8 +182,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'messages',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesMessagesSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 10, text: 'messages: Read recent email summaries. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -204,8 +193,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'message',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesMessageSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 11, text: 'message: Read a single email with attachment metadata. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -216,8 +204,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'connect',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesConnectSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 12,
             text: 'connect: Link an external inbox; the user completes consent using the returned redirect URL. ',
@@ -231,8 +218,7 @@ export const MAILBOXES_TABLE = [
     {
         op: 'connection',
         input: selectInput(MAILBOXES_INPUT_FIELDS, [...Object.keys(mailboxesConnectionSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 13, text: 'connection: Read the connection status after consent.' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;

@@ -58,8 +58,7 @@ export const DEVICE_ACTION_TABLE = [
         op: 'tap',
         input: selectInput(DEVICE_ACTION_INPUT_FIELDS, [...['x', 'y', 'pacedInput'], 'displayId']),
         fieldOrder: 4,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 0, text: 'Low-level device input. Operations: tap (x, y), ' },
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
@@ -83,8 +82,7 @@ export const DEVICE_ACTION_TABLE = [
             'displayId',
         ]),
         fieldOrder: 5,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 1, text: 'swipe (startX, startY, endX, endY, duration ms), ' },
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
@@ -111,8 +109,7 @@ export const DEVICE_ACTION_TABLE = [
             'displayId',
         ]),
         fieldOrder: 6,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 2, text: 'keyboard_write (text, clear?, errorRate?, wpm?, pacedInput?), ' },
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
@@ -135,8 +132,7 @@ export const DEVICE_ACTION_TABLE = [
         op: 'keyboard_key',
         input: selectInput(DEVICE_ACTION_INPUT_FIELDS, [...['key'], 'displayId']),
         fieldOrder: 7,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'keyboard_key (key: Android keycode), ' },
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
@@ -154,8 +150,7 @@ export const DEVICE_ACTION_TABLE = [
         op: 'keyboard_clear',
         input: selectInput(DEVICE_ACTION_INPUT_FIELDS, [...[], 'displayId']),
         fieldOrder: 8,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'keyboard_clear, ' },
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
@@ -169,8 +164,7 @@ export const DEVICE_ACTION_TABLE = [
         op: 'global_action',
         input: selectInput(DEVICE_ACTION_INPUT_FIELDS, [...['action'], 'displayId']),
         fieldOrder: 9,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 5,
             text: 'global_action (action: Android global-action code, e.g. back/home/recents). `pacedInput` (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call `displayId` targets a specific display on multi-display devices. Additional operations: ',
@@ -198,8 +192,7 @@ export const DEVICE_ACTION_TABLE = [
         ]),
         fieldOrder: 0,
         fieldRepeats: ['displayId'],
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 6, text: 'clipboard_get: Read clipboard text. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -218,8 +211,7 @@ export const DEVICE_ACTION_TABLE = [
         ]),
         fieldOrder: 1,
         fieldRepeats: ['displayId'],
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 7, text: 'clipboard_set: Write clipboard text. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -235,8 +227,7 @@ export const DEVICE_ACTION_TABLE = [
         input: selectInput(DEVICE_ACTION_INPUT_FIELDS, [...Object.keys(deviceActionDeepLinkSchema.shape), 'displayId']),
         fieldOrder: 2,
         fieldRepeats: ['displayId'],
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 8, text: 'deep_link: Open a URL or app link. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -255,8 +246,7 @@ export const DEVICE_ACTION_TABLE = [
         ]),
         fieldOrder: 3,
         fieldRepeats: ['displayId'],
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 9, text: 'browser_script: Run a script in the device browser.' },
         run: async (ctx, input) => {
             return asTextResult(

@@ -49,8 +49,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'countries',
         input: selectInput(NUMBERS_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'countries: List available countries and number availability. ' },
         run: async (ctx, raw) => {
             const backend = ctx.backend.numbers;
@@ -60,8 +59,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'capacity',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersCapacitySchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'capacity: Read included number capacity for a country. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -72,8 +70,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'list',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersListSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'list: List owned phone numbers. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -84,8 +81,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'get',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersGetSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 3, text: 'get: Read one phone number. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -96,8 +92,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'create',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersCreateSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: {
             order: 4,
             text: 'create: Create a phone number. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status. ',
@@ -117,8 +112,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'update',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersUpdateSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 5, text: 'update: Update the display label. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -129,8 +123,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'delete',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersDeleteSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 6, text: 'delete: Cancel a pending purchase or schedule cancellation of a paid number. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -141,8 +134,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'messages',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersMessagesSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 7, text: 'messages: Read SMS for one number, optionally filtered by direction or time. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -153,8 +145,7 @@ export const NUMBERS_TABLE = [
     {
         op: 'send',
         input: selectInput(NUMBERS_INPUT_FIELDS, [...Object.keys(numbersSendSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 8, text: 'send: Send an SMS from an active number; charges and limits may apply.' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;

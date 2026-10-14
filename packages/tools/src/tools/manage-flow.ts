@@ -134,8 +134,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'execution_screenshot',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowExecutionScreenshotSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 23, text: 'execution_screenshot: Read a short-lived signed download URL.' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowExecutionScreenshot(
@@ -146,8 +145,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'clone',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId', 'name', 'deviceIds']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 0,
             text: 'Flow lifecycle operations beyond create_flow. Operations: clone (flowId, optional name/deviceIds — copies a flow), ',
@@ -162,8 +160,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'unblock',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 1,
             text: 'unblock (flowId — clears blocked status after fixing the underlying issue, idempotent), ',
@@ -187,8 +184,7 @@ export const MANAGE_FLOW_TABLE = [
             'parentFlowActionId',
             'children',
         ]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 2,
             text: 'add_action (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children — key is derived from the step if omitted), ',
@@ -213,8 +209,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'remove_action',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowActionId', 'flowId']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'remove_action (flowActionId, flowId), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -228,8 +223,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'replace_actions',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId', 'actions']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 4,
             text: "replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action's optional key is carried over from the existing step matching flowActionId, or at the same position with the same actionId, when omitted, and derived for genuinely new steps; when reordering or inserting steps, pass key or flowActionId for every step you are keeping so it is recognized as an existing step), ",
@@ -257,8 +251,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'execution_metrics',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId', 'triggerId', 'from', 'to']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 5,
             text: 'execution_metrics (optional flowId/triggerId/from/to — aggregate execution stats, not a single execution; use get_workflow_resource(resource="execution") for one execution). Check the flow\'s templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action\'s overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the triggering event); older flows use name/slug-based references instead. Use ',
@@ -276,8 +269,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'update',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowUpdateSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 7, text: 'update: Update flow configuration. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowUpdate(manageFlowUpdateSchema.strip().parse(input));
@@ -286,8 +278,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'delete',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeleteSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 8, text: 'delete: Delete a flow. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDelete(manageFlowDeleteSchema.strip().parse(input));
@@ -296,8 +287,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'activate',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowActivateSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 9, text: 'activate: Activate a flow; may start paid automation. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowActivate(manageFlowActivateSchema.strip().parse(input));
@@ -306,8 +296,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'run',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowRunSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 10, text: 'run: Start a flow execution; usage may be billed. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowRun(manageFlowRunSchema.strip().parse(input));
@@ -316,8 +305,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'validate',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowValidateSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 11, text: 'validate: Validate a draft flow without saving it. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowValidate(manageFlowValidateSchema.strip().parse(input));
@@ -326,8 +314,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'verify',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowVerifySchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: {
             order: 12,
             text: 'verify: Verify flow configuration. dry_run: Simulate a flow without executing actions. ',
@@ -339,8 +326,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'dry_run',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDryRunSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 6,
             text: 'dry_run to simulate one flow, or workflow_events(operation="dry_run") to simulate event routing without side effects. Additional operations: ',
@@ -352,8 +338,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'capacity',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 13, text: 'capacity: Read included flow capacity. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowCapacity();
@@ -362,8 +347,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'delivery_options',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeliveryOptionsSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 14, text: 'delivery_options: Read available delivery options. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDeliveryOptions(
@@ -374,8 +358,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'template_context',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowTemplateContextSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 15, text: 'template_context: Read template variables. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowTemplateContext(
@@ -386,8 +369,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'list_repairs',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowListRepairsSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 16, text: 'list_repairs: Read suggested flow repairs. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowListRepairs(manageFlowListRepairsSchema.strip().parse(input));
@@ -396,8 +378,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'update_action',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowUpdateActionSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 17, text: 'update_action: Update a workflow action. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowUpdateAction(manageFlowUpdateActionSchema.strip().parse(input));
@@ -406,8 +387,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'delete_action',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeleteActionSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 18, text: 'delete_action: Delete a workflow action. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDeleteAction(manageFlowDeleteActionSchema.strip().parse(input));
@@ -416,8 +396,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'update_trigger',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowUpdateTriggerSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 19, text: 'update_trigger: Update a workflow trigger. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowUpdateTrigger(manageFlowUpdateTriggerSchema.strip().parse(input));
@@ -426,8 +405,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'delete_trigger',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeleteTriggerSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 20, text: 'delete_trigger: Delete a workflow trigger. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDeleteTrigger(manageFlowDeleteTriggerSchema.strip().parse(input));
@@ -436,8 +414,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'fire_trigger',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowFireTriggerSchema.shape)]),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 21, text: 'fire_trigger: Fire a workflow trigger. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowFireTrigger(manageFlowFireTriggerSchema.strip().parse(input));
@@ -446,8 +423,7 @@ export const MANAGE_FLOW_TABLE = [
     {
         op: 'abort_execution',
         input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowAbortExecutionSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 22, text: 'abort_execution: Abort a running execution. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowAbortExecution(manageFlowAbortExecutionSchema.strip().parse(input));

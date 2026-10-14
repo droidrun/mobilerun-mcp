@@ -46,8 +46,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'create',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['url', 'eventTypes', 'description']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 1, text: 'create (url; returns one-time secret + endpoint id), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -66,8 +65,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'list',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['status', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'list, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.webhooks;
@@ -81,8 +79,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'get',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 3, text: 'get, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -94,8 +91,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'update',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId', 'eventTypes', 'state', 'description']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'update, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -115,8 +111,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'rotate_secret',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 5, text: 'rotate_secret (explicit consent; returns one-time secret), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -132,8 +127,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'test',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 6, text: 'test, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -145,8 +139,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'list_deliveries',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 7, text: 'list_deliveries, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -158,8 +151,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'get_delivery',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId', 'deliveryId']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 8, text: 'get_delivery, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -172,8 +164,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'delivery_stats',
         input: selectInput(WEBHOOK_INPUT_FIELDS, ['since']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 9,
             text: 'delivery_stats (account-wide aggregate, optional `since`). Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery—verify by eventId in delivery records. Additional operations: ',
@@ -186,8 +177,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'delete',
         input: selectInput(WEBHOOK_INPUT_FIELDS, [...Object.keys(webhooksDeleteSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 10,
             text: 'delete: Delete a webhook subscription. deliveries: Read deliveries across all subscriptions. ',
@@ -199,8 +189,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'deliveries',
         input: selectInput(WEBHOOK_INPUT_FIELDS, [...Object.keys(webhooksDeliveriesSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'Manage outbound customer webhooks and inspect deliveries. Operations: ' },
         run: async (ctx, input) => {
             return ctx.backend.webhooks.webhooksDeliveries(webhooksDeliveriesSchema.strip().parse(input));
@@ -209,8 +198,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'integrations',
         input: selectInput(WEBHOOK_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 11, text: 'integrations: Read connected delivery integrations. ' },
         run: async (ctx, input) => {
             return ctx.backend.webhooks.webhooksIntegrations();
@@ -219,8 +207,7 @@ export const WEBHOOK_TABLE = [
     {
         op: 'integration_targets',
         input: selectInput(WEBHOOK_INPUT_FIELDS, [...Object.keys(webhooksIntegrationTargetsSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 12, text: 'integration_targets: Read delivery targets for an integration.' },
         run: async (ctx, input) => {
             return ctx.backend.webhooks.webhooksIntegrationTargets(

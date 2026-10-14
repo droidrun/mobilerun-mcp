@@ -90,8 +90,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 0,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 11, text: 'recordings_trajectory return short-lived signed download URLs.' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -109,8 +108,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 1,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 10, text: 'recordings_video and ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -128,8 +126,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 2,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 9, text: 'screenshots_image, ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -144,8 +141,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'reboot',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
         fieldOrder: 24,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 0, text: 'Device lifecycle operations. Operations: reboot, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -159,8 +155,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'reset',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
         fieldOrder: 25,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 1, text: 'reset (factory-reset to a fresh state — destructive), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -174,8 +169,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'rename',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [...['name'], 'deviceId']),
         fieldOrder: 26,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 2, text: 'rename (needs name), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -191,8 +185,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'wait_ready',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
         fieldOrder: 27,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 3, text: 'wait_ready (blocks until state=ready), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -207,8 +200,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'get_capabilities',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
         fieldOrder: 28,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 4, text: 'get_capabilities (device profile: carrier, display, identifiers, model), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -221,8 +213,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'count',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 29,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 5, text: 'count (claimed-device counts by state — no deviceId). ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.deviceControl;
@@ -233,8 +224,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'stop',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [...Object.keys(manageDeviceStopSchema.shape), 'deviceId']),
         fieldOrder: 3,
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 6, text: 'stop/' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -248,8 +238,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'resume',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [...Object.keys(manageDeviceResumeSchema.shape), 'deviceId']),
         fieldOrder: 4,
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 7, text: 'resume affect device billing. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -263,8 +252,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'summary',
         input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, Object.keys(manageDeviceSummarySchema.shape)),
         fieldOrder: 5,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 8,
             text: 'summary reads account usage without deviceId. Recordings support list, start, stop, status, deletion and screenshot metadata. Screenshot capture returns a PNG image up to 256 KB; save stores device media. Traffic sessions capture network activity; media sessions control camera and microphone streams. ',
@@ -282,8 +270,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 6,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 24, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -300,8 +287,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 7,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 25, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -319,8 +305,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 8,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 26, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -338,8 +323,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 9,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 27, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -357,8 +341,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 10,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 28, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -376,8 +359,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 11,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 29, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -395,8 +377,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 12,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 30, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -414,8 +395,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 13,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 31, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -433,8 +413,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 14,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 32, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -452,8 +431,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 15,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 33, text: '' },
         run: async (ctx, input) => {
             return asImageResult(
@@ -471,8 +449,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 16,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 34, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -490,8 +467,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 17,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 35, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -512,8 +488,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 18,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 36, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -534,8 +509,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 19,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 37, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -553,8 +527,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 20,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 38, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -572,8 +545,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 21,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 39, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -591,8 +563,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 22,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 40, text: '' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -610,8 +581,7 @@ export const MANAGE_DEVICE_TABLE = [
             'deviceId',
         ]),
         fieldOrder: 23,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 41, text: '' },
         run: async (ctx, input) => {
             return asTextResult(

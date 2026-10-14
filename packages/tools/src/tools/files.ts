@@ -36,8 +36,7 @@ export const FILES_TABLE = [
     {
         op: 'download',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesDownloadSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 6, text: 'download: Read a short-lived signed download URL.' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -48,8 +47,7 @@ export const FILES_TABLE = [
     {
         op: 'list',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesListSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'list: List organization files. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -60,8 +58,7 @@ export const FILES_TABLE = [
     {
         op: 'update',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesUpdateSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 1, text: 'update: Update file metadata. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -72,8 +69,7 @@ export const FILES_TABLE = [
     {
         op: 'delete',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesDeleteSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 2, text: 'delete: Delete a file. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -84,8 +80,7 @@ export const FILES_TABLE = [
     {
         op: 'cancel_pending',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesCancelPendingSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'cancel_pending: Cancel a pending file upload. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -96,8 +91,7 @@ export const FILES_TABLE = [
     {
         op: 'confirm',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesConfirmSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'confirm: Confirm an uploaded file. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -108,8 +102,7 @@ export const FILES_TABLE = [
     {
         op: 'upload_url',
         input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesUploadUrlSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 5,
             text: 'upload_url: Create a signed upload URL; upload bytes to the URL outside this tool. ',

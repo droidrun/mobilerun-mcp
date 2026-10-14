@@ -9,8 +9,9 @@ export type Operation<Input, Result = unknown> = {
     fieldOrder?: number;
     /** Preserve repeated legacy allowlist entries in validation error text. */
     fieldRepeats?: readonly string[];
-    readonly: boolean;
-    billed: boolean;
+    access: 'read' | 'write' | 'commerce';
+    /** Assistant writes retain their existing full-profile gate. */
+    fullOnly?: boolean;
     /** Ordered fragments preserve existing prose even when enum and prose orders differ. */
     describe: {
         order: number;
@@ -20,7 +21,7 @@ export type Operation<Input, Result = unknown> = {
 };
 type SurfaceOperation = Pick<
     Operation<never>,
-    'op' | 'input' | 'readonly' | 'billed' | 'describe' | 'fieldOrder' | 'fieldRepeats'
+    'op' | 'input' | 'access' | 'fullOnly' | 'describe' | 'fieldOrder' | 'fieldRepeats'
 >;
 export function operationValues<T extends SurfaceOperation>(table: readonly T[]): [T['op'], ...T['op'][]] {
     if (table.length === 0) throw new Error('An operation table must not be empty');

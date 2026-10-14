@@ -35,7 +35,7 @@ function bundleOperations(profile: 'readonly' | 'no-commerce'): ReadonlyMap<stri
     const entries: Array<[string, ReadonlySet<string>]> = [];
     for (const [name, { operations }] of Object.entries(BUNDLE_TOOLS)) {
         const allowed = operations.filter((operation) =>
-            profile === 'readonly' ? operation.readonly : !operation.billed,
+            profile === 'readonly' ? operation.access === 'read' : operation.access !== 'commerce' && !('fullOnly' in operation && operation.fullOnly),
         );
         // readonly includes a bundle only if it has reads; no-commerce needs a gate only for billed operations.
         if (

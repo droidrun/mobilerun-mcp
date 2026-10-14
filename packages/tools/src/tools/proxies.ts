@@ -32,8 +32,7 @@ export const PROXIES_TABLE = [
     {
         op: 'list',
         input: selectInput(PROXIES_INPUT_FIELDS, ['protocol']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 0,
             text: 'Manage device-bound proxy configs (socks5 or wireguard) — the outbound network path a device can be assigned. Operations: list, ',
@@ -46,8 +45,7 @@ export const PROXIES_TABLE = [
     {
         op: 'get',
         input: selectInput(PROXIES_INPUT_FIELDS, ['proxyId']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'get, ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -59,8 +57,7 @@ export const PROXIES_TABLE = [
     {
         op: 'create',
         input: selectInput(PROXIES_INPUT_FIELDS, ['protocol', 'name', 'host', 'port', 'user', 'password', 'config']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 2,
             text: 'create (protocol + either socks5:{host,port,user,password} or wireguard:{config}, both also need name), ',
@@ -83,8 +80,7 @@ export const PROXIES_TABLE = [
             'password',
             'config',
         ]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'update (same shape as create), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -96,8 +92,7 @@ export const PROXIES_TABLE = [
     {
         op: 'delete',
         input: selectInput(PROXIES_INPUT_FIELDS, ['proxyId']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'delete.' },
         run: async (ctx, input) => {
             const { operation } = input;

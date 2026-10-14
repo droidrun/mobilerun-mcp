@@ -19,8 +19,7 @@ export const PLATFORM_CATALOG_TABLE = [
     {
         op: 'models',
         input: selectInput(PLATFORM_CATALOG_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 0,
             text: 'Read-only platform reference data, chosen via `catalog`: models (available LLM model ids), ',
@@ -30,8 +29,7 @@ export const PLATFORM_CATALOG_TABLE = [
     {
         op: 'timezones',
         input: selectInput(PLATFORM_CATALOG_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 1,
             text: "timezones (supported IANA timezone strings — use for workflows create_trigger scheduleRule's timezone field).",

@@ -65,8 +65,7 @@ export const APPS_TABLE = [
     {
         op: 'list',
         input: selectInput(APPS_INPUT_FIELDS, ['query', 'platform', 'status', 'sortBy', 'order', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'list, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.apps;
@@ -84,8 +83,7 @@ export const APPS_TABLE = [
     {
         op: 'get',
         input: selectInput(APPS_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'get, versions (all versions visible to the user), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -97,8 +95,7 @@ export const APPS_TABLE = [
     {
         op: 'versions',
         input: selectInput(APPS_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'Manage uploaded apps (APKs) and inspect versions. Operations: ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -123,8 +120,7 @@ export const APPS_TABLE = [
             'iconURL',
             'targetSdk',
         ]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 3,
             text: 'create_upload_url (starts the 3-step upload flow: returns pre-signed upload URLs per file — PUT the raw file bytes to those URLs yourself, outside this tool, then call ',
@@ -151,8 +147,7 @@ export const APPS_TABLE = [
     {
         op: 'confirm_upload',
         input: selectInput(APPS_INPUT_FIELDS, ['id']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'confirm_upload; call ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -164,8 +159,7 @@ export const APPS_TABLE = [
     {
         op: 'mark_failed',
         input: selectInput(APPS_INPUT_FIELDS, ['id']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 5,
             text: 'mark_failed instead if the PUT fails or is abandoned), confirm_upload, mark_failed, ',
@@ -180,8 +174,7 @@ export const APPS_TABLE = [
     {
         op: 'delete',
         input: selectInput(APPS_INPUT_FIELDS, ['id']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 6, text: 'delete. Additional operations: ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -193,8 +186,7 @@ export const APPS_TABLE = [
     {
         op: 'storage_usage',
         input: selectInput(APPS_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 7, text: 'storage_usage: Read app storage usage.' },
         run: async (ctx, input) => {
             return ctx.backend.apps.appsStorageUsage();

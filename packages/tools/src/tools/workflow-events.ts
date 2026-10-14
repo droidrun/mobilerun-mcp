@@ -23,8 +23,7 @@ export const WORKFLOW_EVENTS_TABLE = [
     {
         op: 'ingest',
         input: selectInput(WORKFLOW_EVENTS_INPUT_FIELDS, ['eventType', 'payload']),
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: {
             order: 0,
             text: 'Ingest and simulate custom app/system events for trigger evaluation. Operations: ingest (eventType, optional payload — enqueues for trigger evaluation, returns immediately with an eventId), ',
@@ -39,8 +38,7 @@ export const WORKFLOW_EVENTS_TABLE = [
     {
         op: 'dry_run',
         input: selectInput(WORKFLOW_EVENTS_INPUT_FIELDS, ['eventType', 'payload']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 1,
             text: 'dry_run (eventType, optional payload — simulates against ALL configured flows, no side effects: returns which flows would fire, their gates, and payload validation errors). Confirm eventType and payload shape before ingesting an event.',

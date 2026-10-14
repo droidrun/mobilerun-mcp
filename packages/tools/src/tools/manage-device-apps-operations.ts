@@ -32,8 +32,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'install',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName', 'bundleId']),
         fieldOrder: 3,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 0,
             text: 'Mutate apps on a device. Operations: install (packageName and/or bundleId — at least one), ',
@@ -52,8 +51,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'delete',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName']),
         fieldOrder: 4,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 1, text: 'delete (packageName), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -68,8 +66,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'start',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName', 'activity']),
         fieldOrder: 5,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 2, text: 'start (packageName, activity?), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -84,8 +81,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'stop',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName']),
         fieldOrder: 6,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'stop (packageName), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -100,8 +96,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'list_packages',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['includeSystemPackages', 'includeProtectedPackages']),
         fieldOrder: 7,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 4,
             text: 'list_packages (raw installed package names, includeSystemPackages?, includeProtectedPackages?). Read app metadata (label, versions) via list_apps_on_device instead. Additional operations: ',
@@ -121,8 +116,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'grant_permission',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, Object.keys(manageDeviceAppsGrantPermissionSchema.shape)),
         fieldOrder: 0,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 5, text: 'grant_permission: Grant an app notification permission. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -137,8 +131,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'revoke_permission',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, Object.keys(manageDeviceAppsRevokePermissionSchema.shape)),
         fieldOrder: 1,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 6, text: 'revoke_permission: Revoke an app notification permission. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -153,8 +146,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'list_installs',
         input: selectInput(MANAGE_APPS_INPUT_FIELDS, Object.keys(manageDeviceAppsListInstallsSchema.shape)),
         fieldOrder: 2,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 7, text: 'list_installs: Read app installation jobs.' },
         run: async (ctx, input) => {
             return asTextResult(

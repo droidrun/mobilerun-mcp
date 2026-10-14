@@ -69,8 +69,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'init_package',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 0,
             text: 'Write path for the credentials vault (see list_credentials/list_credential_packages for reads). Operations: init_package (packageName — create a new app package before its first credential), ',
@@ -86,8 +85,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'create_credential',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fields']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 1, text: 'create_credential (packageName, credentialName, fields[{fieldType, value}]), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -103,8 +101,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'delete_credential',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 2, text: 'delete_credential (packageName, credentialName), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -122,8 +119,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'add_field',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fieldType', 'value']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'add_field (packageName, credentialName, fieldType, value), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -147,8 +143,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'update_field',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fieldType', 'value']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'update_field (packageName, credentialName, fieldType, value), ' },
         run: async (ctx, input) => {
             const { operation } = input;
@@ -172,8 +167,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'delete_field',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fieldType']),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 5,
             text: 'delete_field (packageName, credentialName, fieldType). Field values are write-only: every response returns metadata only (fieldType, never the plaintext value) — keep the value you sent yourself if you need it again. Additional operations: ',
@@ -195,8 +189,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
     {
         op: 'get',
         input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, [...Object.keys(manageCredentialsGetSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 6, text: 'get: Read credential metadata; secret values stay in storage.' },
         run: async (ctx, input) => {
             return ctx.backend.credentials.manageCredentialsGet(manageCredentialsGetSchema.strip().parse(input));

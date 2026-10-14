@@ -40,8 +40,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
     {
         op: 'action_catalog',
         input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['service']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 0,
             text: 'List one kind of workflow resource, chosen via `resource`. Each resource accepts only its own filter subset — a filter only valid for a DIFFERENT resource is rejected naming what is allowed here. `resource` values:\n- action_catalog (filters: ',
@@ -55,8 +54,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
     {
         op: 'action',
         input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['service', 'search', 'page', 'pageSize']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 2,
             text: 'action (filters: service, search, page, pageSize): the user\'s saved actions (configured catalog instances) — slim overview; call get_workflow_resource(resource="action") for full params.\n- ',
@@ -83,8 +81,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
             'page',
             'pageSize',
         ]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 3,
             text: "trigger (filters: activation, eventType, search, page, pageSize): the user's triggers.\n- ",
@@ -112,8 +109,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
             'page',
             'pageSize',
         ]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 4,
             text: "flow (filters: enabled, search, triggerId, page, pageSize): the user's automation flows.\n- ",
@@ -135,8 +131,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
     {
         op: 'execution',
         input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['flowId', 'triggerId', 'status', 'limit']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 5,
             text: 'execution (filters: flowId, triggerId, status, limit): flow executions.\n- service (no filters): the workflow-action service identifiers (e.g. tasks_api, devices_api) usable as the `service` filter elsewhere in this tool.\n- ',
@@ -157,8 +152,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
     {
         op: 'service',
         input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, []),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'service): every available workflow step.\n- ' },
         required: [],
         run: async (ctx, input) => {
@@ -168,8 +162,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
     {
         op: 'service_methods',
         input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['service']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 6,
             text: 'service_methods (filter REQUIRED: service): the methods a given service supports, each with its param schema — background info on what an action_catalog entry for that service can do.',
@@ -189,8 +182,7 @@ export const GET_WORKFLOW_RESOURCE_TABLE = [
     {
         op: 'action_catalog',
         input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'Fetch one workflow resource by id, chosen via `resource` (action_catalog | ' },
         run: async (ctx, input) => {
             const { id } = input;
@@ -200,8 +192,7 @@ export const GET_WORKFLOW_RESOURCE_TABLE = [
     {
         op: 'action',
         input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'action | ' },
         run: async (ctx, input) => {
             const { id } = input;
@@ -211,8 +202,7 @@ export const GET_WORKFLOW_RESOURCE_TABLE = [
     {
         op: 'trigger',
         input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'trigger | ' },
         run: async (ctx, input) => {
             const { id } = input;
@@ -222,8 +212,7 @@ export const GET_WORKFLOW_RESOURCE_TABLE = [
     {
         op: 'flow',
         input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 3, text: 'flow | ' },
         run: async (ctx, input) => {
             const { id } = input;
@@ -233,8 +222,7 @@ export const GET_WORKFLOW_RESOURCE_TABLE = [
     {
         op: 'execution',
         input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 4, text: 'execution). Returns full config/params, unlike the slim list projections.' },
         run: async (ctx, input) => {
             const { id } = input;

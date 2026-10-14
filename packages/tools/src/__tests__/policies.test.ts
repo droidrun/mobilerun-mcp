@@ -363,8 +363,7 @@ test('every enumerated tool operation has one complete table classification', as
             expect(schema.enum).toEqual(operations.map(({ op }) => op));
             expect(new Set(operations.map(({ op }) => op)).size).toBe(operations.length);
             for (const operation of operations) {
-                expect(typeof operation.readonly).toBe('boolean');
-                expect(typeof operation.billed).toBe('boolean');
+                expect(['read', 'write', 'commerce']).toContain(operation.access);
             }
         }
         for (const [profile, count] of [

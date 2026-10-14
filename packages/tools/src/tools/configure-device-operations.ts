@@ -41,8 +41,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'get_language',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 4,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'Read/write device settings. Operations: get_language/' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -54,8 +53,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'set_language',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['locale', 'restart']),
         fieldOrder: 5,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 1,
             text: 'set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), ',
@@ -74,8 +72,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'get_timezone',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 6,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'get_timezone/' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -87,8 +84,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'set_timezone',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['timezone']),
         fieldOrder: 7,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'set_timezone (IANA tz), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -104,8 +100,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'get_location',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 8,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 4, text: 'get_location/' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -117,8 +112,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'set_location',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['latitude', 'longitude']),
         fieldOrder: 9,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 5, text: 'set_location (latitude, longitude), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -134,8 +128,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'get_time',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 10,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 6, text: 'get_time (read-only device clock), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -147,8 +140,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'get_overlay',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 11,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 7, text: 'get_overlay/' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -160,8 +152,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'set_overlay',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['visible']),
         fieldOrder: 12,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 8, text: 'set_overlay (visible: the on-device debug/annotation overlay), ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -184,8 +175,7 @@ export const CONFIGURE_DEVICE_TABLE = [
             'socks5Password',
         ]),
         fieldOrder: 13,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 9,
             text: 'proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy; smartIp defaults to true — aligns the device location, time zone, locale, and carrier settings with the proxy region; pass false to connect without changing device settings), ',
@@ -216,8 +206,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'proxy_disconnect',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 14,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 10, text: 'proxy_disconnect, ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -230,8 +219,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'get_proxy_status',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
         fieldOrder: 15,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 11, text: 'get_proxy_status. Additional operations: ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -243,8 +231,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'reset_location',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceResetLocationSchema.shape)),
         fieldOrder: 0,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 12, text: 'reset_location: Reset the device location. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -259,8 +246,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'kiosk_enable',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceKioskEnableSchema.shape)),
         fieldOrder: 1,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 13, text: 'kiosk_enable: Enable kiosk mode for an app. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -275,8 +261,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'kiosk_disable',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceKioskDisableSchema.shape)),
         fieldOrder: 2,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 14, text: 'kiosk_disable: Disable kiosk mode. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -291,8 +276,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'update_profile',
         input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceUpdateProfileSchema.shape)),
         fieldOrder: 3,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 15, text: 'update_profile: Update device profile settings.' },
         run: async (ctx, input) => {
             return asTextResult(

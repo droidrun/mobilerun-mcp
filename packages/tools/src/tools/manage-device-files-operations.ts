@@ -27,8 +27,7 @@ export const MANAGE_FILES_TABLE = [
         op: 'list',
         input: selectInput(MANAGE_FILES_INPUT_FIELDS, []),
         fieldOrder: 0,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'Device filesystem access. Operations: list (directory entries at `path`), ' },
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;
@@ -40,8 +39,7 @@ export const MANAGE_FILES_TABLE = [
         op: 'upload',
         input: selectInput(MANAGE_FILES_INPUT_FIELDS, ['contentBase64', 'fileName', 'contentType']),
         fieldOrder: 1,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 1,
             text: 'upload (write `contentBase64` to `path`; decoded payload capped at 256KB — larger files are rejected), ',
@@ -68,8 +66,7 @@ export const MANAGE_FILES_TABLE = [
         op: 'download',
         input: selectInput(MANAGE_FILES_INPUT_FIELDS, []),
         fieldOrder: 2,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 2, text: 'download (read `path`; oversized results are rejected the same way), ' },
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;
@@ -87,8 +84,7 @@ export const MANAGE_FILES_TABLE = [
         op: 'delete',
         input: selectInput(MANAGE_FILES_INPUT_FIELDS, []),
         fieldOrder: 3,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'delete (`path`). `path` is required for every operation.' },
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;

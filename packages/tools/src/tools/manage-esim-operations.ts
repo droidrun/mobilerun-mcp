@@ -36,8 +36,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'list',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, []),
         fieldOrder: 5,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'eSIM subscription management. Operations: list, ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -49,8 +48,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'activate',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, ['enable', 'smDpAddr', 'confirmationCode', 'matchingId']),
         fieldOrder: 6,
-        readonly: false,
-        billed: true,
+        access: 'commerce',
         describe: { order: 1, text: 'activate (smDpAddr required, ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -69,8 +67,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'enable',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, ['subId']),
         fieldOrder: 7,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: {
             order: 2,
             text: 'enable: whether to also enable the downloaded profile, confirmationCode?/matchingId? — confirmationCode requires matchingId, only needed when the SM-DP+ challenges for it), enable (subId), ',
@@ -87,8 +84,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'remove',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, ['subId']),
         fieldOrder: 8,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'remove (subId). Additional operations: ' },
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
@@ -102,8 +98,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'set_roaming',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimSetRoamingSchema.shape)),
         fieldOrder: 0,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 4, text: 'set_roaming: Enable or disable eSIM roaming. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -118,8 +113,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'status',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimStatusSchema.shape)),
         fieldOrder: 1,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 5, text: 'status: Read eSIM connectivity status. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -134,8 +128,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'apn_list',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimApnListSchema.shape)),
         fieldOrder: 2,
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 6, text: 'apn_list: List available access point settings. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -150,8 +143,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'apn_select',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimApnSelectSchema.shape)),
         fieldOrder: 3,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 7, text: 'apn_select: Select an access point. ' },
         run: async (ctx, input) => {
             return asTextResult(
@@ -166,8 +158,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'apn_set',
         input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimApnSetSchema.shape)),
         fieldOrder: 4,
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 8, text: 'apn_set: Set access point settings.' },
         run: async (ctx, input) => {
             return asTextResult(

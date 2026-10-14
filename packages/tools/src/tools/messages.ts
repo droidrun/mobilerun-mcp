@@ -44,8 +44,7 @@ export const MESSAGES_TABLE = [
     {
         op: 'list',
         input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesListSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 0, text: 'list: Read the organization SMS inbox. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -56,8 +55,7 @@ export const MESSAGES_TABLE = [
     {
         op: 'get',
         input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesGetSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: { order: 1, text: 'get: Read one SMS. ' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
@@ -68,8 +66,7 @@ export const MESSAGES_TABLE = [
     {
         op: 'conversations',
         input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesConversationsSchema.shape)]),
-        readonly: true,
-        billed: false,
+        access: 'read',
         describe: {
             order: 2,
             text: 'conversations: List SMS conversations; use both cursor fields for the next page. ',
@@ -83,8 +80,7 @@ export const MESSAGES_TABLE = [
     {
         op: 'mark_read',
         input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesMarkReadSchema.shape)]),
-        readonly: false,
-        billed: false,
+        access: 'write',
         describe: { order: 3, text: 'mark_read: Mark received SMS as read through a cursor.' },
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
