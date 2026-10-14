@@ -1,3 +1,9 @@
+import {
+    webhooksDeleteSchema,
+    webhooksDeliveriesSchema,
+    webhooksIntegrationsSchema,
+    webhooksIntegrationTargetsSchema,
+} from '../backend/webhooks.js';
 // Webhooks bundle tool. Dispatch goes through Backend.webhooks (one method
 // per operation), which the public SdkBackend implements over
 // @mobilerun/sdk's typed client — never a raw fetch with trust headers.
@@ -17,7 +23,10 @@ const WEBHOOK_OPERATIONS = [
     'list_deliveries',
     'get_delivery',
     'delivery_stats',
-    'list_event_types',
+    'delete',
+    'deliveries',
+    'integrations',
+    'integration_targets',
 ] as const;
 // Full-set schema — used to type WebhookToolInput regardless of any
 // per-credential operation narrowing applied to the registered tool's
@@ -26,6 +35,7 @@ const webhookOperationSchema = z.enum(WEBHOOK_OPERATIONS);
 const webhookStatusSchema = z.enum(['active', 'failing', 'blocked', 'disabled']);
 
 type WebhookToolInput = {
+    params?: unknown;
     operation: z.infer<typeof webhookOperationSchema>;
     endpointId?: string;
     deliveryId?: string;
@@ -52,6 +62,16 @@ function withSecretHandling(result: unknown, secretHandling: string): Record<str
 }
 
 async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): Promise<unknown> {
+    if (input.operation === 'delete')
+        return ctx.backend.webhooks.webhooksDelete(webhooksDeleteSchema.parse(input.params ?? {}));
+    if (input.operation === 'deliveries')
+        return ctx.backend.webhooks.webhooksDeliveries(webhooksDeliveriesSchema.parse(input.params ?? {}));
+    if (input.operation === 'integrations')
+        return ctx.backend.webhooks.webhooksIntegrations(webhooksIntegrationsSchema.parse(input.params ?? {}));
+    if (input.operation === 'integration_targets')
+        return ctx.backend.webhooks.webhooksIntegrationTargets(
+            webhooksIntegrationTargetsSchema.parse(input.params ?? {}),
+        );
     const { operation } = input;
     const backend = ctx.backend.webhooks;
 
@@ -74,7 +94,6 @@ async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): P
     // Account-wide, no endpointId — must be handled before the endpointId
     // requirement below.
     if (operation === 'delivery_stats') return backend.getWebhookDeliveryStats({ since: input.since });
-    if (operation === 'list_event_types') return backend.listWebhookEventTypes();
 
     const endpointId = requireValue(input.endpointId, 'endpointId', operation);
 
@@ -122,13 +141,23 @@ export function registerWebhookTools(server: McpServer, ctx: ToolCtx): void {
         'webhooks',
         {
             description:
-                'Manage outbound customer webhooks and inspect deliveries. Operations: create (url; returns one-time secret + endpoint id), list, get, update, rotate_secret (explicit consent; returns one-time secret), test, list_deliveries, get_delivery, delivery_stats (account-wide aggregate, optional `since`), list_event_types (subscribable event types by source — for the `eventTypes` field on create/update). Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery—verify by eventId in delivery records.' +
+                'Manage outbound customer webhooks and inspect deliveries. Operations: create (url; returns one-time secret + endpoint id), list, get, update, rotate_secret (explicit consent; returns one-time secret), test, list_deliveries, get_delivery, delivery_stats (account-wide aggregate, optional `since`). Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery—verify by eventId in delivery records.' +
+                ' Additional operations (use params): delete: Delete a webhook subscription. deliveries: Read deliveries across all subscriptions. integrations: Read connected delivery integrations. integration_targets: Read delivery targets for an integration.' +
                 allowedValuesNote(operationValues, WEBHOOK_OPERATIONS),
             inputSchema: {
                 // Enum stays the FULL set — see the identical note in
                 // tools/workflows.ts's registerWorkflowTools for why: dispatch-time
                 // rejection in register.ts is the actual enforcement point.
                 operation: webhookOperationSchema,
+                params: z
+                    .union([
+                        webhooksDeleteSchema,
+                        webhooksDeliveriesSchema,
+                        webhooksIntegrationsSchema,
+                        webhooksIntegrationTargetsSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
                 endpointId: z.string().uuid().optional(),
                 deliveryId: z.string().uuid().optional(),
                 url: z.string().url().max(2048).optional(),

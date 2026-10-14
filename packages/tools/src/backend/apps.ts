@@ -1,17 +1,14 @@
+import { z } from 'zod';
 // Apps port — see devices.ts's file header for the DTO philosophy.
 // Mirrors @mobilerun/sdk's apps.* response shapes (verified against the
 // SDK's shipped apps.d.ts).
 //
-// GAP: @mobilerun/sdk 5.1.0 has no
-// storage-usage method on `client.apps` (verified — apps.d.ts exposes only
-// retrieve/list/delete/confirmUpload/createSignedUploadURL/listVersions/
-// markFailed). Dropped from this bundle.
 import type { PageMeta } from './devices.js';
 
 export interface ListAppsOpts {
     query?: string;
     platform?: 'all' | 'android' | 'ios';
-    status?: 'all' | 'queued' | 'available' | 'failed';
+    status?: 'all' | 'queued' | 'available' | 'failed' | 'pruned';
     sortBy?: 'createdAt' | 'name';
     order?: 'asc' | 'desc';
     page?: number;
@@ -27,7 +24,7 @@ interface AppVersionDto {
     sizeBytes: number | null;
     targetSdk: number | null;
     source: 'user' | 'system' | 'portal' | 'catalog' | 'store';
-    status: 'queued' | 'available' | 'failed';
+    status: 'queued' | 'available' | 'failed' | 'pruned';
     userId: string | null;
     createdAt: string | null;
     queuedAt: string | null;
@@ -103,6 +100,7 @@ interface AppSimpleResultDto {
 }
 
 export interface AppsBackend {
+    appsStorageUsage(params: z.infer<typeof appsStorageUsageSchema>): Promise<unknown>;
     listApps(opts: ListAppsOpts): Promise<AppListDto>;
     getApp(id: string): Promise<AppEnvelopeDto>;
     listAppVersions(id: string): Promise<AppVersionListDto>;
@@ -116,3 +114,5 @@ export interface AppsBackend {
     markAppUploadFailed(id: string): Promise<AppSimpleResultDto>;
     deleteApp(id: string): Promise<AppSimpleResultDto>;
 }
+
+export const appsStorageUsageSchema = z.object({}).strict();

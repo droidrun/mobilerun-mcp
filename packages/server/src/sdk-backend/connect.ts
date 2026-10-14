@@ -10,6 +10,12 @@ import type {
 
 export function createConnectBackend(client: Mobilerun): ConnectBackend {
     return {
+        async connectUpdateProxy(params) {
+            return client.connect.proxies.update(params.id, { name: params['name'] });
+        },
+        async connectEnsureHealthy(params) {
+            return client.connect.proxies.ensureHealthy(params.id);
+        },
         async listCountries(opts: ListCountriesOpts) {
             return client.connect.countries.list({ type: opts.type, page: opts.page, pageSize: opts.pageSize });
         },

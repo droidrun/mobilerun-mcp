@@ -3,6 +3,9 @@ import type { AppsBackend, CreateUploadUrlParams, ListAppsOpts } from '@mobileru
 
 export function createAppsBackend(client: Mobilerun): AppsBackend {
     return {
+        async appsStorageUsage(params) {
+            return client.apps.storageUsage();
+        },
         async listApps(opts: ListAppsOpts) {
             return client.apps.list({
                 query: opts.query,

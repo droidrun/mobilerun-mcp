@@ -1,3 +1,4 @@
+import { signedDownload } from './files.js';
 import type Mobilerun from '@mobilerun/sdk';
 import { isScheduleRule } from '@mobilerun/mcp-tools';
 import type {
@@ -28,11 +29,132 @@ function withFlowActionKey<T extends object>(value: T): T & { key: string } {
 }
 
 function withScheduleRule<T extends { scheduleRule?: unknown }>(trigger: T) {
-    return { ...trigger, scheduleRule: isScheduleRule(trigger.scheduleRule) ? trigger.scheduleRule : null };
+    return {
+        ...trigger,
+        scheduleRule: isScheduleRule(trigger.scheduleRule) ? trigger.scheduleRule : null,
+    };
 }
 
 export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
     return {
+        async manageFlowExecutionScreenshot(params) {
+            return signedDownload(
+                client.workflows.executions.screenshots.retrieve(params.screenshotId, {
+                    executionId: params.executionId,
+                }),
+            );
+        },
+        async manageFlowUpdate(params) {
+            return client.workflows.flows.update(params.flowId, {
+                cooldownScope: params['cooldownScope'],
+                cooldownSeconds: params['cooldownSeconds'],
+                delivery: params['delivery'],
+                description: params['description'],
+                deviceIds: params['deviceIds'],
+                enabled: params['enabled'],
+                healthMonitoringEnabled: params['healthMonitoringEnabled'],
+                lifecycleStatus: params['lifecycleStatus'],
+                name: params['name'],
+                notifyOnFailure: params['notifyOnFailure'],
+                notifyOnSuccess: params['notifyOnSuccess'],
+                notifyWebhookId: params['notifyWebhookId'],
+                recordingEnabled: params['recordingEnabled'],
+                recordingPolicy: params['recordingPolicy'],
+                selfHealingEnabled: params['selfHealingEnabled'],
+                selfHealingMaxAttempts: params['selfHealingMaxAttempts'],
+                triggerId: params['triggerId'],
+            });
+        },
+        async manageFlowDelete(params) {
+            return client.workflows.flows.delete(params.flowId);
+        },
+        async manageFlowActivate(params) {
+            return client.workflows.flows.activate(params.flowId, {
+                verificationExecutionId: params['verificationExecutionId'],
+            });
+        },
+        async manageFlowRun(params) {
+            return client.workflows.flows.run(params.flowId, {
+                captureScreenshots: params['captureScreenshots'],
+                payload: params['payload'],
+            });
+        },
+        async manageFlowValidate(params) {
+            return client.workflows.flows.validate({
+                actions: params['actions'],
+                name: params['name'],
+                cooldownScope: params['cooldownScope'],
+                cooldownSeconds: params['cooldownSeconds'],
+                delivery: params['delivery'],
+                description: params['description'],
+                deviceIds: params['deviceIds'],
+                enabled: params['enabled'],
+                healthMonitoringEnabled: params['healthMonitoringEnabled'],
+                notifyOnFailure: params['notifyOnFailure'],
+                notifyOnSuccess: params['notifyOnSuccess'],
+                notifyWebhookId: params['notifyWebhookId'],
+                recordingEnabled: params['recordingEnabled'],
+                recordingPolicy: params['recordingPolicy'],
+                selfHealingEnabled: params['selfHealingEnabled'],
+                selfHealingMaxAttempts: params['selfHealingMaxAttempts'],
+                triggerId: params['triggerId'],
+            });
+        },
+        async manageFlowVerify(params) {
+            return client.workflows.flows.verify(params.flowId, {
+                invocationId: params['invocationId'],
+                deviceId: params['deviceId'],
+                payload: params['payload'],
+            });
+        },
+        async manageFlowDryRun(params) {
+            return client.workflows.flows.dryRun(params.flowId, { payload: params['payload'] });
+        },
+        async manageFlowCapacity(params) {
+            return client.workflows.flows.capacity();
+        },
+        async manageFlowDeliveryOptions(params) {
+            return client.workflows.flows.deliveryOptions(params.flowId);
+        },
+        async manageFlowTemplateContext(params) {
+            return client.workflows.flows.templateContext({
+                templateResolutionVersion: params['templateResolutionVersion'],
+            });
+        },
+        async manageFlowListRepairs(params) {
+            return client.workflows.flows.listRepairs(params.flowId);
+        },
+        async manageFlowUpdateAction(params) {
+            return client.workflows.actions.update(params.actionId, {
+                description: params['description'],
+                name: params['name'],
+                params: params['params'],
+            });
+        },
+        async manageFlowDeleteAction(params) {
+            return client.workflows.actions.delete(params.actionId);
+        },
+        async manageFlowUpdateTrigger(params) {
+            return client.workflows.triggers.update(params.triggerId, {
+                activation: params['activation'],
+                conditions: params['conditions'],
+                customPayloadSchema: params['customPayloadSchema'],
+                description: params['description'],
+                eventType: params['eventType'],
+                name: params['name'],
+                scheduleRule: params['scheduleRule'],
+                timezone: params['timezone'],
+            });
+        },
+        async manageFlowDeleteTrigger(params) {
+            return client.workflows.triggers.delete(params.triggerId);
+        },
+        async manageFlowFireTrigger(params) {
+            return client.workflows.triggers.fire(params.triggerId, { payload: params['payload'] });
+        },
+        async manageFlowAbortExecution(params) {
+            return client.workflows.executions.abort(params.executionId);
+        },
         async listActionCatalog(opts: ListActionCatalogOpts) {
             // pageSize 100: the whole reviewed action catalog is expected to
             // fit in one page.
@@ -40,24 +162,6 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async getActionCatalogEntry(id: string) {
             return client.workflows.actionCatalog.retrieve(id);
-        },
-        async listAppEventCatalog() {
-            const { data } = await client.appEvents.catalog.list();
-            return {
-                items: data.map((item) => ({
-                    eventType: item.appEventType,
-                    appName: item.appName,
-                    sourceEventType: item.sourceEventType,
-                    packageName: item.packageName,
-                    label: item.label,
-                    description: null,
-                    source: item.category,
-                    createdAt: null,
-                    updatedAt: null,
-                    payloadSchema: item.payloadSchema,
-                })),
-                pagination: { page: 1, pages: 1, pageSize: data.length, total: data.length, hasNext: false, hasPrev: false },
-            };
         },
         async listActions(opts: ListActionsOpts) {
             return client.workflows.actions.list({
@@ -209,7 +313,10 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
             return client.workflows.events.ingest({ eventType: params.eventType, payload: params.payload });
         },
         async dryRunEvent(params: DryRunEventParams) {
-            const response = await client.workflows.events.dryRun({ eventType: params.eventType, payload: params.payload });
+            const response = await client.workflows.events.dryRun({
+                eventType: params.eventType,
+                payload: params.payload,
+            });
             return {
                 data: {
                     ...response.data,

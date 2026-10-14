@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // Connect port — residential SOCKS5 proxies + bound
 // users, distinct from device-bound `proxies` (proxies.ts). Mirrors
 // @mobilerun/sdk's connect.* response shapes (verified against the SDK's
@@ -144,6 +145,8 @@ export interface ListConnectUsersOpts {
     pageSize?: number;
 }
 export interface ConnectBackend {
+    connectUpdateProxy(params: z.infer<typeof connectUpdateProxySchema>): Promise<unknown>;
+    connectEnsureHealthy(params: z.infer<typeof connectEnsureHealthySchema>): Promise<unknown>;
     listCountries(opts: ListCountriesOpts): Promise<CountryListDto>;
     listConnectProxies(opts: ListConnectProxiesOpts): Promise<ConnectProxyListDto>;
     getConnectProxy(id: string): Promise<ConnectProxyDto>;
@@ -155,3 +158,16 @@ export interface ConnectBackend {
     getConnectUser(id: string): Promise<ConnectUserDto>;
     listConnectUserConnections(id: string, opts: ListConnectionsOpts): Promise<ConnectionListDto>;
 }
+
+export const connectUpdateProxySchema = z
+    .object({
+        id: z.string(),
+        name: z.union([z.string(), z.null()]).optional(),
+    })
+    .strict();
+
+export const connectEnsureHealthySchema = z
+    .object({
+        id: z.string(),
+    })
+    .strict();

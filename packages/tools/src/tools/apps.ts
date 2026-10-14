@@ -1,3 +1,4 @@
+import { appsStorageUsageSchema } from '../backend/apps.js';
 // apps bundle. Upload is a 3-step flow: (1) create_upload_url returns
 // pre-signed object-storage PUT URLs per file — the actual file bytes are
 // PUT directly to those URLs by the caller, OUTSIDE this MCP tool (binary
@@ -6,16 +7,22 @@
 // landed in storage and flips the app to `available` — or mark_failed(id) if
 // the PUT failed/was abandoned.
 //
-// GAP: a `storage-usage` endpoint was originally planned for this bundle;
-// @mobilerun/sdk 5.1.0 has no such method on `client.apps` (verified
-// against apps.d.ts) — dropped, see backend/apps.ts's file header.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-const APPS_OPERATIONS = ['list', 'get', 'versions', 'create_upload_url', 'confirm_upload', 'mark_failed', 'delete'] as const;
+const APPS_OPERATIONS = [
+    'list',
+    'get',
+    'versions',
+    'create_upload_url',
+    'confirm_upload',
+    'mark_failed',
+    'delete',
+    'storage_usage',
+] as const;
 const appsOperationSchema = z.enum(APPS_OPERATIONS);
 
 const appFileSchema = z.object({
@@ -25,11 +32,12 @@ const appFileSchema = z.object({
 });
 
 type AppsToolInput = {
+    params?: unknown;
     operation: z.infer<typeof appsOperationSchema>;
     id?: string;
     query?: string;
     platform?: 'all' | 'android' | 'ios';
-    status?: 'all' | 'queued' | 'available' | 'failed';
+    status?: 'all' | 'queued' | 'available' | 'failed' | 'pruned';
     sortBy?: 'createdAt' | 'name';
     order?: 'asc' | 'desc';
     page?: number;
@@ -54,6 +62,8 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
 }
 
 async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise<unknown> {
+    if (input.operation === 'storage_usage')
+        return ctx.backend.apps.appsStorageUsage(appsStorageUsageSchema.parse(input.params ?? {}));
     const { operation } = input;
     const backend = ctx.backend.apps;
 
@@ -105,13 +115,18 @@ export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
                 'user), create_upload_url (starts the 3-step upload flow: returns pre-signed upload URLs per file — PUT the raw ' +
                 'file bytes to those URLs yourself, outside this tool, then call confirm_upload; call mark_failed instead if the ' +
                 'PUT fails or is abandoned), confirm_upload, mark_failed, delete.' +
+                ' Additional operations (use params): storage_usage: Read app storage usage.' +
                 allowedValuesNote(operationValues, APPS_OPERATIONS),
             inputSchema: {
                 operation: appsOperationSchema,
+                params: appsStorageUsageSchema.optional(),
                 id: z.string().uuid().optional(),
                 query: z.string().optional().describe('Search filter for operation=list.'),
                 platform: z.enum(['all', 'android', 'ios']).optional().describe('Filter for operation=list.'),
-                status: z.enum(['all', 'queued', 'available', 'failed']).optional().describe('Filter for operation=list.'),
+                status: z
+                    .enum(['all', 'queued', 'available', 'failed', 'pruned'])
+                    .optional()
+                    .describe('Filter for operation=list.'),
                 sortBy: z.enum(['createdAt', 'name']).optional(),
                 order: z.enum(['asc', 'desc']).optional(),
                 page: z.number().int().positive().optional(),
@@ -120,10 +135,21 @@ export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
                 displayName: z.string().optional().describe('Required for operation=create_upload_url.'),
                 versionCode: z.number().int().optional().describe('Required for operation=create_upload_url.'),
                 versionName: z.string().optional().describe('Required for operation=create_upload_url.'),
-                sizeBytes: z.number().int().positive().optional().describe('Total upload size in bytes. Required for operation=create_upload_url.'),
+                sizeBytes: z
+                    .number()
+                    .int()
+                    .positive()
+                    .optional()
+                    .describe('Total upload size in bytes. Required for operation=create_upload_url.'),
                 files: z.array(appFileSchema).min(1).optional().describe('Required for operation=create_upload_url.'),
-                uploadPlatform: z.enum(['android', 'ios']).optional().describe('App platform for operation=create_upload_url.'),
-                country: z.string().optional().describe('Country code for search results. Optional for operation=create_upload_url.'),
+                uploadPlatform: z
+                    .enum(['android', 'ios'])
+                    .optional()
+                    .describe('App platform for operation=create_upload_url.'),
+                country: z
+                    .string()
+                    .optional()
+                    .describe('Country code for search results. Optional for operation=create_upload_url.'),
                 description: z.string().optional(),
                 developerName: z.string().optional(),
                 iconURL: z.string().url().optional(),

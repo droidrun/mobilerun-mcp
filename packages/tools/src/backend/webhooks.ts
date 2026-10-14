@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // Webhooks port — see devices.ts's file header for the DTO philosophy.
 // Mirrors @mobilerun/sdk's webhooks / webhooks.deliveries response shapes
 // (verified against the SDK's shipped .d.ts) — including which endpoints
@@ -31,7 +32,7 @@ export interface WebhookDeliveryStatsOpts {
 
 interface WebhookDto {
     id: string;
-    url: string;
+    url: string | null;
     description: string | null;
     eventTypes: string[];
     state: 'ACTIVE' | 'DISABLED' | 'DELETED';
@@ -108,14 +109,11 @@ interface WebhookDeliveryStatsDto {
     };
 }
 
-interface WebhookEventTypesDto {
-    data: {
-        schemaVersion: number;
-        sources: Array<{ source: string; events: Array<{ type: string; description: string }> }>;
-    };
-}
-
 export interface WebhooksBackend {
+    webhooksDelete(params: z.infer<typeof webhooksDeleteSchema>): Promise<unknown>;
+    webhooksDeliveries(params: z.infer<typeof webhooksDeliveriesSchema>): Promise<unknown>;
+    webhooksIntegrations(params: z.infer<typeof webhooksIntegrationsSchema>): Promise<unknown>;
+    webhooksIntegrationTargets(params: z.infer<typeof webhooksIntegrationTargetsSchema>): Promise<unknown>;
     createWebhook(params: CreateWebhookParams): Promise<WebhookEnvelopeDto>;
     listWebhooks(opts: ListWebhooksOpts): Promise<WebhookListDto>;
     getWebhook(endpointId: string): Promise<WebhookEnvelopeDto>;
@@ -125,5 +123,32 @@ export interface WebhooksBackend {
     listWebhookDeliveries(endpointId: string, opts: ListWebhookDeliveriesOpts): Promise<WebhookDeliveryListDto>;
     getWebhookDelivery(endpointId: string, deliveryId: string): Promise<WebhookDeliveryDetailEnvelopeDto>;
     getWebhookDeliveryStats(opts: WebhookDeliveryStatsOpts): Promise<WebhookDeliveryStatsDto>;
-    listWebhookEventTypes(): Promise<WebhookEventTypesDto>;
 }
+
+export const webhooksDeleteSchema = z
+    .object({
+        id: z.string(),
+    })
+    .strict();
+
+export const webhooksDeliveriesSchema = z
+    .object({
+        eventId: z.string().optional(),
+        kind: z.union([z.literal('http'), z.literal('integration')]).optional(),
+        page: z.number().int().positive().optional(),
+        pageSize: z.number().int().positive().max(100).optional(),
+        since: z.string().optional(),
+        status: z
+            .union([z.literal('pending'), z.literal('success'), z.literal('skipped'), z.literal('dead')])
+            .optional(),
+    })
+    .strict();
+
+export const webhooksIntegrationsSchema = z.object({}).strict();
+
+export const webhooksIntegrationTargetsSchema = z
+    .object({
+        capabilityId: z.string(),
+        revision: z.number(),
+    })
+    .strict();

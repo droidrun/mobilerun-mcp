@@ -1,21 +1,24 @@
-// Flow-lifecycle operations beyond create_flow / list_workflow_resources /
-// get_workflow_resource.
-//
-// This bundle's `operation` enum was originally scoped wider: clone,
-// dry_run, unblock, list_repairs, add_action, remove_action, replace_actions,
-// abort_execution, execution_metrics (9 ops). Verified against
-// @mobilerun/sdk's shipped workflows/flows/*.d.ts and workflows/executions.d.ts
-// — three have no corresponding SDK method and are DROPPED here (a
-// deliberate omission, not an oversight):
-//   - dry_run: the SDK's only dry-run surface is client.workflows.events.dryRun
-//     (simulate an EVENT against all flows) — there is no per-flow dry-run
-//     endpoint. That operation lives on `workflow_events` instead (its
-//     `dry_run` operation), which is the actual matching SDK capability.
-//   - list_repairs / abort_execution: no SDK method exists for either
-//     (grepped the full shipped .d.ts tree — no repair-candidate listing, no
-//     execution cancel/abort; FlowExecution.status includes 'cancelled' as a
-//     terminal *state* but nothing sets it from the client). Repair-candidate
-//     listing is outside this package's scope.
+import { manageFlowExecutionScreenshotSchema } from '../backend/workflows.js';
+import {
+    manageFlowUpdateSchema,
+    manageFlowDeleteSchema,
+    manageFlowActivateSchema,
+    manageFlowRunSchema,
+    manageFlowValidateSchema,
+    manageFlowVerifySchema,
+    manageFlowDryRunSchema,
+    manageFlowCapacitySchema,
+    manageFlowDeliveryOptionsSchema,
+    manageFlowTemplateContextSchema,
+    manageFlowListRepairsSchema,
+    manageFlowUpdateActionSchema,
+    manageFlowDeleteActionSchema,
+    manageFlowUpdateTriggerSchema,
+    manageFlowDeleteTriggerSchema,
+    manageFlowFireTriggerSchema,
+    manageFlowAbortExecutionSchema,
+} from '../backend/workflows.js';
+// Flow lifecycle, configuration, validation and execution operations.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -23,7 +26,32 @@ import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 import { replaceActionsNeedsExistingLookup, resolveReplaceActionKeys } from './step-key.js';
 
-const MANAGE_FLOW_OPERATIONS = ['clone', 'unblock', 'add_action', 'remove_action', 'replace_actions', 'execution_metrics'] as const;
+const MANAGE_FLOW_OPERATIONS = [
+    'execution_screenshot',
+    'clone',
+    'unblock',
+    'add_action',
+    'remove_action',
+    'replace_actions',
+    'execution_metrics',
+    'update',
+    'delete',
+    'activate',
+    'run',
+    'validate',
+    'verify',
+    'dry_run',
+    'capacity',
+    'delivery_options',
+    'template_context',
+    'list_repairs',
+    'update_action',
+    'delete_action',
+    'update_trigger',
+    'delete_trigger',
+    'fire_trigger',
+    'abort_execution',
+] as const;
 const manageFlowOperationSchema = z.enum(MANAGE_FLOW_OPERATIONS);
 
 const flowActionOverridesSchema = z
@@ -37,24 +65,31 @@ const flowChildActionInputSchema = z.object({
     continueOnError: z.boolean().optional(),
     nameOverride: z.string().optional(),
     overrides: flowActionOverridesSchema,
-    key: z.string().optional().describe(
-        'Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this ' +
-            'tool carry over the key of the existing step matching flowActionId, or at the same position with the ' +
-            'same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass ' +
-            'flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new ' +
-            'rather than risking a wrong carry-over onto a shifted position.',
-    ),
-    flowActionId: z.string().optional().describe(
-        'operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior ' +
-            'add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — ' +
-            'the reliable way to identify a kept step when reordering or inserting.',
-    ),
+    key: z
+        .string()
+        .optional()
+        .describe(
+            'Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this ' +
+                'tool carry over the key of the existing step matching flowActionId, or at the same position with the ' +
+                'same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass ' +
+                'flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new ' +
+                'rather than risking a wrong carry-over onto a shifted position.',
+        ),
+    flowActionId: z
+        .string()
+        .optional()
+        .describe(
+            'operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior ' +
+                'add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — ' +
+                'the reliable way to identify a kept step when reordering or inserting.',
+        ),
 });
 const flowActionBindingSchema = flowChildActionInputSchema.extend({
     children: z.array(flowChildActionInputSchema).optional(),
 });
 
 type ManageFlowInput = {
+    params?: unknown;
     operation: z.infer<typeof manageFlowOperationSchema>;
     flowId?: string;
     name?: string;
@@ -80,6 +115,48 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
 }
 
 async function executeManageFlowOperation(input: ManageFlowInput, ctx: ToolCtx): Promise<unknown> {
+    if (input.operation === 'execution_screenshot')
+        return ctx.backend.workflows.manageFlowExecutionScreenshot(
+            manageFlowExecutionScreenshotSchema.parse(input.params ?? {}),
+        );
+    if (input.operation === 'update')
+        return ctx.backend.workflows.manageFlowUpdate(manageFlowUpdateSchema.parse(input.params ?? {}));
+    if (input.operation === 'delete')
+        return ctx.backend.workflows.manageFlowDelete(manageFlowDeleteSchema.parse(input.params ?? {}));
+    if (input.operation === 'activate')
+        return ctx.backend.workflows.manageFlowActivate(manageFlowActivateSchema.parse(input.params ?? {}));
+    if (input.operation === 'run')
+        return ctx.backend.workflows.manageFlowRun(manageFlowRunSchema.parse(input.params ?? {}));
+    if (input.operation === 'validate')
+        return ctx.backend.workflows.manageFlowValidate(manageFlowValidateSchema.parse(input.params ?? {}));
+    if (input.operation === 'verify')
+        return ctx.backend.workflows.manageFlowVerify(manageFlowVerifySchema.parse(input.params ?? {}));
+    if (input.operation === 'dry_run')
+        return ctx.backend.workflows.manageFlowDryRun(manageFlowDryRunSchema.parse(input.params ?? {}));
+    if (input.operation === 'capacity')
+        return ctx.backend.workflows.manageFlowCapacity(manageFlowCapacitySchema.parse(input.params ?? {}));
+    if (input.operation === 'delivery_options')
+        return ctx.backend.workflows.manageFlowDeliveryOptions(
+            manageFlowDeliveryOptionsSchema.parse(input.params ?? {}),
+        );
+    if (input.operation === 'template_context')
+        return ctx.backend.workflows.manageFlowTemplateContext(
+            manageFlowTemplateContextSchema.parse(input.params ?? {}),
+        );
+    if (input.operation === 'list_repairs')
+        return ctx.backend.workflows.manageFlowListRepairs(manageFlowListRepairsSchema.parse(input.params ?? {}));
+    if (input.operation === 'update_action')
+        return ctx.backend.workflows.manageFlowUpdateAction(manageFlowUpdateActionSchema.parse(input.params ?? {}));
+    if (input.operation === 'delete_action')
+        return ctx.backend.workflows.manageFlowDeleteAction(manageFlowDeleteActionSchema.parse(input.params ?? {}));
+    if (input.operation === 'update_trigger')
+        return ctx.backend.workflows.manageFlowUpdateTrigger(manageFlowUpdateTriggerSchema.parse(input.params ?? {}));
+    if (input.operation === 'delete_trigger')
+        return ctx.backend.workflows.manageFlowDeleteTrigger(manageFlowDeleteTriggerSchema.parse(input.params ?? {}));
+    if (input.operation === 'fire_trigger')
+        return ctx.backend.workflows.manageFlowFireTrigger(manageFlowFireTriggerSchema.parse(input.params ?? {}));
+    if (input.operation === 'abort_execution')
+        return ctx.backend.workflows.manageFlowAbortExecution(manageFlowAbortExecutionSchema.parse(input.params ?? {}));
     const { operation } = input;
     const backend = ctx.backend.workflows;
 
@@ -150,7 +227,7 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 'add_action (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children — ' +
                 'key is derived from the step if omitted), ' +
                 'remove_action (flowActionId, flowId), ' +
-                'replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action\'s optional key is ' +
+                "replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action's optional key is " +
                 'carried over from the existing step matching flowActionId, or at the same position with the same actionId, when ' +
                 'omitted, and derived for genuinely new steps; when reordering or inserting steps, pass key or flowActionId for ' +
                 'every step you are keeping so it is recognized as an existing step), ' +
@@ -161,29 +238,80 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 'triggering event); older flows use name/slug-based references instead. ' +
                 'To simulate an event against flows without side effects, use workflow_events(operation="dry_run") instead — ' +
                 'there is no per-flow dry-run.' +
+                ' Additional operations (use params): update: Update flow configuration. delete: Delete a flow. activate: Activate a flow; may start paid automation. run: Start a flow execution; usage may be billed. validate: Validate a draft flow without saving it. verify: Verify flow configuration. dry_run: Simulate a flow without executing actions. capacity: Read included flow capacity. delivery_options: Read available delivery options. template_context: Read template variables. list_repairs: Read suggested flow repairs. update_action: Update a workflow action. delete_action: Delete a workflow action. update_trigger: Update a workflow trigger. delete_trigger: Delete a workflow trigger. fire_trigger: Fire a workflow trigger. abort_execution: Abort a running execution.' +
+                ' execution_screenshot: Read a short-lived signed download URL.' +
                 allowedValuesNote(operationValues, MANAGE_FLOW_OPERATIONS),
             inputSchema: {
                 // Enum stays the FULL set — dispatch-time rejection in register.ts
                 // is the actual enforcement point (see tools/webhooks.ts for why).
                 operation: manageFlowOperationSchema,
+                params: z
+                    .union([
+                        manageFlowExecutionScreenshotSchema,
+                        manageFlowUpdateSchema,
+                        manageFlowDeleteSchema,
+                        manageFlowActivateSchema,
+                        manageFlowRunSchema,
+                        manageFlowValidateSchema,
+                        manageFlowVerifySchema,
+                        manageFlowDryRunSchema,
+                        manageFlowCapacitySchema,
+                        manageFlowDeliveryOptionsSchema,
+                        manageFlowTemplateContextSchema,
+                        manageFlowListRepairsSchema,
+                        manageFlowUpdateActionSchema,
+                        manageFlowDeleteActionSchema,
+                        manageFlowUpdateTriggerSchema,
+                        manageFlowDeleteTriggerSchema,
+                        manageFlowFireTriggerSchema,
+                        manageFlowAbortExecutionSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
                 flowId: z.string().optional(),
-                name: z.string().optional().describe('New flow name for operation=clone; defaults to a server-generated copy name.'),
-                deviceIds: z.array(z.string()).optional().describe('Target devices for operation=clone; defaults to the source flow\'s devices.'),
+                name: z
+                    .string()
+                    .optional()
+                    .describe('New flow name for operation=clone; defaults to a server-generated copy name.'),
+                deviceIds: z
+                    .array(z.string())
+                    .optional()
+                    .describe("Target devices for operation=clone; defaults to the source flow's devices."),
                 actionId: z.string().optional(),
                 position: z.number().int().min(0).optional(),
-                key: z.string().optional().describe(
-                    'operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this ' +
-                        'step\'s output from later steps. Derived from the action if omitted.',
-                ),
+                key: z
+                    .string()
+                    .optional()
+                    .describe(
+                        'operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this ' +
+                            "step's output from later steps. Derived from the action if omitted.",
+                    ),
                 continueOnError: z.boolean().optional(),
                 nameOverride: z.string().optional(),
                 overrides: flowActionOverridesSchema,
-                parentFlowActionId: z.string().nullable().optional().describe('Nest under this flow-action id (loop/branch parent) for operation=add_action.'),
-                children: z.array(flowChildActionInputSchema).optional().describe('Nested loop/branch child actions for operation=add_action.'),
-                flowActionId: z.string().optional().describe('The flow-action binding id (not the actionId) for operation=remove_action.'),
-                actions: z.array(flowActionBindingSchema).optional().describe('Full replacement action list for operation=replace_actions.'),
+                parentFlowActionId: z
+                    .string()
+                    .nullable()
+                    .optional()
+                    .describe('Nest under this flow-action id (loop/branch parent) for operation=add_action.'),
+                children: z
+                    .array(flowChildActionInputSchema)
+                    .optional()
+                    .describe('Nested loop/branch child actions for operation=add_action.'),
+                flowActionId: z
+                    .string()
+                    .optional()
+                    .describe('The flow-action binding id (not the actionId) for operation=remove_action.'),
+                actions: z
+                    .array(flowActionBindingSchema)
+                    .optional()
+                    .describe('Full replacement action list for operation=replace_actions.'),
                 triggerId: z.string().optional().describe('Filter for operation=execution_metrics.'),
-                from: z.string().nullable().optional().describe('ISO 8601 range start for operation=execution_metrics.'),
+                from: z
+                    .string()
+                    .nullable()
+                    .optional()
+                    .describe('ISO 8601 range start for operation=execution_metrics.'),
                 to: z.string().nullable().optional().describe('ISO 8601 range end for operation=execution_metrics.'),
             },
         },
