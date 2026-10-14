@@ -3,8 +3,7 @@ import {
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -29,7 +28,7 @@ export const WORKFLOW_EVENTS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.workflows;
             const eventType = requireValue(input.eventType, 'eventType', operation, 'workflow_events');
-            return backend.ingestEvent({ eventType, payload: input.payload });
+            return asTextResult(await backend.ingestEvent({ eventType, payload: input.payload }));
         },
     }),
     operation({
@@ -45,28 +44,13 @@ export const WORKFLOW_EVENTS_TABLE = [
             const backend = ctx.backend.workflows;
             const eventType = requireValue(input.eventType, 'eventType', operation, 'workflow_events');
             // operation === 'dry_run'
-            return backend.dryRunEvent({ eventType, payload: input.payload });
+            return asTextResult(await backend.dryRunEvent({ eventType, payload: input.payload }));
         },
     }),
 ] as const;
-const WORKFLOW_EVENTS_OPERATIONS = operationValues(WORKFLOW_EVENTS_TABLE);
+
 
 export function registerWorkflowEventsTool(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(
-        WORKFLOW_EVENTS_OPERATIONS,
-        ctx.policy.operationAllowlist?.get('workflow_events'),
-    );
-    server.registerTool(
-        'workflow_events',
-        {
-            description:
-                operationDescription(WORKFLOW_EVENTS_TABLE) +
-                allowedValuesNote(operationValues, WORKFLOW_EVENTS_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(WORKFLOW_EVENTS_OPERATIONS),
-                ...operationInput(WORKFLOW_EVENTS_TABLE, WORKFLOW_EVENTS_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(WORKFLOW_EVENTS_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'workflow_events', WORKFLOW_EVENTS_TABLE, { shared: WORKFLOW_EVENTS_SHARED_FIELDS });
 }

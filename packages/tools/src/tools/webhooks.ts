@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 // Webhooks bundle tool. Dispatch goes through Backend.webhooks (one method
 // per operation), which the public SdkBackend implements over
@@ -47,10 +47,10 @@ export const WEBHOOK_TABLE = [
                 eventTypes: input.eventTypes,
                 description: input.description,
             });
-            return withSecretHandling(
+            return asTextResult(await withSecretHandling(
                 result,
                 'Show the returned plaintext data.secret to the user now, exactly once, and tell them to store it securely. Never place it in workflow action data.',
-            );
+            ));
         },
     }),
     operation({
@@ -60,11 +60,11 @@ export const WEBHOOK_TABLE = [
         describe: { order: 2, text: 'list, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.webhooks;
-            return backend.listWebhooks({
+            return asTextResult(await backend.listWebhooks({
                 status: webhookStatusSchema.optional().parse(input.status),
                 page: input.page,
                 pageSize: input.pageSize,
-            });
+            }));
         },
     }),
     operation({
@@ -76,7 +76,7 @@ export const WEBHOOK_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.webhooks;
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
-            return backend.getWebhook(endpointId);
+            return asTextResult(await backend.getWebhook(endpointId));
         },
     }),
     operation({
@@ -96,7 +96,7 @@ export const WEBHOOK_TABLE = [
             if (Object.keys(body).length === 0) {
                 throw new Error('webhooks operation=update requires eventTypes, state, or description');
             }
-            return backend.updateWebhook(endpointId, body);
+            return asTextResult(await backend.updateWebhook(endpointId, body));
         },
     }),
     operation({
@@ -109,10 +109,10 @@ export const WEBHOOK_TABLE = [
             const backend = ctx.backend.webhooks;
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
             const result = await backend.rotateWebhookSecret(endpointId);
-            return withSecretHandling(
+            return asTextResult(await withSecretHandling(
                 result,
                 'Show the returned plaintext data.secret to the user now, exactly once, and tell them to store it securely. The previous secret is already invalid.',
-            );
+            ));
         },
     }),
     operation({
@@ -124,7 +124,7 @@ export const WEBHOOK_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.webhooks;
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
-            return backend.testWebhook(endpointId);
+            return asTextResult(await backend.testWebhook(endpointId));
         },
     }),
     operation({
@@ -136,7 +136,7 @@ export const WEBHOOK_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.webhooks;
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
-            return backend.listWebhookDeliveries(endpointId, { page: input.page, pageSize: input.pageSize });
+            return asTextResult(await backend.listWebhookDeliveries(endpointId, { page: input.page, pageSize: input.pageSize }));
         },
     }),
     operation({
@@ -149,7 +149,7 @@ export const WEBHOOK_TABLE = [
             const backend = ctx.backend.webhooks;
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
             const deliveryId = requireValue(input.deliveryId, 'deliveryId', operation, 'webhooks');
-            return backend.getWebhookDelivery(endpointId, deliveryId);
+            return asTextResult(await backend.getWebhookDelivery(endpointId, deliveryId));
         },
     }),
     operation({
@@ -162,52 +162,18 @@ export const WEBHOOK_TABLE = [
         },
         run: async (ctx, input) => {
             const backend = ctx.backend.webhooks;
-            return backend.getWebhookDeliveryStats({ since: input.since });
+            return asTextResult(await backend.getWebhookDeliveryStats({ since: input.since }));
         },
     }),
-    operation({
-        op: 'delete',
-        input: { ...webhooksDeleteSchema.partial().shape, endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
-        access: 'write',
-        describe: {
+    sdkOp('delete', webhooksDeleteSchema, (ctx, params) => ctx.backend.webhooks.webhooksDelete(params), 'write', { describe: {
             order: 10,
             text: 'delete: Delete a webhook subscription. deliveries: Read deliveries across all subscriptions. ',
-        },
-        run: async (ctx, input) => {
-            return ctx.backend.webhooks.webhooksDelete(webhooksDeleteSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'deliveries',
-        input: { ...webhooksDeliveriesSchema.partial().shape, page: WEBHOOK_SHARED_FIELDS.page, pageSize: WEBHOOK_SHARED_FIELDS.pageSize, since: WEBHOOK_SHARED_FIELDS.since, status: WEBHOOK_SHARED_FIELDS.status },
-        access: 'read',
-        describe: { order: 0, text: 'Manage outbound customer webhooks and inspect deliveries. Operations: ' },
-        run: async (ctx, input) => {
-            return ctx.backend.webhooks.webhooksDeliveries(webhooksDeliveriesSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'integrations',
-        input: {  },
-        access: 'read',
-        describe: { order: 11, text: 'integrations: Read connected delivery integrations. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.webhooks.webhooksIntegrations();
-        },
-    }),
-    operation({
-        op: 'integration_targets',
-        input: { ...webhooksIntegrationTargetsSchema.partial().shape },
-        access: 'read',
-        describe: { order: 12, text: 'integration_targets: Read delivery targets for an integration.' },
-        run: async (ctx, input) => {
-            return ctx.backend.webhooks.webhooksIntegrationTargets(
-                webhooksIntegrationTargetsSchema.strip().parse(input),
-            );
-        },
-    }),
+        } }),
+    sdkOp('deliveries', webhooksDeliveriesSchema, (ctx, params) => ctx.backend.webhooks.webhooksDeliveries(params), 'read', { describe: { order: 0, text: 'Manage outbound customer webhooks and inspect deliveries. Operations: ' } }),
+    sdkOp('integrations', z.object({}), (ctx, params) => ctx.backend.webhooks.webhooksIntegrations(), 'read', { describe: { order: 11, text: 'integrations: Read connected delivery integrations. ' } }),
+    sdkOp('integration_targets', webhooksIntegrationTargetsSchema, (ctx, params) => ctx.backend.webhooks.webhooksIntegrationTargets(params), 'read', { describe: { order: 12, text: 'integration_targets: Read delivery targets for an integration.' } }),
 ] as const;
-const WEBHOOK_OPERATIONS = operationValues(WEBHOOK_TABLE);
+
 // Full-set schema — used to type WebhookToolInput regardless of any
 // per-credential operation narrowing applied to the registered tool's
 // actual input schema (see registerWebhookTools).
@@ -220,16 +186,6 @@ function withSecretHandling(result: unknown, secretHandling: string): Record<str
 }
 
 export function registerWebhookTools(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(WEBHOOK_OPERATIONS, ctx.policy.operationAllowlist?.get('webhooks'));
-    server.registerTool(
-        'webhooks',
-        {
-            description: operationDescription(WEBHOOK_TABLE) + allowedValuesNote(operationValues, WEBHOOK_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(WEBHOOK_OPERATIONS),
-                ...operationInput(WEBHOOK_TABLE, WEBHOOK_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(WEBHOOK_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'webhooks', WEBHOOK_TABLE, { shared: WEBHOOK_SHARED_FIELDS });
 }

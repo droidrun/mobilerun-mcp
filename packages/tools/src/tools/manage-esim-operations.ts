@@ -1,4 +1,4 @@
-import { operation } from './operation-table.js';
+import { operation, sdkOp } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -83,79 +83,9 @@ export const MANAGE_ESIM_TABLE = [
             return asTextResult({ status: 'ok', operation, deviceId, subId });
         },
     }),
-    operation({
-        op: 'set_roaming',
-        input: { ...manageEsimSetRoamingSchema.partial().shape, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
-        fieldOrder: 0,
-        access: 'write',
-        describe: { order: 4, text: 'set_roaming: Enable or disable eSIM roaming. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageEsimSetRoaming(
-                    input.deviceId,
-                    manageEsimSetRoamingSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'status',
-        input: { ...manageEsimStatusSchema.partial().shape, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
-        fieldOrder: 1,
-        access: 'read',
-        describe: { order: 5, text: 'status: Read eSIM connectivity status. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageEsimStatus(
-                    input.deviceId,
-                    manageEsimStatusSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'apn_list',
-        input: { ...manageEsimApnListSchema.partial().shape, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
-        fieldOrder: 2,
-        access: 'read',
-        describe: { order: 6, text: 'apn_list: List available access point settings. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageEsimApnList(
-                    input.deviceId,
-                    manageEsimApnListSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'apn_select',
-        input: { ...manageEsimApnSelectSchema.partial().shape, subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
-        fieldOrder: 3,
-        access: 'write',
-        describe: { order: 7, text: 'apn_select: Select an access point. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageEsimApnSelect(
-                    input.deviceId,
-                    manageEsimApnSelectSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'apn_set',
-        input: { ...manageEsimApnSetSchema.partial().shape, subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
-        fieldOrder: 4,
-        access: 'write',
-        describe: { order: 8, text: 'apn_set: Set access point settings.' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageEsimApnSet(
-                    input.deviceId,
-                    manageEsimApnSetSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('set_roaming', manageEsimSetRoamingSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimSetRoaming(deviceId, params), 'write', { fieldOrder: 0, describe: { order: 4, text: 'set_roaming: Enable or disable eSIM roaming. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('status', manageEsimStatusSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimStatus(deviceId, params), 'read', { fieldOrder: 1, describe: { order: 5, text: 'status: Read eSIM connectivity status. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('apn_list', manageEsimApnListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnList(deviceId, params), 'read', { fieldOrder: 2, describe: { order: 6, text: 'apn_list: List available access point settings. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('apn_select', manageEsimApnSelectSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnSelect(deviceId, params), 'write', { fieldOrder: 3, describe: { order: 7, text: 'apn_select: Select an access point. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('apn_set', manageEsimApnSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnSet(deviceId, params), 'write', { fieldOrder: 4, describe: { order: 8, text: 'apn_set: Set access point settings.' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
 ] as const;

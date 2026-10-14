@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 // connect bundle — residential SOCKS5 proxies + bound users (distinct from
 // the device-bound `proxies` tool). Operations: list_countries,
@@ -70,7 +70,7 @@ export const CONNECT_TABLE = [
         },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
-            return backend.listCountries({ type: input.type, page: input.page, pageSize: input.pageSize });
+            return asTextResult(await backend.listCountries({ type: input.type, page: input.page, pageSize: input.pageSize }));
         },
     }),
     operation({
@@ -80,7 +80,7 @@ export const CONNECT_TABLE = [
         describe: { order: 1, text: 'list_proxies, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
-            return backend.listConnectProxies({ country: input.country, page: input.page, pageSize: input.pageSize });
+            return asTextResult(await backend.listConnectProxies({ country: input.country, page: input.page, pageSize: input.pageSize }));
         },
     }),
     operation({
@@ -91,7 +91,7 @@ export const CONNECT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
-            return backend.getConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
+            return asTextResult(await backend.getConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect')));
         },
     }),
     operation({
@@ -102,10 +102,10 @@ export const CONNECT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
-            return backend.buyConnectProxy({
+            return asTextResult(await backend.buyConnectProxy({
                 country: requireValue(input.country, 'country', operation, 'connect'),
                 type: input.type,
-            });
+            }));
         },
     }),
     operation({
@@ -117,7 +117,7 @@ export const CONNECT_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.connect;
             await backend.cancelConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
-            return { success: true };
+            return asTextResult(await { success: true });
         },
     }),
     operation({
@@ -128,7 +128,7 @@ export const CONNECT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
-            return backend.pingConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
+            return asTextResult(await backend.pingConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect')));
         },
     }),
     operation({
@@ -139,10 +139,10 @@ export const CONNECT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
-            return backend.listConnectProxyConnections(
+            return asTextResult(await backend.listConnectProxyConnections(
                 requireValue(input.proxyId, 'proxyId', operation, 'connect'),
                 connectionOpts(input),
-            );
+            ));
         },
     }),
     operation({
@@ -152,7 +152,7 @@ export const CONNECT_TABLE = [
         describe: { order: 7, text: 'list_users, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
-            return backend.listConnectUsers({ proxyId: input.proxyId, page: input.page, pageSize: input.pageSize });
+            return asTextResult(await backend.listConnectUsers({ proxyId: input.proxyId, page: input.page, pageSize: input.pageSize }));
         },
     }),
     operation({
@@ -163,7 +163,7 @@ export const CONNECT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
-            return backend.getConnectUser(requireValue(input.userId, 'userId', operation, 'connect'));
+            return asTextResult(await backend.getConnectUser(requireValue(input.userId, 'userId', operation, 'connect')));
         },
     }),
     operation({
@@ -174,33 +174,17 @@ export const CONNECT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
-            return backend.listConnectUserConnections(
+            return asTextResult(await backend.listConnectUserConnections(
                 requireValue(input.userId, 'userId', operation, 'connect'),
                 connectionOpts(input),
-            );
+            ));
         },
     }),
-    operation({
-        op: 'update_proxy',
-        input: { ...connectUpdateProxySchema.partial().shape, proxyId: CONNECT_SHARED_FIELDS.proxyId },
-        access: 'write',
-        describe: { order: 10, text: 'update_proxy: Update a residential proxy label. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.connect.connectUpdateProxy(connectUpdateProxySchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'ensure_healthy',
-        input: { ...connectEnsureHealthySchema.partial().shape, proxyId: CONNECT_SHARED_FIELDS.proxyId },
-        access: 'write',
-        describe: { order: 11, text: 'ensure_healthy: Repair an unhealthy residential proxy.' },
-        run: async (ctx, input) => {
-            return ctx.backend.connect.connectEnsureHealthy(connectEnsureHealthySchema.strip().parse(input));
-        },
-    }),
+    sdkOp('update_proxy', connectUpdateProxySchema, (ctx, params) => ctx.backend.connect.connectUpdateProxy(params), 'write', { describe: { order: 10, text: 'update_proxy: Update a residential proxy label. ' } }),
+    sdkOp('ensure_healthy', connectEnsureHealthySchema, (ctx, params) => ctx.backend.connect.connectEnsureHealthy(params), 'write', { describe: { order: 11, text: 'ensure_healthy: Repair an unhealthy residential proxy.' } }),
 ] as const;
 type ConnectInput = z.infer<z.ZodObject<typeof CONNECT_SHARED_FIELDS>>;
-const CONNECT_OPERATIONS = operationValues(CONNECT_TABLE);
+
 
 function connectionOpts(input: ConnectInput) {
     return {
@@ -223,16 +207,6 @@ function connectionOpts(input: ConnectInput) {
 }
 
 export function registerConnectTools(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(CONNECT_OPERATIONS, ctx.policy.operationAllowlist?.get('connect'));
-    server.registerTool(
-        'connect',
-        {
-            description: operationDescription(CONNECT_TABLE) + allowedValuesNote(operationValues, CONNECT_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(CONNECT_OPERATIONS),
-                ...operationInput(CONNECT_TABLE, CONNECT_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(CONNECT_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'connect', CONNECT_TABLE, { shared: CONNECT_SHARED_FIELDS });
 }

@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 // Credentials read and mutation tools use separate policy operation gates.
 import { manageCredentialsGetSchema } from '../backend/credentials.js';
@@ -69,9 +69,9 @@ export const MANAGE_CREDENTIALS_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
-            return backend.initPackage({
+            return asTextResult(await backend.initPackage({
                 packageName: requireValue(input.packageName, 'packageName', operation, 'manage_credentials'),
-            });
+            }));
         },
     }),
     operation({
@@ -86,11 +86,11 @@ export const MANAGE_CREDENTIALS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.credentials;
             const packageName = requireValue(input.packageName, 'packageName', operation, 'manage_credentials');
-            return backend.createCredential({
+            return asTextResult(await backend.createCredential({
                 packageName,
                 credentialName: requireValue(input.credentialName, 'credentialName', operation, 'manage_credentials'),
                 fields: requireValue(input.fields, 'fields', operation, 'manage_credentials'),
-            });
+            }));
         },
     }),
     operation({
@@ -108,7 +108,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 operation,
                 'manage_credentials',
             );
-            return backend.deleteCredential({ packageName, credentialName });
+            return asTextResult(await backend.deleteCredential({ packageName, credentialName }));
         },
     }),
     operation({
@@ -127,12 +127,12 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 'manage_credentials',
             );
             const fieldType = requireValue(input.fieldType, 'fieldType', operation, 'manage_credentials');
-            return backend.addField({
+            return asTextResult(await backend.addField({
                 packageName,
                 credentialName,
                 fieldType,
                 value: requireValue(input.value, 'value', operation, 'manage_credentials'),
-            });
+            }));
         },
     }),
     operation({
@@ -151,12 +151,12 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 'manage_credentials',
             );
             const fieldType = requireValue(input.fieldType, 'fieldType', operation, 'manage_credentials');
-            return backend.updateField({
+            return asTextResult(await backend.updateField({
                 packageName,
                 credentialName,
                 fieldType,
                 value: requireValue(input.value, 'value', operation, 'manage_credentials'),
-            });
+            }));
         },
     }),
     operation({
@@ -178,37 +178,14 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 'manage_credentials',
             );
             const fieldType = requireValue(input.fieldType, 'fieldType', operation, 'manage_credentials');
-            return backend.deleteField({ packageName, credentialName, fieldType });
+            return asTextResult(await backend.deleteField({ packageName, credentialName, fieldType }));
         },
     }),
-    operation({
-        op: 'get',
-        input: { ...manageCredentialsGetSchema.partial().shape, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName },
-        access: 'read',
-        describe: { order: 6, text: 'get: Read credential metadata; secret values stay in storage.' },
-        run: async (ctx, input) => {
-            return ctx.backend.credentials.manageCredentialsGet(manageCredentialsGetSchema.strip().parse(input));
-        },
-    }),
+    sdkOp('get', manageCredentialsGetSchema, (ctx, params) => ctx.backend.credentials.manageCredentialsGet(params), 'read', { describe: { order: 6, text: 'get: Read credential metadata; secret values stay in storage.' } }),
 ] as const;
-const MANAGE_CREDENTIALS_OPERATIONS = operationValues(MANAGE_CREDENTIALS_TABLE);
+
 
 export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(
-        MANAGE_CREDENTIALS_OPERATIONS,
-        ctx.policy.operationAllowlist?.get('manage_credentials'),
-    );
-    server.registerTool(
-        'manage_credentials',
-        {
-            description:
-                operationDescription(MANAGE_CREDENTIALS_TABLE) +
-                allowedValuesNote(operationValues, MANAGE_CREDENTIALS_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(MANAGE_CREDENTIALS_OPERATIONS),
-                ...operationInput(MANAGE_CREDENTIALS_TABLE, MANAGE_CREDENTIALS_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(MANAGE_CREDENTIALS_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'manage_credentials', MANAGE_CREDENTIALS_TABLE, { shared: MANAGE_CREDENTIALS_SHARED_FIELDS });
 }

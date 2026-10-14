@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { awaitCheckoutUrl } from './checkout.js';
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -61,27 +61,8 @@ const MAILBOXES_SHARED_FIELDS = {
 };
 
 export const MAILBOXES_TABLE = [
-    operation({
-        op: 'list',
-        input: { ...mailboxesListSchema.partial().shape, page: MAILBOXES_SHARED_FIELDS.page, pageSize: MAILBOXES_SHARED_FIELDS.pageSize },
-        access: 'read',
-        describe: { order: 0, text: 'list: List owned mailboxes. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesList(mailboxesListSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'capacity',
-        input: {  },
-        access: 'read',
-        describe: { order: 1, text: 'capacity: Read included mailbox capacity. ' },
-        run: async (ctx, raw) => {
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesCapacity());
-        },
-    }),
+    sdkOp('list', mailboxesListSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesList(params), 'read', { describe: { order: 0, text: 'list: List owned mailboxes. ' } }),
+    sdkOp('capacity', z.object({}), (ctx, params) => ctx.backend.mailboxes.mailboxesCapacity(), 'read', { describe: { order: 1, text: 'capacity: Read included mailbox capacity. ' } }),
     operation({
         op: 'create',
         input: { ...mailboxesCreateSchema.partial().shape, billingPreference: MAILBOXES_SHARED_FIELDS.billingPreference, domainId: MAILBOXES_SHARED_FIELDS.domainId, label: MAILBOXES_SHARED_FIELDS.label, localPart: MAILBOXES_SHARED_FIELDS.localPart, clientRequestId: MAILBOXES_SHARED_FIELDS.clientRequestId },
@@ -99,143 +80,23 @@ export const MAILBOXES_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'get',
-        input: { ...mailboxesGetSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId },
-        access: 'read',
-        describe: { order: 3, text: 'get: Read a mailbox. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesGet(mailboxesGetSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'update',
-        input: { ...mailboxesUpdateSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId, label: MAILBOXES_SHARED_FIELDS.label },
-        access: 'write',
-        describe: { order: 4, text: 'update: Update the mailbox label. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesUpdate(mailboxesUpdateSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'delete',
-        input: { ...mailboxesDeleteSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId },
-        access: 'commerce',
-        describe: { order: 5, text: 'delete: Cancel a pending mailbox or schedule paid cancellation. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesDelete(mailboxesDeleteSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'uncancel',
-        input: { ...mailboxesUncancelSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId },
-        access: 'commerce',
-        describe: { order: 6, text: 'uncancel: Withdraw a scheduled cancellation and continue service. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesUncancel(mailboxesUncancelSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'restart',
-        input: { ...mailboxesRestartSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId, billingPreference: MAILBOXES_SHARED_FIELDS.billingPreference },
-        access: 'commerce',
-        describe: { order: 7, text: 'restart: Restart an archived mailbox; may start paid service. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesRestart(mailboxesRestartSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'disconnect',
-        input: { ...mailboxesDisconnectSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId },
-        access: 'write',
-        describe: { order: 8, text: 'disconnect: Disconnect an external inbox link. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesDisconnect(mailboxesDisconnectSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'otp',
-        input: { ...mailboxesOtpSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId, after: MAILBOXES_SHARED_FIELDS.after, maxLength: MAILBOXES_SHARED_FIELDS.maxLength, minLength: MAILBOXES_SHARED_FIELDS.minLength, sender: MAILBOXES_SHARED_FIELDS.sender },
-        access: 'read',
-        describe: { order: 9, text: 'otp: Read a recent email code; set after before requesting the code. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesOtp(mailboxesOtpSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'messages',
-        input: { ...mailboxesMessagesSchema.partial().shape, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId, after: MAILBOXES_SHARED_FIELDS.after, cursor: MAILBOXES_SHARED_FIELDS.cursor, hasOtp: MAILBOXES_SHARED_FIELDS.hasOtp, limit: MAILBOXES_SHARED_FIELDS.limit, sender: MAILBOXES_SHARED_FIELDS.sender },
-        access: 'read',
-        describe: { order: 10, text: 'messages: Read recent email summaries. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesMessages(mailboxesMessagesSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'message',
-        input: { ...mailboxesMessageSchema.partial().shape, messageId: MAILBOXES_SHARED_FIELDS.messageId, mailboxId: MAILBOXES_SHARED_FIELDS.mailboxId },
-        access: 'read',
-        describe: { order: 11, text: 'message: Read a single email with attachment metadata. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesMessage(mailboxesMessageSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'connect',
-        input: { ...mailboxesConnectSchema.partial().shape, bindingHash: MAILBOXES_SHARED_FIELDS.bindingHash, label: MAILBOXES_SHARED_FIELDS.label, clientRequestId: MAILBOXES_SHARED_FIELDS.clientRequestId },
-        access: 'write',
-        describe: {
+    sdkOp('get', mailboxesGetSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesGet(params), 'read', { describe: { order: 3, text: 'get: Read a mailbox. ' } }),
+    sdkOp('update', mailboxesUpdateSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUpdate(params), 'write', { describe: { order: 4, text: 'update: Update the mailbox label. ' } }),
+    sdkOp('delete', mailboxesDeleteSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDelete(params), 'commerce', { describe: { order: 5, text: 'delete: Cancel a pending mailbox or schedule paid cancellation. ' } }),
+    sdkOp('uncancel', mailboxesUncancelSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUncancel(params), 'commerce', { describe: { order: 6, text: 'uncancel: Withdraw a scheduled cancellation and continue service. ' } }),
+    sdkOp('restart', mailboxesRestartSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesRestart(params), 'commerce', { describe: { order: 7, text: 'restart: Restart an archived mailbox; may start paid service. ' } }),
+    sdkOp('disconnect', mailboxesDisconnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDisconnect(params), 'write', { describe: { order: 8, text: 'disconnect: Disconnect an external inbox link. ' } }),
+    sdkOp('otp', mailboxesOtpSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesOtp(params), 'read', { describe: { order: 9, text: 'otp: Read a recent email code; set after before requesting the code. ' } }),
+    sdkOp('messages', mailboxesMessagesSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessages(params), 'read', { describe: { order: 10, text: 'messages: Read recent email summaries. ' } }),
+    sdkOp('message', mailboxesMessageSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessage(params), 'read', { describe: { order: 11, text: 'message: Read a single email with attachment metadata. ' } }),
+    sdkOp('connect', mailboxesConnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesConnect(params), 'write', { describe: {
             order: 12,
             text: 'connect: Link an external inbox; the user completes consent using the returned redirect URL. ',
-        },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesConnect(mailboxesConnectSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'connection',
-        input: { ...mailboxesConnectionSchema.partial().shape, connectionId: MAILBOXES_SHARED_FIELDS.connectionId },
-        access: 'read',
-        describe: { order: 13, text: 'connection: Read the connection status after consent.' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.mailboxes;
-            return asTextResult(await backend.mailboxesConnection(mailboxesConnectionSchema.strip().parse(input)));
-        },
-    }),
+        } }),
+    sdkOp('connection', mailboxesConnectionSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesConnection(params), 'read', { describe: { order: 13, text: 'connection: Read the connection status after consent.' } }),
 ] as const;
-const MAILBOXES_OPERATIONS = operationValues(MAILBOXES_TABLE);
+
 export function registerMailboxesTools(server: McpServer, ctx: ToolCtx): void {
-    const values = narrowedValues(MAILBOXES_OPERATIONS, ctx.policy.operationAllowlist?.get('mailboxes'));
-    server.registerTool(
-        'mailboxes',
-        {
-            description: operationDescription(MAILBOXES_TABLE) + allowedValuesNote(values, MAILBOXES_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(MAILBOXES_OPERATIONS),
-                ...operationInput(MAILBOXES_TABLE, MAILBOXES_SHARED_FIELDS),
-            },
-        },
-        async (input) => runOperation(MAILBOXES_TABLE, input.operation, ctx, input),
-    );
+    
+    registerBundle(server, ctx, 'mailboxes', MAILBOXES_TABLE, { shared: MAILBOXES_SHARED_FIELDS });
 }

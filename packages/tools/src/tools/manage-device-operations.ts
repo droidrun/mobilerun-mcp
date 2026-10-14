@@ -1,4 +1,4 @@
-import { operation } from './operation-table.js';
+import { operation, sdkOp } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -61,51 +61,9 @@ export const MANAGE_DEVICE_SHARED_FIELDS = {
 
 
 export const MANAGE_DEVICE_TABLE = [
-    operation({
-        op: 'recordings_trajectory',
-        input: { ...manageDeviceRecordingsTrajectorySchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 0,
-        access: 'read',
-        describe: { order: 11, text: 'recordings_trajectory return short-lived signed download URLs.' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsTrajectory(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsTrajectorySchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'recordings_video',
-        input: { ...manageDeviceRecordingsVideoSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 1,
-        access: 'read',
-        describe: { order: 10, text: 'recordings_video and ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsVideo(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsVideoSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'screenshots_image',
-        input: { ...manageDeviceScreenshotsImageSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 2,
-        access: 'read',
-        describe: { order: 9, text: 'screenshots_image, ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceScreenshotsImage(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceScreenshotsImageSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('recordings_trajectory', manageDeviceRecordingsTrajectorySchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsTrajectory(deviceId, params), 'read', { fieldOrder: 0, describe: { order: 11, text: 'recordings_trajectory return short-lived signed download URLs.' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_video', manageDeviceRecordingsVideoSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsVideo(deviceId, params), 'read', { fieldOrder: 1, describe: { order: 10, text: 'recordings_video and ' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('screenshots_image', manageDeviceScreenshotsImageSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsImage(deviceId, params), 'read', { fieldOrder: 2, describe: { order: 9, text: 'screenshots_image, ' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'reboot',
         input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
@@ -178,17 +136,7 @@ export const MANAGE_DEVICE_TABLE = [
             return asTextResult(await backend.getDeviceCapabilities(deviceId));
         },
     }),
-    operation({
-        op: 'count',
-        input: {  },
-        fieldOrder: 29,
-        access: 'read',
-        describe: { order: 5, text: 'count (claimed-device counts by state — no deviceId). ' },
-        run: async (ctx, input) => {
-            const backend = ctx.backend.deviceControl;
-            return asTextResult(await backend.countDevices());
-        },
-    }),
+    sdkOp('count', z.object({}), (ctx, params) => ctx.backend.deviceControl.countDevices(), 'read', { fieldOrder: 29, describe: { order: 5, text: 'count (claimed-device counts by state — no deviceId). ' } }),
     operation({
         op: 'stop',
         input: { ...manageDeviceStopSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
@@ -217,21 +165,10 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'summary',
-        input: { ...manageDeviceSummarySchema.partial().shape },
-        fieldOrder: 5,
-        access: 'read',
-        describe: {
+    sdkOp('summary', manageDeviceSummarySchema, (ctx, params) => ctx.backend.deviceControl.manageDeviceSummary(params), 'read', { fieldOrder: 5, describe: {
             order: 8,
             text: 'summary reads account usage without deviceId. Recordings support list, start, stop, status, deletion and screenshot metadata. Screenshot capture returns a PNG image up to 256 KB; save stores device media. Traffic sessions capture network activity; media sessions control camera and microphone streams. ',
-        },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceSummary(manageDeviceSummarySchema.strip().parse(input)),
-            );
-        },
-    }),
+        } }),
     operation({
         op: 'retrieve_capabilities',
         input: { ...manageDeviceRetrieveCapabilitiesSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
@@ -246,126 +183,14 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'recordings_list',
-        input: { ...manageDeviceRecordingsListSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 7,
-        access: 'read',
-        describe: { order: 25, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsList(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsListSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'recordings_delete',
-        input: { ...manageDeviceRecordingsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 8,
-        access: 'write',
-        describe: { order: 26, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsDelete(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsDeleteSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'recordings_screenshots',
-        input: { ...manageDeviceRecordingsScreenshotsSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 9,
-        access: 'read',
-        describe: { order: 27, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsScreenshots(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsScreenshotsSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'recordings_start',
-        input: { ...manageDeviceRecordingsStartSchema.partial().shape, name: MANAGE_DEVICE_SHARED_FIELDS.name, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 10,
-        access: 'write',
-        describe: { order: 28, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsStart(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsStartSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'recordings_status',
-        input: { ...manageDeviceRecordingsStatusSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 11,
-        access: 'read',
-        describe: { order: 29, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsStatus(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsStatusSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'recordings_stop',
-        input: { ...manageDeviceRecordingsStopSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 12,
-        access: 'write',
-        describe: { order: 30, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRecordingsStop(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceRecordingsStopSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'screenshots_list',
-        input: { ...manageDeviceScreenshotsListSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 13,
-        access: 'read',
-        describe: { order: 31, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceScreenshotsList(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceScreenshotsListSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'screenshots_delete',
-        input: { ...manageDeviceScreenshotsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 14,
-        access: 'write',
-        describe: { order: 32, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceScreenshotsDelete(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceScreenshotsDeleteSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('recordings_list', manageDeviceRecordingsListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsList(deviceId, params), 'read', { fieldOrder: 7, describe: { order: 25, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_delete', manageDeviceRecordingsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsDelete(deviceId, params), 'write', { fieldOrder: 8, describe: { order: 26, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_screenshots', manageDeviceRecordingsScreenshotsSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsScreenshots(deviceId, params), 'read', { fieldOrder: 9, describe: { order: 27, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_start', manageDeviceRecordingsStartSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStart(deviceId, params), 'write', { fieldOrder: 10, describe: { order: 28, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_status', manageDeviceRecordingsStatusSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStatus(deviceId, params), 'read', { fieldOrder: 11, describe: { order: 29, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_stop', manageDeviceRecordingsStopSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStop(deviceId, params), 'write', { fieldOrder: 12, describe: { order: 30, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('screenshots_list', manageDeviceScreenshotsListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsList(deviceId, params), 'read', { fieldOrder: 13, describe: { order: 31, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('screenshots_delete', manageDeviceScreenshotsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsDelete(deviceId, params), 'write', { fieldOrder: 14, describe: { order: 32, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'screenshots_capture',
         input: { ...manageDeviceScreenshotsCaptureSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
@@ -381,21 +206,7 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'traffic_sessions_create',
-        input: { ...manageDeviceTrafficSessionsCreateSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 16,
-        access: 'write',
-        describe: { order: 34, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceTrafficSessionsCreate(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceTrafficSessionsCreateSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('traffic_sessions_create', manageDeviceTrafficSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsCreate(deviceId, params), 'write', { fieldOrder: 16, describe: { order: 34, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'traffic_sessions_retrieve',
         input: { ...manageDeviceTrafficSessionsRetrieveSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
@@ -432,66 +243,10 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'traffic_sessions_delete',
-        input: { ...manageDeviceTrafficSessionsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 19,
-        access: 'write',
-        describe: { order: 37, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceTrafficSessionsDeleteSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'media_sessions_create',
-        input: { ...manageDeviceMediaSessionsCreateSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 20,
-        access: 'write',
-        describe: { order: 38, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceMediaSessionsCreate(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceMediaSessionsCreateSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'media_sessions_delete',
-        input: { ...manageDeviceMediaSessionsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 21,
-        access: 'write',
-        describe: { order: 39, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceMediaSessionsDelete(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceMediaSessionsDeleteSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'media_sessions_activate',
-        input: { ...manageDeviceMediaSessionsActivateSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 22,
-        access: 'write',
-        describe: { order: 40, text: '' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceMediaSessionsActivate(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceMediaSessionsActivateSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('traffic_sessions_delete', manageDeviceTrafficSessionsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(deviceId, params), 'write', { fieldOrder: 19, describe: { order: 37, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('media_sessions_create', manageDeviceMediaSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsCreate(deviceId, params), 'write', { fieldOrder: 20, describe: { order: 38, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('media_sessions_delete', manageDeviceMediaSessionsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsDelete(deviceId, params), 'write', { fieldOrder: 21, describe: { order: 39, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('media_sessions_activate', manageDeviceMediaSessionsActivateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsActivate(deviceId, params), 'write', { fieldOrder: 22, describe: { order: 40, text: '' }, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'media_sessions_retrieve_current',
         input: { ...manageDeviceMediaSessionsRetrieveCurrentSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },

@@ -1,4 +1,4 @@
-import { operation } from './operation-table.js';
+import { operation, sdkOp } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -161,68 +161,8 @@ export const DEVICE_ACTION_TABLE = [
             return asTextResult({ status: 'ok', operation, deviceId });
         },
     }),
-    operation({
-        op: 'clipboard_get',
-        input: { ...deviceActionClipboardGetSchema.partial().shape, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 0,
-        fieldRepeats: ['displayId'],
-        access: 'read',
-        describe: { order: 6, text: 'clipboard_get: Read clipboard text. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.deviceActionClipboardGet(
-                    input.deviceId,
-                    deviceActionClipboardGetSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'clipboard_set',
-        input: { ...deviceActionClipboardSetSchema.partial().shape, text: DEVICE_ACTION_SHARED_FIELDS.text, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 1,
-        fieldRepeats: ['displayId'],
-        access: 'write',
-        describe: { order: 7, text: 'clipboard_set: Write clipboard text. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.deviceActionClipboardSet(
-                    input.deviceId,
-                    deviceActionClipboardSetSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'deep_link',
-        input: { ...deviceActionDeepLinkSchema.partial().shape, action: DEVICE_ACTION_SHARED_FIELDS.action, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 2,
-        fieldRepeats: ['displayId'],
-        access: 'write',
-        describe: { order: 8, text: 'deep_link: Open a URL or app link. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.deviceActionDeepLink(
-                    input.deviceId,
-                    deviceActionDeepLinkSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'browser_script',
-        input: { ...deviceActionBrowserScriptSchema.partial().shape, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 3,
-        fieldRepeats: ['displayId'],
-        access: 'write',
-        describe: { order: 9, text: 'browser_script: Run a script in the device browser.' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.deviceActionBrowserScript(
-                    input.deviceId,
-                    deviceActionBrowserScriptSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('clipboard_get', deviceActionClipboardGetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardGet(deviceId, params), 'read', { fieldOrder: 0, fieldRepeats: ['displayId'], describe: { order: 6, text: 'clipboard_get: Read clipboard text. ' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('clipboard_set', deviceActionClipboardSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardSet(deviceId, params), 'write', { fieldOrder: 1, fieldRepeats: ['displayId'], describe: { order: 7, text: 'clipboard_set: Write clipboard text. ' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('deep_link', deviceActionDeepLinkSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionDeepLink(deviceId, params), 'write', { fieldOrder: 2, fieldRepeats: ['displayId'], describe: { order: 8, text: 'deep_link: Open a URL or app link. ' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('browser_script', deviceActionBrowserScriptSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionBrowserScript(deviceId, params), 'write', { fieldOrder: 3, fieldRepeats: ['displayId'], describe: { order: 9, text: 'browser_script: Run a script in the device browser.' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
 ] as const;

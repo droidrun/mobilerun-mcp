@@ -3,8 +3,7 @@ import {
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -35,7 +34,7 @@ export const ASSISTANT_TABLE = [
         },
         run: async (ctx, input) => {
             const backend = ctx.backend.assistant;
-            return backend.listSessions(input.mine);
+            return asTextResult(await backend.listSessions(input.mine));
         },
     }),
     operation({
@@ -47,7 +46,7 @@ export const ASSISTANT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.assistant;
-            return backend.createSession(requireValue(input.title, 'title', operation, 'assistant'), input.description);
+            return asTextResult(await backend.createSession(requireValue(input.title, 'title', operation, 'assistant'), input.description));
         },
     }),
     operation({
@@ -69,7 +68,7 @@ export const ASSISTANT_TABLE = [
             if (Object.values(params).every((value) => value === undefined)) {
                 throw new Error('assistant operation=update_session requires title, description, pinned, or status');
             }
-            return backend.updateSession(sessionId, params);
+            return asTextResult(await backend.updateSession(sessionId, params));
         },
     }),
     operation({
@@ -82,11 +81,11 @@ export const ASSISTANT_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.assistant;
             const sessionId = requireValue(input.sessionId, 'sessionId', operation, 'assistant');
-            return backend.sendMessage(
+            return asTextResult(await backend.sendMessage(
                 sessionId,
                 requireValue(input.message, 'message', operation, 'assistant'),
                 input.waitSeconds ?? 45,
-            );
+            ));
         },
     }),
     operation({
@@ -101,7 +100,7 @@ export const ASSISTANT_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.assistant;
             const sessionId = requireValue(input.sessionId, 'sessionId', operation, 'assistant');
-            return curateAssistantHistory(await backend.getMessages(sessionId, input.limit ?? 20));
+            return asTextResult(await curateAssistantHistory(await backend.getMessages(sessionId, input.limit ?? 20)));
         },
     }),
     operation({
@@ -114,7 +113,7 @@ export const ASSISTANT_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.assistant;
             const sessionId = requireValue(input.sessionId, 'sessionId', operation, 'assistant');
-            return backend.abort(sessionId, input.expectedTurnId);
+            return asTextResult(await backend.abort(sessionId, input.expectedTurnId));
         },
     }),
     operation({
@@ -129,10 +128,10 @@ export const ASSISTANT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.assistant;
-            return backend.answerPermission(
+            return asTextResult(await backend.answerPermission(
                 requireValue(input.permissionId, 'permissionId', operation, 'assistant'),
                 requireValue(input.response, 'response', operation, 'assistant'),
-            );
+            ));
         },
     }),
     operation({
@@ -144,10 +143,10 @@ export const ASSISTANT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.assistant;
-            return backend.answerQuestion(
+            return asTextResult(await backend.answerQuestion(
                 requireValue(input.questionId, 'questionId', operation, 'assistant'),
                 requireValue(input.answers, 'answers', operation, 'assistant'),
-            );
+            ));
         },
     }),
     operation({
@@ -159,11 +158,11 @@ export const ASSISTANT_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.assistant;
-            return backend.rejectQuestion(requireValue(input.questionId, 'questionId', operation, 'assistant'));
+            return asTextResult(await backend.rejectQuestion(requireValue(input.questionId, 'questionId', operation, 'assistant')));
         },
     }),
 ] as const;
-const ASSISTANT_OPERATIONS = operationValues(ASSISTANT_TABLE);
+
 
 function objectValue(value: unknown): Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -219,17 +218,6 @@ export function curateAssistantHistory(history: AssistantHistory) {
 }
 
 export function registerAssistantTool(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(ASSISTANT_OPERATIONS, ctx.policy.operationAllowlist?.get('assistant'));
-    server.registerTool(
-        'assistant',
-        {
-            description:
-                operationDescription(ASSISTANT_TABLE) + allowedValuesNote(operationValues, ASSISTANT_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(ASSISTANT_OPERATIONS),
-                ...operationInput(ASSISTANT_TABLE, ASSISTANT_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(ASSISTANT_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'assistant', ASSISTANT_TABLE, { shared: ASSISTANT_SHARED_FIELDS });
 }

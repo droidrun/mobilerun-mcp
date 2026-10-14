@@ -3,8 +3,7 @@ import {
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 // Tasks tools (the platform's core product) — built directly against
 // @mobilerun/sdk's public surface.
@@ -125,8 +124,8 @@ export const GET_TASK_MEDIA_TABLE = [
         run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
     }),
 ] as const;
-const TASK_VIEWS = operationValues(GET_TASK_TABLE);
-const TASK_MEDIA_KINDS = operationValues(GET_TASK_MEDIA_TABLE);
+
+
 // Union of the global (client.tasks.list) and device-scoped
 // (client.devices.tasks.list) `orderBy` enums (verified against the SDK's
 // shipped tasks.d.ts / devices/tasks.d.ts) — the two endpoints don't share
@@ -199,26 +198,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         async ({ pacedInput, ...params }) =>
             asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })),
     );
-    server.registerTool(
-        'get_task',
-        {
-            description: operationDescription(GET_TASK_TABLE),
-            inputSchema: { view: z.enum(TASK_VIEWS), ...operationInput(GET_TASK_TABLE, GET_TASK_SHARED_FIELDS) },
-        },
-        async ({
-            view,
-            taskId,
-            offset,
-            limit,
-        }: {
-            view: TaskView;
-            taskId: string;
-            offset?: number;
-            limit?: number;
-        }) => {
-            return runOperation(GET_TASK_TABLE, view, ctx, { view, taskId, offset, limit });
-        },
-    );
+    registerBundle(server, ctx, 'get_task', GET_TASK_TABLE, { shared: GET_TASK_SHARED_FIELDS, field: 'view' });
     server.registerTool(
         'list_tasks',
         {
@@ -257,17 +237,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         },
         async ({ taskId, message }) => asTextResult(await ctx.backend.tasks.sendTaskMessage(taskId, message)),
     );
-    server.registerTool(
-        'get_task_media',
-        {
-            description: operationDescription(GET_TASK_MEDIA_TABLE),
-            inputSchema: {
-                kind: z.enum(TASK_MEDIA_KINDS),
-                ...operationInput(GET_TASK_MEDIA_TABLE, GET_TASK_MEDIA_SHARED_FIELDS),
-            },
-        },
-        async (input) => runOperation(GET_TASK_MEDIA_TABLE, input.kind, ctx, input),
-    );
+    registerBundle(server, ctx, 'get_task_media', GET_TASK_MEDIA_TABLE, { shared: GET_TASK_MEDIA_SHARED_FIELDS, field: 'kind' });
 }
 async function executeTaskMediaOperation(
     ctx: ToolCtx,

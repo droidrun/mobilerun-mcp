@@ -1,4 +1,4 @@
-import { operation } from './operation-table.js';
+import { operation, sdkOp } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -202,64 +202,8 @@ export const CONFIGURE_DEVICE_TABLE = [
             return asTextResult(await backend.getProxyStatus(deviceId));
         },
     }),
-    operation({
-        op: 'reset_location',
-        input: { ...configureDeviceResetLocationSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 0,
-        access: 'write',
-        describe: { order: 12, text: 'reset_location: Reset the device location. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.configureDeviceResetLocation(
-                    input.deviceId,
-                    configureDeviceResetLocationSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'kiosk_enable',
-        input: { ...configureDeviceKioskEnableSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 1,
-        access: 'write',
-        describe: { order: 13, text: 'kiosk_enable: Enable kiosk mode for an app. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.configureDeviceKioskEnable(
-                    input.deviceId,
-                    configureDeviceKioskEnableSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'kiosk_disable',
-        input: { ...configureDeviceKioskDisableSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 2,
-        access: 'write',
-        describe: { order: 14, text: 'kiosk_disable: Disable kiosk mode. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.configureDeviceKioskDisable(
-                    input.deviceId,
-                    configureDeviceKioskDisableSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'update_profile',
-        input: { ...configureDeviceUpdateProfileSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 3,
-        access: 'write',
-        describe: { order: 15, text: 'update_profile: Update device profile settings.' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.configureDeviceUpdateProfile(
-                    input.deviceId,
-                    configureDeviceUpdateProfileSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('reset_location', configureDeviceResetLocationSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.configureDeviceResetLocation(deviceId, params), 'write', { fieldOrder: 0, describe: { order: 12, text: 'reset_location: Reset the device location. ' }, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('kiosk_enable', configureDeviceKioskEnableSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.configureDeviceKioskEnable(deviceId, params), 'write', { fieldOrder: 1, describe: { order: 13, text: 'kiosk_enable: Enable kiosk mode for an app. ' }, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('kiosk_disable', configureDeviceKioskDisableSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.configureDeviceKioskDisable(deviceId, params), 'write', { fieldOrder: 2, describe: { order: 14, text: 'kiosk_disable: Disable kiosk mode. ' }, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('update_profile', configureDeviceUpdateProfileSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.configureDeviceUpdateProfile(deviceId, params), 'write', { fieldOrder: 3, describe: { order: 15, text: 'update_profile: Update device profile settings.' }, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId }),
 ] as const;

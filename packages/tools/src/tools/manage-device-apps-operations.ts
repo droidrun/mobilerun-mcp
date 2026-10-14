@@ -1,4 +1,4 @@
-import { operation } from './operation-table.js';
+import { operation, sdkOp } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -103,49 +103,7 @@ export const MANAGE_APPS_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'grant_permission',
-        input: { ...manageDeviceAppsGrantPermissionSchema.partial().shape, packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
-        fieldOrder: 0,
-        access: 'write',
-        describe: { order: 5, text: 'grant_permission: Grant an app notification permission. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceAppsGrantPermission(
-                    input.deviceId,
-                    manageDeviceAppsGrantPermissionSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'revoke_permission',
-        input: { ...manageDeviceAppsRevokePermissionSchema.partial().shape, packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
-        fieldOrder: 1,
-        access: 'write',
-        describe: { order: 6, text: 'revoke_permission: Revoke an app notification permission. ' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceAppsRevokePermission(
-                    input.deviceId,
-                    manageDeviceAppsRevokePermissionSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
-    operation({
-        op: 'list_installs',
-        input: { ...manageDeviceAppsListInstallsSchema.partial().shape, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
-        fieldOrder: 2,
-        access: 'read',
-        describe: { order: 7, text: 'list_installs: Read app installation jobs.' },
-        run: async (ctx, input) => {
-            return asTextResult(
-                await ctx.backend.deviceControl.manageDeviceAppsListInstalls(
-                    input.deviceId,
-                    manageDeviceAppsListInstallsSchema.strip().parse(input),
-                ),
-            );
-        },
-    }),
+    sdkOp('grant_permission', manageDeviceAppsGrantPermissionSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsGrantPermission(deviceId, params), 'write', { fieldOrder: 0, describe: { order: 5, text: 'grant_permission: Grant an app notification permission. ' }, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
+    sdkOp('revoke_permission', manageDeviceAppsRevokePermissionSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsRevokePermission(deviceId, params), 'write', { fieldOrder: 1, describe: { order: 6, text: 'revoke_permission: Revoke an app notification permission. ' }, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
+    sdkOp('list_installs', manageDeviceAppsListInstallsSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsListInstalls(deviceId, params), 'read', { fieldOrder: 2, describe: { order: 7, text: 'list_installs: Read app installation jobs.' }, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
 ] as const;

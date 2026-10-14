@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import {
     filesDownloadSchema,
     filesListSchema,
@@ -30,96 +30,19 @@ const FILES_SHARED_FIELDS = {
 };
 
 export const FILES_TABLE = [
-    operation({
-        op: 'download',
-        input: { ...filesDownloadSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
-        access: 'read',
-        describe: { order: 6, text: 'download: Read a short-lived signed download URL.' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesDownload(filesDownloadSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'list',
-        input: { ...filesListSchema.partial().shape, zone: FILES_SHARED_FIELDS.zone },
-        access: 'read',
-        describe: { order: 0, text: 'list: List organization files. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesList(filesListSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'update',
-        input: { ...filesUpdateSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId, displayName: FILES_SHARED_FIELDS.displayName, enabled: FILES_SHARED_FIELDS.enabled },
-        access: 'write',
-        describe: { order: 1, text: 'update: Update file metadata. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesUpdate(filesUpdateSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'delete',
-        input: { ...filesDeleteSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
-        access: 'write',
-        describe: { order: 2, text: 'delete: Delete a file. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesDelete(filesDeleteSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'cancel_pending',
-        input: { ...filesCancelPendingSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
-        access: 'write',
-        describe: { order: 3, text: 'cancel_pending: Cancel a pending file upload. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesCancelPending(filesCancelPendingSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'confirm',
-        input: { ...filesConfirmSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
-        access: 'write',
-        describe: { order: 4, text: 'confirm: Confirm an uploaded file. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesConfirm(filesConfirmSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'upload_url',
-        input: { ...filesUploadUrlSchema.partial().shape, filename: FILES_SHARED_FIELDS.filename, mimeType: FILES_SHARED_FIELDS.mimeType, sizeBytes: FILES_SHARED_FIELDS.sizeBytes, zone: FILES_SHARED_FIELDS.zone },
-        access: 'write',
-        describe: {
+    sdkOp('download', filesDownloadSchema, (ctx, params) => ctx.backend.files.filesDownload(params), 'read', { describe: { order: 6, text: 'download: Read a short-lived signed download URL.' } }),
+    sdkOp('list', filesListSchema, (ctx, params) => ctx.backend.files.filesList(params), 'read', { describe: { order: 0, text: 'list: List organization files. ' } }),
+    sdkOp('update', filesUpdateSchema, (ctx, params) => ctx.backend.files.filesUpdate(params), 'write', { describe: { order: 1, text: 'update: Update file metadata. ' } }),
+    sdkOp('delete', filesDeleteSchema, (ctx, params) => ctx.backend.files.filesDelete(params), 'write', { describe: { order: 2, text: 'delete: Delete a file. ' } }),
+    sdkOp('cancel_pending', filesCancelPendingSchema, (ctx, params) => ctx.backend.files.filesCancelPending(params), 'write', { describe: { order: 3, text: 'cancel_pending: Cancel a pending file upload. ' } }),
+    sdkOp('confirm', filesConfirmSchema, (ctx, params) => ctx.backend.files.filesConfirm(params), 'write', { describe: { order: 4, text: 'confirm: Confirm an uploaded file. ' } }),
+    sdkOp('upload_url', filesUploadUrlSchema, (ctx, params) => ctx.backend.files.filesUploadUrl(params), 'write', { describe: {
             order: 5,
             text: 'upload_url: Create a signed upload URL; upload bytes to the URL outside this tool. ',
-        },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.files;
-            return asTextResult(await backend.filesUploadUrl(filesUploadUrlSchema.strip().parse(input)));
-        },
-    }),
+        } }),
 ] as const;
-const FILES_OPERATIONS = operationValues(FILES_TABLE);
+
 export function registerFilesTools(server: McpServer, ctx: ToolCtx): void {
-    const values = narrowedValues(FILES_OPERATIONS, ctx.policy.operationAllowlist?.get('files'));
-    server.registerTool(
-        'files',
-        {
-            description: operationDescription(FILES_TABLE) + allowedValuesNote(values, FILES_OPERATIONS),
-            inputSchema: { operation: z.enum(FILES_OPERATIONS), ...operationInput(FILES_TABLE, FILES_SHARED_FIELDS) },
-        },
-        async (input) => runOperation(FILES_TABLE, input.operation, ctx, input),
-    );
+    
+    registerBundle(server, ctx, 'files', FILES_TABLE, { shared: FILES_SHARED_FIELDS });
 }

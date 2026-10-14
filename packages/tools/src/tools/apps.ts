@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 // apps bundle. Upload is a 3-step flow: (1) create_upload_url returns
 // pre-signed object-storage PUT URLs per file — the actual file bytes are
@@ -39,7 +39,7 @@ export const APPS_TABLE = [
         describe: { order: 1, text: 'list, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.apps;
-            return backend.listApps({
+            return asTextResult(await backend.listApps({
                 query: input.query,
                 platform: input.platform,
                 status: input.status,
@@ -47,7 +47,7 @@ export const APPS_TABLE = [
                 order: input.order,
                 page: input.page,
                 pageSize: input.pageSize,
-            });
+            }));
         },
     }),
     operation({
@@ -59,7 +59,7 @@ export const APPS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.apps;
             const id = requireValue(input.id, 'id', operation, 'apps');
-            return backend.getApp(id);
+            return asTextResult(await backend.getApp(id));
         },
     }),
     operation({
@@ -71,7 +71,7 @@ export const APPS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.apps;
             const id = requireValue(input.id, 'id', operation, 'apps');
-            return backend.listAppVersions(id);
+            return asTextResult(await backend.listAppVersions(id));
         },
     }),
     operation({
@@ -93,7 +93,7 @@ export const APPS_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
-            return backend.createAppUploadUrl({
+            return asTextResult(await backend.createAppUploadUrl({
                 bundleId: requireValue(input.bundleId, 'bundleId', operation, 'apps'),
                 displayName: requireValue(input.displayName, 'displayName', operation, 'apps'),
                 versionCode: requireValue(input.versionCode, 'versionCode', operation, 'apps'),
@@ -106,7 +106,7 @@ export const APPS_TABLE = [
                 developerName: input.developerName,
                 iconURL: input.iconURL,
                 targetSdk: input.targetSdk,
-            });
+            }));
         },
     }),
     operation({
@@ -118,7 +118,7 @@ export const APPS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.apps;
             const id = requireValue(input.id, 'id', operation, 'apps');
-            return backend.confirmAppUpload(id);
+            return asTextResult(await backend.confirmAppUpload(id));
         },
     }),
     operation({
@@ -133,7 +133,7 @@ export const APPS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.apps;
             const id = requireValue(input.id, 'id', operation, 'apps');
-            return backend.markAppUploadFailed(id);
+            return asTextResult(await backend.markAppUploadFailed(id));
         },
     }),
     operation({
@@ -145,29 +145,14 @@ export const APPS_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.apps;
             const id = requireValue(input.id, 'id', operation, 'apps');
-            return backend.deleteApp(id);
+            return asTextResult(await backend.deleteApp(id));
         },
     }),
-    operation({
-        op: 'storage_usage',
-        input: {  },
-        access: 'read',
-        describe: { order: 7, text: 'storage_usage: Read app storage usage.' },
-        run: async (ctx, input) => {
-            return ctx.backend.apps.appsStorageUsage();
-        },
-    }),
+    sdkOp('storage_usage', z.object({}), (ctx, params) => ctx.backend.apps.appsStorageUsage(), 'read', { describe: { order: 7, text: 'storage_usage: Read app storage usage.' } }),
 ] as const;
-const APPS_OPERATIONS = operationValues(APPS_TABLE);
+
 
 export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(APPS_OPERATIONS, ctx.policy.operationAllowlist?.get('apps'));
-    server.registerTool(
-        'apps',
-        {
-            description: operationDescription(APPS_TABLE) + allowedValuesNote(operationValues, APPS_OPERATIONS),
-            inputSchema: { operation: z.enum(APPS_OPERATIONS), ...operationInput(APPS_TABLE, APPS_SHARED_FIELDS) },
-        },
-        async (input) => asTextResult(await runOperation(APPS_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'apps', APPS_TABLE, { shared: APPS_SHARED_FIELDS });
 }

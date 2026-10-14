@@ -1,11 +1,11 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
     runOperation,
-    operationFields,
-} from './operation-table.js';
+    operationFields, registerBundle } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { disallowedFilterError } from './op-helpers.js';
 // Workflow tools expose the public action catalog without step-type filtering.
@@ -128,16 +128,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'service',
-        input: {  },
-        access: 'read',
-        describe: { order: 1, text: 'service): every available workflow step.\n- ' },
-        required: [],
-        run: async (ctx, input) => {
-            return asTextResult(await ctx.backend.workflows.listServices());
-        },
-    }),
+    sdkOp('service', z.object({}), (ctx, params) => ctx.backend.workflows.listServices(), 'read', { describe: { order: 1, text: 'service): every available workflow step.\n- ' }, required: [] }),
     operation({
         op: 'service_methods',
         input: { service: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.service },
@@ -209,10 +200,10 @@ export const GET_WORKFLOW_RESOURCE_TABLE = [
         },
     }),
 ] as const;
-const LIST_RESOURCES = operationValues(LIST_WORKFLOW_RESOURCES_TABLE);
-type ListResource = (typeof LIST_RESOURCES)[number];
-const GET_RESOURCES = operationValues(GET_WORKFLOW_RESOURCE_TABLE);
-type GetResource = (typeof GET_RESOURCES)[number];
+
+type ListResource = (typeof LIST_WORKFLOW_RESOURCES_TABLE)[number]['op'];
+
+type GetResource = (typeof GET_WORKFLOW_RESOURCE_TABLE)[number]['op'];
 type ListFilters = {
     service?: 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks' | 'integrations_api';
     search?: string;
@@ -251,71 +242,14 @@ const flowDeviceIdsSchema = z
     .min(1)
     .describe('Owned device ids on which device-bound steps may run. Required for a runnable device workflow.');
 export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
-    const listResourceValues = narrowedValues(
-        LIST_RESOURCES,
-        ctx.policy.operationAllowlist?.get('list_workflow_resources'),
-    );
-    const getResourceValues = narrowedValues(
-        GET_RESOURCES,
-        ctx.policy.operationAllowlist?.get('get_workflow_resource'),
-    );
-    server.registerTool(
-        'list_workflow_resources',
-        {
-            description:
-                operationDescription(LIST_WORKFLOW_RESOURCES_TABLE) +
-                allowedValuesNote(listResourceValues, LIST_RESOURCES),
-            inputSchema: {
-                resource: z.enum(LIST_RESOURCES),
-                ...operationInput(LIST_WORKFLOW_RESOURCES_TABLE, LIST_WORKFLOW_RESOURCES_SHARED_FIELDS),
-            },
-        },
-        async ({
-            resource,
-            ...filters
-        }: {
-            resource: ListResource;
-        } & ListFilters) => {
-            const filterError = disallowedFilterError(
-                resource,
-                ALLOWED_FILTERS[resource],
-                FILTER_KEYS,
-                REQUIRED_FILTERS[resource],
-                filters,
-            );
-            if (filterError) return asErrorResult(filterError);
-            return runOperation(LIST_WORKFLOW_RESOURCES_TABLE, resource, ctx, { resource, ...filters });
-        },
-    );
-    server.registerTool(
-        'get_workflow_resource',
-        {
-            description:
-                operationDescription(GET_WORKFLOW_RESOURCE_TABLE) + allowedValuesNote(getResourceValues, GET_RESOURCES),
-            inputSchema: {
-                resource: z.enum(GET_RESOURCES),
-                ...operationInput(GET_WORKFLOW_RESOURCE_TABLE, GET_WORKFLOW_RESOURCE_SHARED_FIELDS),
-            },
-        },
-        async ({ resource, id }: { resource: GetResource; id: string }) => {
-            try {
-                return await runOperation(GET_WORKFLOW_RESOURCE_TABLE, resource, ctx, { resource, id });
-            } catch (err) {
-                // Codex fix pack (2026-08-12): a BackendError MUST stay a
-                // BackendError through this context-wrapping rethrow —
-                // register.ts's enforcePolicy only renders the typed
-                // `[code] message` shape (asErrorResult) for
-                // `err instanceof BackendError`; wrapping it in a plain
-                // `Error` here (the previous bug) lost the not_found/
-                // forbidden/etc code before the client ever saw it.
-                const msg = err instanceof Error ? err.message : String(err);
-                if (err instanceof BackendError) {
-                    throw new BackendError(err.code, `${resource} ${id}: ${msg}`, err.status);
-                }
-                throw new Error(`${resource} ${id}: ${msg}`);
-            }
-        },
-    );
+    
+    
+    registerBundle(server, ctx, 'list_workflow_resources', LIST_WORKFLOW_RESOURCES_TABLE, { shared: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS, field: 'resource', beforeRun: (input) => disallowedFilterError(input.resource as string, ALLOWED_FILTERS[input.resource as ListResource], FILTER_KEYS, REQUIRED_FILTERS[input.resource as ListResource], input) });
+    registerBundle(server, ctx, 'get_workflow_resource', GET_WORKFLOW_RESOURCE_TABLE, { shared: GET_WORKFLOW_RESOURCE_SHARED_FIELDS, field: 'resource', onError: (error, input) => {
+                const msg = error instanceof Error ? error.message : String(error);
+                if (error instanceof BackendError) throw new BackendError(error.code, `${input.resource} ${input.id}: ${msg}`, error.status);
+                throw new Error(`${input.resource} ${input.id}: ${msg}`);
+            } });
     server.registerTool(
         'create_action',
         {

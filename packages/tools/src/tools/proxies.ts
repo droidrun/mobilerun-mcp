@@ -3,8 +3,7 @@ import {
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 // proxies bundle — device-bound socks5/wireguard proxy configs (distinct
 // from the `connect` tool's purchasable residential proxies).
@@ -36,7 +35,7 @@ export const PROXIES_TABLE = [
         },
         run: async (ctx, input) => {
             const backend = ctx.backend.proxies;
-            return backend.listProxies({ protocol: input.protocol });
+            return asTextResult(await backend.listProxies({ protocol: input.protocol }));
         },
     }),
     operation({
@@ -48,7 +47,7 @@ export const PROXIES_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.proxies;
             const proxyId = requireValue(input.proxyId, 'proxyId', operation, 'proxies');
-            return backend.getProxy(proxyId);
+            return asTextResult(await backend.getProxy(proxyId));
         },
     }),
     operation({
@@ -62,7 +61,7 @@ export const PROXIES_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.proxies;
-            return backend.createProxy(buildProxyParams(input, operation));
+            return asTextResult(await backend.createProxy(buildProxyParams(input, operation)));
         },
     }),
     operation({
@@ -74,7 +73,7 @@ export const PROXIES_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.proxies;
             const proxyId = requireValue(input.proxyId, 'proxyId', operation, 'proxies');
-            return backend.updateProxy(proxyId, buildProxyParams(input, operation));
+            return asTextResult(await backend.updateProxy(proxyId, buildProxyParams(input, operation)));
         },
     }),
     operation({
@@ -86,12 +85,12 @@ export const PROXIES_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.proxies;
             const proxyId = requireValue(input.proxyId, 'proxyId', operation, 'proxies');
-            return backend.deleteProxy(proxyId);
+            return asTextResult(await backend.deleteProxy(proxyId));
         },
     }),
 ] as const;
 type ProxiesInput = z.infer<z.ZodObject<typeof PROXIES_SHARED_FIELDS>>;
-const PROXIES_OPERATIONS = operationValues(PROXIES_TABLE);
+
 
 function buildProxyParams(input: ProxiesInput, operation: string) {
     const protocol = requireValue(input.protocol, 'protocol', operation, 'proxies');
@@ -113,16 +112,6 @@ function buildProxyParams(input: ProxiesInput, operation: string) {
 }
 
 export function registerProxiesTools(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(PROXIES_OPERATIONS, ctx.policy.operationAllowlist?.get('proxies'));
-    server.registerTool(
-        'proxies',
-        {
-            description: operationDescription(PROXIES_TABLE) + allowedValuesNote(operationValues, PROXIES_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(PROXIES_OPERATIONS),
-                ...operationInput(PROXIES_TABLE, PROXIES_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(PROXIES_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'proxies', PROXIES_TABLE, { shared: PROXIES_SHARED_FIELDS });
 }

@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { requireValue } from './op-helpers.js';
 // Flow lifecycle, configuration, validation and execution operations.
 import {
@@ -85,17 +85,7 @@ const MANAGE_FLOW_SHARED_FIELDS = {
 };
 
 export const MANAGE_FLOW_TABLE = [
-    operation({
-        op: 'execution_screenshot',
-        input: { ...manageFlowExecutionScreenshotSchema.partial().shape },
-        access: 'read',
-        describe: { order: 23, text: 'execution_screenshot: Read a short-lived signed download URL.' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowExecutionScreenshot(
-                manageFlowExecutionScreenshotSchema.strip().parse(input),
-            );
-        },
-    }),
+    sdkOp('execution_screenshot', manageFlowExecutionScreenshotSchema, (ctx, params) => ctx.backend.workflows.manageFlowExecutionScreenshot(params), 'read', { describe: { order: 23, text: 'execution_screenshot: Read a short-lived signed download URL.' } }),
     operation({
         op: 'clone',
         input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, name: MANAGE_FLOW_SHARED_FIELDS.name, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds },
@@ -108,7 +98,7 @@ export const MANAGE_FLOW_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.workflows;
             const flowId = requireValue(input.flowId, 'flowId', operation, 'manage_flow');
-            return backend.cloneFlow({ flowId, name: input.name, deviceIds: input.deviceIds });
+            return asTextResult(await backend.cloneFlow({ flowId, name: input.name, deviceIds: input.deviceIds }));
         },
     }),
     operation({
@@ -122,7 +112,7 @@ export const MANAGE_FLOW_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
-            return backend.unblockFlow(requireValue(input.flowId, 'flowId', operation, 'manage_flow'));
+            return asTextResult(await backend.unblockFlow(requireValue(input.flowId, 'flowId', operation, 'manage_flow')));
         },
     }),
     operation({
@@ -150,7 +140,7 @@ export const MANAGE_FLOW_TABLE = [
             const { operation } = input;
             const backend = ctx.backend.workflows;
             const flowId = requireValue(input.flowId, 'flowId', operation, 'manage_flow');
-            return backend.addFlowAction({
+            return asTextResult(await backend.addFlowAction({
                 flowId,
                 actionId: requireValue(input.actionId, 'actionId', operation, 'manage_flow'),
                 position: requireValue(input.position, 'position', operation, 'manage_flow'),
@@ -160,7 +150,7 @@ export const MANAGE_FLOW_TABLE = [
                 overrides: input.overrides,
                 parentFlowActionId: input.parentFlowActionId,
                 children: input.children,
-            });
+            }));
         },
     }),
     operation({
@@ -174,10 +164,10 @@ export const MANAGE_FLOW_TABLE = [
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
-            return backend.removeFlowAction({
+            return asTextResult(await backend.removeFlowAction({
                 flowActionId: requireValue(input.flowActionId, 'flowActionId', operation, 'manage_flow'),
                 flowId: requireValue(input.flowId, 'flowId', operation, 'manage_flow'),
-            });
+            }));
         },
     }),
     operation({
@@ -205,7 +195,7 @@ export const MANAGE_FLOW_TABLE = [
             const resolvedActions = replaceActionsNeedsExistingLookup(actions)
                 ? resolveReplaceActionKeys(actions, (await backend.listFlowActions(flowId)).items)
                 : actions;
-            return backend.replaceFlowActions({ flowId, actions: resolvedActions });
+            return asTextResult(await backend.replaceFlowActions({ flowId, actions: resolvedActions }));
         },
     }),
     operation({
@@ -218,192 +208,41 @@ export const MANAGE_FLOW_TABLE = [
         },
         run: async (ctx, input) => {
             const backend = ctx.backend.workflows;
-            return backend.getExecutionMetrics({
+            return asTextResult(await backend.getExecutionMetrics({
                 flowId: input.flowId,
                 triggerId: input.triggerId,
                 from: input.from,
                 to: input.to,
-            });
+            }));
         },
     }),
-    operation({
-        op: 'update',
-        input: { ...manageFlowUpdateSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, delivery: MANAGE_FLOW_SHARED_FIELDS.delivery, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds, name: MANAGE_FLOW_SHARED_FIELDS.name, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
-        access: 'write',
-        describe: { order: 7, text: 'update: Update flow configuration. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowUpdate(manageFlowUpdateSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'delete',
-        input: { ...manageFlowDeleteSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'write',
-        describe: { order: 8, text: 'delete: Delete a flow. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowDelete(manageFlowDeleteSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'activate',
-        input: { ...manageFlowActivateSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'commerce',
-        describe: { order: 9, text: 'activate: Activate a flow; may start paid automation. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowActivate(manageFlowActivateSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'run',
-        input: { ...manageFlowRunSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'commerce',
-        describe: { order: 10, text: 'run: Start a flow execution; usage may be billed. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowRun(manageFlowRunSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'validate',
-        input: { ...manageFlowValidateSchema.partial().shape, actions: MANAGE_FLOW_SHARED_FIELDS.actions, name: MANAGE_FLOW_SHARED_FIELDS.name, delivery: MANAGE_FLOW_SHARED_FIELDS.delivery, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
-        access: 'read',
-        describe: { order: 11, text: 'validate: Validate a draft flow without saving it. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowValidate(manageFlowValidateSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'verify',
-        input: { ...manageFlowVerifySchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'commerce',
-        describe: {
+    sdkOp('update', manageFlowUpdateSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdate(params), 'write', { describe: { order: 7, text: 'update: Update flow configuration. ' } }),
+    sdkOp('delete', manageFlowDeleteSchema, (ctx, params) => ctx.backend.workflows.manageFlowDelete(params), 'write', { describe: { order: 8, text: 'delete: Delete a flow. ' } }),
+    sdkOp('activate', manageFlowActivateSchema, (ctx, params) => ctx.backend.workflows.manageFlowActivate(params), 'commerce', { describe: { order: 9, text: 'activate: Activate a flow; may start paid automation. ' } }),
+    sdkOp('run', manageFlowRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowRun(params), 'commerce', { describe: { order: 10, text: 'run: Start a flow execution; usage may be billed. ' } }),
+    sdkOp('validate', manageFlowValidateSchema, (ctx, params) => ctx.backend.workflows.manageFlowValidate(params), 'read', { describe: { order: 11, text: 'validate: Validate a draft flow without saving it. ' } }),
+    sdkOp('verify', manageFlowVerifySchema, (ctx, params) => ctx.backend.workflows.manageFlowVerify(params), 'commerce', { describe: {
             order: 12,
             text: 'verify: Verify flow configuration. dry_run: Simulate a flow without executing actions. ',
-        },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowVerify(manageFlowVerifySchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'dry_run',
-        input: { ...manageFlowDryRunSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'read',
-        describe: {
+        } }),
+    sdkOp('dry_run', manageFlowDryRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowDryRun(params), 'read', { describe: {
             order: 6,
             text: 'dry_run to simulate one flow, or workflow_events(operation="dry_run") to simulate event routing without side effects. Additional operations: ',
-        },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowDryRun(manageFlowDryRunSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'capacity',
-        input: {  },
-        access: 'read',
-        describe: { order: 13, text: 'capacity: Read included flow capacity. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowCapacity();
-        },
-    }),
-    operation({
-        op: 'delivery_options',
-        input: { ...manageFlowDeliveryOptionsSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'read',
-        describe: { order: 14, text: 'delivery_options: Read available delivery options. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowDeliveryOptions(
-                manageFlowDeliveryOptionsSchema.strip().parse(input),
-            );
-        },
-    }),
-    operation({
-        op: 'template_context',
-        input: { ...manageFlowTemplateContextSchema.partial().shape },
-        access: 'read',
-        describe: { order: 15, text: 'template_context: Read template variables. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowTemplateContext(
-                manageFlowTemplateContextSchema.strip().parse(input),
-            );
-        },
-    }),
-    operation({
-        op: 'list_repairs',
-        input: { ...manageFlowListRepairsSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
-        access: 'read',
-        describe: { order: 16, text: 'list_repairs: Read suggested flow repairs. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowListRepairs(manageFlowListRepairsSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'update_action',
-        input: { ...manageFlowUpdateActionSchema.partial().shape, actionId: MANAGE_FLOW_SHARED_FIELDS.actionId, name: MANAGE_FLOW_SHARED_FIELDS.name },
-        access: 'write',
-        describe: { order: 17, text: 'update_action: Update a workflow action. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowUpdateAction(manageFlowUpdateActionSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'delete_action',
-        input: { ...manageFlowDeleteActionSchema.partial().shape, actionId: MANAGE_FLOW_SHARED_FIELDS.actionId },
-        access: 'write',
-        describe: { order: 18, text: 'delete_action: Delete a workflow action. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowDeleteAction(manageFlowDeleteActionSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'update_trigger',
-        input: { ...manageFlowUpdateTriggerSchema.partial().shape, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId, name: MANAGE_FLOW_SHARED_FIELDS.name },
-        access: 'write',
-        describe: { order: 19, text: 'update_trigger: Update a workflow trigger. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowUpdateTrigger(manageFlowUpdateTriggerSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'delete_trigger',
-        input: { ...manageFlowDeleteTriggerSchema.partial().shape, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
-        access: 'write',
-        describe: { order: 20, text: 'delete_trigger: Delete a workflow trigger. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowDeleteTrigger(manageFlowDeleteTriggerSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'fire_trigger',
-        input: { ...manageFlowFireTriggerSchema.partial().shape, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
-        access: 'commerce',
-        describe: { order: 21, text: 'fire_trigger: Fire a workflow trigger. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowFireTrigger(manageFlowFireTriggerSchema.strip().parse(input));
-        },
-    }),
-    operation({
-        op: 'abort_execution',
-        input: { ...manageFlowAbortExecutionSchema.partial().shape },
-        access: 'write',
-        describe: { order: 22, text: 'abort_execution: Abort a running execution. ' },
-        run: async (ctx, input) => {
-            return ctx.backend.workflows.manageFlowAbortExecution(manageFlowAbortExecutionSchema.strip().parse(input));
-        },
-    }),
+        } }),
+    sdkOp('capacity', z.object({}), (ctx, params) => ctx.backend.workflows.manageFlowCapacity(), 'read', { describe: { order: 13, text: 'capacity: Read included flow capacity. ' } }),
+    sdkOp('delivery_options', manageFlowDeliveryOptionsSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeliveryOptions(params), 'read', { describe: { order: 14, text: 'delivery_options: Read available delivery options. ' } }),
+    sdkOp('template_context', manageFlowTemplateContextSchema, (ctx, params) => ctx.backend.workflows.manageFlowTemplateContext(params), 'read', { describe: { order: 15, text: 'template_context: Read template variables. ' } }),
+    sdkOp('list_repairs', manageFlowListRepairsSchema, (ctx, params) => ctx.backend.workflows.manageFlowListRepairs(params), 'read', { describe: { order: 16, text: 'list_repairs: Read suggested flow repairs. ' } }),
+    sdkOp('update_action', manageFlowUpdateActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdateAction(params), 'write', { describe: { order: 17, text: 'update_action: Update a workflow action. ' } }),
+    sdkOp('delete_action', manageFlowDeleteActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteAction(params), 'write', { describe: { order: 18, text: 'delete_action: Delete a workflow action. ' } }),
+    sdkOp('update_trigger', manageFlowUpdateTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdateTrigger(params), 'write', { describe: { order: 19, text: 'update_trigger: Update a workflow trigger. ' } }),
+    sdkOp('delete_trigger', manageFlowDeleteTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteTrigger(params), 'write', { describe: { order: 20, text: 'delete_trigger: Delete a workflow trigger. ' } }),
+    sdkOp('fire_trigger', manageFlowFireTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowFireTrigger(params), 'commerce', { describe: { order: 21, text: 'fire_trigger: Fire a workflow trigger. ' } }),
+    sdkOp('abort_execution', manageFlowAbortExecutionSchema, (ctx, params) => ctx.backend.workflows.manageFlowAbortExecution(params), 'write', { describe: { order: 22, text: 'abort_execution: Abort a running execution. ' } }),
 ] as const;
-const MANAGE_FLOW_OPERATIONS = operationValues(MANAGE_FLOW_TABLE);
+
 
 export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(MANAGE_FLOW_OPERATIONS, ctx.policy.operationAllowlist?.get('manage_flow'));
-    server.registerTool(
-        'manage_flow',
-        {
-            description:
-                operationDescription(MANAGE_FLOW_TABLE) + allowedValuesNote(operationValues, MANAGE_FLOW_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(MANAGE_FLOW_OPERATIONS),
-                ...operationInput(MANAGE_FLOW_TABLE, MANAGE_FLOW_SHARED_FIELDS),
-            },
-        },
-        async (input) => asTextResult(await runOperation(MANAGE_FLOW_TABLE, input.operation, ctx, input)),
-    );
+    
+    registerBundle(server, ctx, 'manage_flow', MANAGE_FLOW_TABLE, { shared: MANAGE_FLOW_SHARED_FIELDS });
 }

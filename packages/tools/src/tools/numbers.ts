@@ -1,10 +1,10 @@
 import {
     operation,
+    sdkOp,
     operationValues,
     operationInput,
     operationDescription,
-    runOperation,
-} from './operation-table.js';
+    runOperation, registerBundle } from './operation-table.js';
 import { awaitCheckoutUrl } from './checkout.js';
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -43,49 +43,10 @@ const NUMBERS_SHARED_FIELDS = {
 };
 
 export const NUMBERS_TABLE = [
-    operation({
-        op: 'countries',
-        input: {  },
-        access: 'read',
-        describe: { order: 0, text: 'countries: List available countries and number availability. ' },
-        run: async (ctx, raw) => {
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersCountries());
-        },
-    }),
-    operation({
-        op: 'capacity',
-        input: { ...numbersCapacitySchema.partial().shape, country: NUMBERS_SHARED_FIELDS.country },
-        access: 'read',
-        describe: { order: 1, text: 'capacity: Read included number capacity for a country. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersCapacity(numbersCapacitySchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'list',
-        input: { ...numbersListSchema.partial().shape, page: NUMBERS_SHARED_FIELDS.page, pageSize: NUMBERS_SHARED_FIELDS.pageSize },
-        access: 'read',
-        describe: { order: 2, text: 'list: List owned phone numbers. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersList(numbersListSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'get',
-        input: { ...numbersGetSchema.partial().shape, numberId: NUMBERS_SHARED_FIELDS.numberId },
-        access: 'read',
-        describe: { order: 3, text: 'get: Read one phone number. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersGet(numbersGetSchema.strip().parse(input)));
-        },
-    }),
+    sdkOp('countries', z.object({}), (ctx, params) => ctx.backend.numbers.numbersCountries(), 'read', { describe: { order: 0, text: 'countries: List available countries and number availability. ' } }),
+    sdkOp('capacity', numbersCapacitySchema, (ctx, params) => ctx.backend.numbers.numbersCapacity(params), 'read', { describe: { order: 1, text: 'capacity: Read included number capacity for a country. ' } }),
+    sdkOp('list', numbersListSchema, (ctx, params) => ctx.backend.numbers.numbersList(params), 'read', { describe: { order: 2, text: 'list: List owned phone numbers. ' } }),
+    sdkOp('get', numbersGetSchema, (ctx, params) => ctx.backend.numbers.numbersGet(params), 'read', { describe: { order: 3, text: 'get: Read one phone number. ' } }),
     operation({
         op: 'create',
         input: { ...numbersCreateSchema.partial().shape, billingPreference: NUMBERS_SHARED_FIELDS.billingPreference, country: NUMBERS_SHARED_FIELDS.country, label: NUMBERS_SHARED_FIELDS.label, clientRequestId: NUMBERS_SHARED_FIELDS.clientRequestId },
@@ -106,63 +67,13 @@ export const NUMBERS_TABLE = [
             );
         },
     }),
-    operation({
-        op: 'update',
-        input: { ...numbersUpdateSchema.partial().shape, numberId: NUMBERS_SHARED_FIELDS.numberId, label: NUMBERS_SHARED_FIELDS.label },
-        access: 'write',
-        describe: { order: 5, text: 'update: Update the display label. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersUpdate(numbersUpdateSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'delete',
-        input: { ...numbersDeleteSchema.partial().shape, numberId: NUMBERS_SHARED_FIELDS.numberId },
-        access: 'commerce',
-        describe: { order: 6, text: 'delete: Cancel a pending purchase or schedule cancellation of a paid number. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersDelete(numbersDeleteSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'messages',
-        input: { ...numbersMessagesSchema.partial().shape, numberId: NUMBERS_SHARED_FIELDS.numberId, direction: NUMBERS_SHARED_FIELDS.direction, page: NUMBERS_SHARED_FIELDS.page, pageSize: NUMBERS_SHARED_FIELDS.pageSize, since: NUMBERS_SHARED_FIELDS.since },
-        access: 'read',
-        describe: { order: 7, text: 'messages: Read SMS for one number, optionally filtered by direction or time. ' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersMessages(numbersMessagesSchema.strip().parse(input)));
-        },
-    }),
-    operation({
-        op: 'send',
-        input: { ...numbersSendSchema.partial().shape, numberId: NUMBERS_SHARED_FIELDS.numberId, body: NUMBERS_SHARED_FIELDS.body, to: NUMBERS_SHARED_FIELDS.to, deliveryReport: NUMBERS_SHARED_FIELDS.deliveryReport },
-        access: 'commerce',
-        describe: { order: 8, text: 'send: Send an SMS from an active number; charges and limits may apply.' },
-        run: async (ctx, raw) => {
-            const { operation, ...input } = raw;
-            const backend = ctx.backend.numbers;
-            return asTextResult(await backend.numbersSend(numbersSendSchema.strip().parse(input)));
-        },
-    }),
+    sdkOp('update', numbersUpdateSchema, (ctx, params) => ctx.backend.numbers.numbersUpdate(params), 'write', { describe: { order: 5, text: 'update: Update the display label. ' } }),
+    sdkOp('delete', numbersDeleteSchema, (ctx, params) => ctx.backend.numbers.numbersDelete(params), 'commerce', { describe: { order: 6, text: 'delete: Cancel a pending purchase or schedule cancellation of a paid number. ' } }),
+    sdkOp('messages', numbersMessagesSchema, (ctx, params) => ctx.backend.numbers.numbersMessages(params), 'read', { describe: { order: 7, text: 'messages: Read SMS for one number, optionally filtered by direction or time. ' } }),
+    sdkOp('send', numbersSendSchema, (ctx, params) => ctx.backend.numbers.numbersSend(params), 'commerce', { describe: { order: 8, text: 'send: Send an SMS from an active number; charges and limits may apply.' } }),
 ] as const;
-const NUMBERS_OPERATIONS = operationValues(NUMBERS_TABLE);
+
 export function registerNumbersTools(server: McpServer, ctx: ToolCtx): void {
-    const values = narrowedValues(NUMBERS_OPERATIONS, ctx.policy.operationAllowlist?.get('numbers'));
-    server.registerTool(
-        'numbers',
-        {
-            description: operationDescription(NUMBERS_TABLE) + allowedValuesNote(values, NUMBERS_OPERATIONS),
-            inputSchema: {
-                operation: z.enum(NUMBERS_OPERATIONS),
-                ...operationInput(NUMBERS_TABLE, NUMBERS_SHARED_FIELDS),
-            },
-        },
-        async (input) => runOperation(NUMBERS_TABLE, input.operation, ctx, input),
-    );
+    
+    registerBundle(server, ctx, 'numbers', NUMBERS_TABLE, { shared: NUMBERS_SHARED_FIELDS });
 }
