@@ -11,7 +11,7 @@ import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-export const MESSAGES_OPERATIONS = ['list', 'get', 'conversations', 'mark_read'] as const;
+const MESSAGES_OPERATIONS = ['list', 'get', 'conversations', 'mark_read'] as const;
 
 export function registerMessagesTools(server: McpServer, ctx: ToolCtx): void {
     const values = narrowedValues(MESSAGES_OPERATIONS, ctx.policy.operationAllowlist?.get('messages'));

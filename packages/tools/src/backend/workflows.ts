@@ -572,8 +572,6 @@ export const manageFlowDryRunSchema = z
     })
     .strict();
 
-export const manageFlowCapacitySchema = z.object({}).strict();
-
 export const manageFlowDeliveryOptionsSchema = z
     .object({
         flowId: z.string(),

@@ -417,7 +417,7 @@ function registerManageDevice(server: McpServer, ctx: ToolCtx): void {
 // device_action
 // ---------------------------------------------------------------------------
 
-export const DEVICE_ACTION_OPERATIONS = [
+const DEVICE_ACTION_OPERATIONS = [
     'tap',
     'swipe',
     'keyboard_write',
@@ -596,7 +596,7 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
 // manage_device_apps
 // ---------------------------------------------------------------------------
 
-export const MANAGE_APPS_OPERATIONS = [
+const MANAGE_APPS_OPERATIONS = [
     'install',
     'delete',
     'start',
@@ -709,7 +709,7 @@ function registerManageDeviceApps(server: McpServer, ctx: ToolCtx): void {
 // manage_device_files
 // ---------------------------------------------------------------------------
 
-export const MANAGE_FILES_OPERATIONS = ['list', 'upload', 'download', 'delete'] as const;
+const MANAGE_FILES_OPERATIONS = ['list', 'upload', 'download', 'delete'] as const;
 type ManageFilesOperation = (typeof MANAGE_FILES_OPERATIONS)[number];
 const MANAGE_FILES_FIELDS: Record<ManageFilesOperation, readonly string[]> = {
     list: [],
@@ -788,7 +788,7 @@ function registerManageDeviceFiles(server: McpServer, ctx: ToolCtx): void {
 // configure_device
 // ---------------------------------------------------------------------------
 
-export const CONFIGURE_DEVICE_OPERATIONS = [
+const CONFIGURE_DEVICE_OPERATIONS = [
     'get_language',
     'set_language',
     'get_timezone',

@@ -13,7 +13,7 @@ import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-export const WEBHOOK_OPERATIONS = [
+const WEBHOOK_OPERATIONS = [
     'create',
     'list',
     'get',

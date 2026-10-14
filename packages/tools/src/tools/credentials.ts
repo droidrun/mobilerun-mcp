@@ -38,7 +38,7 @@ export function registerCredentialTools(server: McpServer, ctx: ToolCtx): void {
 // backend/credentials.ts's CredentialMetaDto (fieldType only, no `value`
 // field in the type at all, so there is nothing to redact here).
 
-export const MANAGE_CREDENTIALS_OPERATIONS = [
+const MANAGE_CREDENTIALS_OPERATIONS = [
     'init_package',
     'create_credential',
     'delete_credential',

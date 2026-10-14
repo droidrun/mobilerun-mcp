@@ -13,7 +13,7 @@ import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-export const APPS_OPERATIONS = [
+const APPS_OPERATIONS = [
     'list',
     'get',
     'versions',

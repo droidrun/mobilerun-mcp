@@ -145,8 +145,6 @@ export const webhooksDeliveriesSchema = z
     })
     .strict();
 
-export const webhooksIntegrationsSchema = z.object({}).strict();
-
 export const webhooksIntegrationTargetsSchema = z
     .object({
         capabilityId: z.string(),

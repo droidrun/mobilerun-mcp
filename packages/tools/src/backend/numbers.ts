@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { smsDirectionSchema, billingPreferenceSchema } from './communication.js';
 
-export const numbersCountriesSchema = z.object({}).strict();
-
 export const numbersCapacitySchema = z
     .object({
         country: z.string(),

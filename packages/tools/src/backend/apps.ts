@@ -115,5 +115,3 @@ export interface AppsBackend {
     markAppUploadFailed(id: string): Promise<AppSimpleResultDto>;
     deleteApp(id: string): Promise<AppSimpleResultDto>;
 }
-
-export const appsStorageUsageSchema = z.object({}).strict();

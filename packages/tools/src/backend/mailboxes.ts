@@ -8,8 +8,6 @@ export const mailboxesListSchema = z
     })
     .strict();
 
-export const mailboxesCapacitySchema = z.object({}).strict();
-
 export const mailboxesCreateSchema = z
     .object({
         billingPreference: billingPreferenceSchema.optional(),
