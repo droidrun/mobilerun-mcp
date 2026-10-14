@@ -46,12 +46,12 @@ const GET_TASK_SHARED_FIELDS = {
     taskId: z.string(),
     offset: z.number().int().min(0).optional().describe('view=trajectory only. 0-based event index to start from.'),
     limit: z
-                    .number()
-                    .int()
-                    .positive()
-                    .max(MAX_TRAJECTORY_EVENTS)
-                    .optional()
-                    .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
+        .number()
+        .int()
+        .positive()
+        .max(MAX_TRAJECTORY_EVENTS)
+        .optional()
+        .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
 };
 
 const GET_TASK_INTRO = 'Fetch one task by id, chosen via view. Poll status or trajectory to follow a running task.';
@@ -129,11 +129,15 @@ const LIST_TASKS_ORDER_BY = ['id', 'createdAt', 'finishedAt', 'status', 'updated
 const GLOBAL_ONLY_ORDER_BY = new Set(['finishedAt', 'status']);
 const DEVICE_ONLY_ORDER_BY = new Set(['updatedAt', 'assignedAt']);
 const TASK_STATUSES = ['queued', 'created', 'running', 'cancelling', 'paused', 'completed', 'failed', 'cancelled'] as const;
-function listTasksValidationError(input: { deviceId?: string; orderBy?: string; query?: string; status?: string }): string | null {
+function listTasksValidationError(input: {
+    deviceId?: string;
+    orderBy?: string;
+    query?: string;
+    status?: string;
+}): string | null {
     if (input.deviceId) {
         if (input.query !== undefined) return 'list_tasks: `query` is only valid without `deviceId` (device-scoped listing has no search).';
-        if (input.status !== undefined)
-            return 'list_tasks: `status` is only valid without `deviceId` (device-scoped listing has no status filter).';
+        if (input.status !== undefined) return 'list_tasks: `status` is only valid without `deviceId` (device-scoped listing has no status filter).';
         if (input.orderBy && GLOBAL_ONLY_ORDER_BY.has(input.orderBy)) {
             return `list_tasks: orderBy="${input.orderBy}" is only valid without \`deviceId\`; device-scoped orderBy is one of id, createdAt, updatedAt, assignedAt.`;
         }
