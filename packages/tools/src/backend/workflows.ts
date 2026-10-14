@@ -140,7 +140,7 @@ export interface DryRunEventParams {
     eventType: string;
     payload?: Record<string, unknown>;
 }
-export interface ActionCatalogEntryDto {
+interface ActionCatalogEntryDto {
     id: string;
     name: string;
     description: string | null;
@@ -150,15 +150,15 @@ export interface ActionCatalogEntryDto {
     updatedAt: string | null;
     paramsSchema?: unknown;
 }
-export interface ActionCatalogListDto {
+interface ActionCatalogListDto {
     items: ActionCatalogEntryDto[];
     pagination: PageMeta;
 }
-export interface ActionCatalogEntryEnvelopeDto {
+interface ActionCatalogEntryEnvelopeDto {
     data: ActionCatalogEntryDto;
 }
 
-export interface AppEventCatalogItemDto {
+interface AppEventCatalogItemDto {
     appName?: string;
     sourceEventType?: string;
     packageName?: string | null;
@@ -170,12 +170,12 @@ export interface AppEventCatalogItemDto {
     updatedAt: string | null;
     payloadSchema?: unknown;
 }
-export interface AppEventCatalogListDto {
+interface AppEventCatalogListDto {
     items: AppEventCatalogItemDto[];
     pagination: PageMeta;
 }
 
-export interface ActionDto {
+interface ActionDto {
     id: string;
     catalogEntryId: string;
     name: string;
@@ -188,15 +188,15 @@ export interface ActionDto {
     params?: unknown;
     paramsSchema?: unknown;
 }
-export interface ActionListDto {
+interface ActionListDto {
     items: ActionDto[];
     pagination: PageMeta;
 }
-export interface ActionEnvelopeDto {
+interface ActionEnvelopeDto {
     data: ActionDto;
 }
 
-export interface TriggerDto {
+interface TriggerDto {
     id: string;
     activation: 'event' | 'schedule' | 'custom';
     name: string;
@@ -211,15 +211,15 @@ export interface TriggerDto {
     conditions?: unknown;
     nextFireTime?: string | null;
 }
-export interface TriggerListDto {
+interface TriggerListDto {
     items: TriggerDto[];
     pagination: PageMeta;
 }
-export interface TriggerEnvelopeDto {
+interface TriggerEnvelopeDto {
     data: TriggerDto;
 }
 
-export interface FlowDto {
+interface FlowDto {
     id: string;
     name: string;
     description: string | null;
@@ -243,15 +243,15 @@ export interface FlowDto {
     // @mobilerun/sdk declares this as number; known API values are 1, 2, and 3.
     templateResolutionVersion?: number;
 }
-export interface FlowListDto {
+interface FlowListDto {
     items: FlowDto[];
     pagination: PageMeta;
 }
-export interface FlowEnvelopeDto {
+interface FlowEnvelopeDto {
     data: FlowDto;
 }
 
-export interface FlowExecutionDto {
+interface FlowExecutionDto {
     id: string;
     flowId: string;
     flowName: string | null;
@@ -265,15 +265,15 @@ export interface FlowExecutionDto {
     finishedAt: string | null;
     result?: unknown;
 }
-export interface ExecutionListDto {
+interface ExecutionListDto {
     items: FlowExecutionDto[];
     pagination: PageMeta;
 }
-export interface ExecutionEnvelopeDto {
+interface ExecutionEnvelopeDto {
     data: FlowExecutionDto;
 }
 
-export interface ExecutionMetricsDto {
+interface ExecutionMetricsDto {
     data: {
         avgDurationMs: number | null;
         byStatus: {
@@ -303,20 +303,20 @@ export interface FlowActionDto {
     // Stable per-step id. The API now returns this on every flow action.
     key: string;
 }
-export interface FlowActionEnvelopeDto {
+interface FlowActionEnvelopeDto {
     data: FlowActionDto;
 }
-export interface FlowActionListDto {
+interface FlowActionListDto {
     items: FlowActionDto[];
 }
-export interface RemoveFlowActionResultDto {
+interface RemoveFlowActionResultDto {
     message: string;
 }
 
-export interface ServiceListDto {
+interface ServiceListDto {
     items: WorkflowService[];
 }
-export interface ServiceMethodDto {
+interface ServiceMethodDto {
     method: string;
     params: Array<{
         name: string;
@@ -327,35 +327,35 @@ export interface ServiceMethodDto {
         example?: unknown;
     }>;
 }
-export interface ServiceMethodListDto {
+interface ServiceMethodListDto {
     items: ServiceMethodDto[];
 }
 
-export interface EventIngestResultDto {
+interface EventIngestResultDto {
     eventId: string;
 }
-export interface EventDryRunMatchedFlowActionDto {
+interface EventDryRunMatchedFlowActionDto {
     name: string;
     method: string;
     service: WorkflowService;
     continueOnError: boolean;
     params?: unknown;
 }
-export interface EventDryRunGatesDto {
+interface EventDryRunGatesDto {
     blocked: boolean;
     cooldownActive: boolean | null;
     deviceAttached: boolean;
     deviceIds: string[];
     enabled: boolean;
 }
-export interface EventDryRunMatchedFlowDto {
+interface EventDryRunMatchedFlowDto {
     flow: FlowDto;
     trigger: TriggerDto;
     actions: EventDryRunMatchedFlowActionDto[];
     gates: EventDryRunGatesDto;
     wouldFire: boolean;
 }
-export interface EventDryRunResultDto {
+interface EventDryRunResultDto {
     data: {
         matchedFlows: EventDryRunMatchedFlowDto[];
         validation: {

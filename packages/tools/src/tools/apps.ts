@@ -53,7 +53,7 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
     return value;
 }
 
-export async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise<unknown> {
+async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.apps;
 

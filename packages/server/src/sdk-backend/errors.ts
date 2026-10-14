@@ -22,7 +22,7 @@ function codeForStatus(status: number | undefined): BackendErrorCode {
  * package's typed `BackendError`, so every error the tool layer sees is
  * rendered uniformly by `asErrorResult` regardless of what the upstream SDK
  * call actually threw. */
-export function toBackendError(err: unknown): BackendError {
+function toBackendError(err: unknown): BackendError {
     if (err instanceof BackendError) return err;
     if (err instanceof APIError) {
         return new BackendError(codeForStatus(err.status), err.message, err.status);

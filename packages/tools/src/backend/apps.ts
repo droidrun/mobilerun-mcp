@@ -18,7 +18,7 @@ export interface ListAppsOpts {
     pageSize?: number;
 }
 
-export interface AppVersionDto {
+interface AppVersionDto {
     id: string;
     appId: string;
     country: string;
@@ -34,7 +34,7 @@ export interface AppVersionDto {
     updatedAt: string | null;
 }
 
-export interface AppListItemDto {
+interface AppListItemDto {
     id: string;
     bundleId: string;
     displayName: string;
@@ -46,13 +46,13 @@ export interface AppListItemDto {
     updatedAt: string | null;
     version: AppVersionDto;
 }
-export interface AppListDto {
+interface AppListDto {
     items: AppListItemDto[];
     pagination: PageMeta;
     count: { totalCount: number; availableCount: number; queuedCount: number; failedCount: number };
 }
 
-export interface AppDto {
+interface AppDto {
     id: string;
     bundleId: string;
     displayName: string;
@@ -63,15 +63,15 @@ export interface AppDto {
     createdAt: string | null;
     updatedAt: string | null;
 }
-export interface AppEnvelopeDto {
+interface AppEnvelopeDto {
     data: AppDto;
 }
 
-export interface AppVersionListDto {
+interface AppVersionListDto {
     data: AppVersionDto[];
 }
 
-export interface AppFileParams {
+interface AppFileParams {
     fileName: string;
     contentType: 'application/vnd.android.package-archive' | 'application/octet-stream' | 'application/zip';
     sha256?: string;
@@ -91,13 +91,13 @@ export interface CreateUploadUrlParams {
     iconURL?: string;
     targetSdk?: number;
 }
-export interface CreateUploadUrlDto {
+interface CreateUploadUrlDto {
     appId: string;
     versionId: string;
     r2UploadUrls: Array<{ fileName: string; r2UploadUrl: string }>;
 }
 
-export interface AppSimpleResultDto {
+interface AppSimpleResultDto {
     success: true;
     message: string;
 }

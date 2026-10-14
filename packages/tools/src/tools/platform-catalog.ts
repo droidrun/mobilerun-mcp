@@ -13,7 +13,7 @@ const CATALOG_VALUES = ['models', 'timezones', 'app_event_types'] as const;
 type CatalogValue = (typeof CATALOG_VALUES)[number];
 const catalogSchema = z.enum(CATALOG_VALUES);
 
-export async function executePlatformCatalogOperation(catalog: CatalogValue, ctx: ToolCtx): Promise<unknown> {
+async function executePlatformCatalogOperation(catalog: CatalogValue, ctx: ToolCtx): Promise<unknown> {
     switch (catalog) {
         case 'models':
             return ctx.backend.platformCatalog.listModels();

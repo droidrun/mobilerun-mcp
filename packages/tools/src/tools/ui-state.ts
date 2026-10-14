@@ -30,7 +30,7 @@ type RawNode = {
     children?: RawNode[];
 };
 
-export type CompactNode = {
+type CompactNode = {
     t?: string; // text
     d?: string; // contentDescription
     id?: string; // resourceId (package prefix stripped)

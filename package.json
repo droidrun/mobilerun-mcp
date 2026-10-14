@@ -5,6 +5,13 @@
   "scripts": {
     "typecheck": "pnpm -r run typecheck",
     "test": "bun test",
-    "build": "pnpm -r run build"
+    "build": "pnpm -r run build",
+    "lint": "eslint .",
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "8.70.1",
+    "eslint": "10.11.0",
+    "knip": "6.38.0"
   }
 }

@@ -28,7 +28,7 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
     return value;
 }
 
-export async function executeWorkflowEventsOperation(input: WorkflowEventsInput, ctx: ToolCtx): Promise<unknown> {
+async function executeWorkflowEventsOperation(input: WorkflowEventsInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.workflows;
 

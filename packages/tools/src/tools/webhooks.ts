@@ -51,7 +51,7 @@ function withSecretHandling(result: unknown, secretHandling: string): Record<str
     return { result, secretHandling };
 }
 
-export async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): Promise<unknown> {
+async function executeWebhookOperation(input: WebhookToolInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.webhooks;
 

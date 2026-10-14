@@ -216,19 +216,21 @@ org. The HTTP/stdio server builds `{ kind: 'api_key', subject: 'api-key' }`.
 ## Typed backend ports & errors
 
 `packages/tools/src/backend/{devices,workflows,webhooks,credentials}.ts`
-(barrel: `backend/index.ts`) define the `Backend` ports as **minimal DTOs**,
+define the ports as **minimal DTOs**,
 not a mirror of `@mobilerun/sdk`'s full response types — only the fields the
-tools actually surface. `packages/server/src/sdk-backend/` mirrors the same
+tools actually surface. `backend/index.ts` composes the ports into `Backend`.
+`packages/server/src/sdk-backend/` mirrors the same
 per-domain split for the `SdkBackend` implementation over `@mobilerun/sdk`,
 wrapped in `withBackendErrors` (`sdk-backend/errors.ts`) so a thrown SDK
 error becomes a typed `BackendError` (`code: 'not_found' | 'forbidden' |
 'rate_limited' | 'upstream_error' | 'invalid_input'`) before it reaches the
 tool layer. `asErrorResult` (`text-result.ts`) renders any `BackendError`
-uniformly as `[code] message`, regardless of which backend produced it. This
-per-domain split is deliberate: a new domain adds
-one `backend/<domain>.ts` + one `sdk-backend/<domain>.ts` + a one-line barrel
-registration in each `index.ts`, keeping the conflict surface for parallel
-domain work small.
+uniformly as `[code] message`, regardless of which backend produced it.
+
+To add a domain, create `backend/<domain>.ts` and `sdk-backend/<domain>.ts`.
+Add one import and one field in `backend/index.ts`, export its public types
+explicitly from the tools package entry `src/index.ts`, and register the
+implementation in `sdk-backend/index.ts`.
 
 ## Audit telemetry
 

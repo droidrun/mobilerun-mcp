@@ -77,7 +77,7 @@ function connectionOpts(input: ConnectToolInput) {
     };
 }
 
-export async function executeConnectOperation(input: ConnectToolInput, ctx: ToolCtx): Promise<unknown> {
+async function executeConnectOperation(input: ConnectToolInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.connect;
 

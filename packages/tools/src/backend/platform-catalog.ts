@@ -5,17 +5,17 @@
 // platform_catalog tool dispatches to that same backend method for
 // catalog="app_event_types" instead of adding a second port for identical
 // data.
-export interface ModelDto {
+interface ModelDto {
     id?: string;
     created?: number;
     object?: string;
     owned_by?: string;
 }
-export interface ModelListDto {
+interface ModelListDto {
     data?: ModelDto[];
     object?: string;
 }
-export interface TimezoneListDto {
+interface TimezoneListDto {
     data: string[];
 }
 

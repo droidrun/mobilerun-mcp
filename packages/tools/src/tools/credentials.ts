@@ -66,7 +66,7 @@ function requireCredentialValue<T>(value: T | undefined, name: string, operation
     return value;
 }
 
-export async function executeManageCredentialsOperation(input: ManageCredentialsInput, ctx: ToolCtx): Promise<unknown> {
+async function executeManageCredentialsOperation(input: ManageCredentialsInput, ctx: ToolCtx): Promise<unknown> {
     const { operation } = input;
     const backend = ctx.backend.credentials;
 
