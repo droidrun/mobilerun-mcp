@@ -1,6 +1,6 @@
 # mobilerun-mcp
 
-Public, curated MCP server for the Mobilerun platform, integrated. See
+Public, curated MCP server for the Mobilerun platform. See
 [`ROADMAP.md`](./ROADMAP.md) for the design (architecture, current state,
 and what's planned next).
 

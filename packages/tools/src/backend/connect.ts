@@ -1,7 +1,7 @@
 // Connect port — residential SOCKS5 proxies + bound
 // users, distinct from device-bound `proxies` (proxies.ts). Mirrors
 // @mobilerun/sdk's connect.* response shapes (verified against the SDK's
-// shipped connect/*.d.ts). buy_proxy/cancel_proxy are COMMERCE — each is
+// shipped connect/*.d.ts). buy_proxy/cancel_proxy affect billing — each is
 // its own tool-input `operation` value so a policy profile (e.g.
 // `no-commerce`) can deny them
 // individually without touching the rest of this bundle; see tools/connect.ts.

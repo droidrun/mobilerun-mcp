@@ -11,7 +11,7 @@
 // a page + offset/limit paging is done client-side in `../tools/tasks.ts`
 // (`compactTrajectory`), the same layer boundary the UI-state tool uses.
 //
-// List-shape mismatch (SDK gap, flagged for the orchestrator): the
+// Device-scoped and global task listings have different response shapes: the
 // device-scoped `client.devices.tasks.list` endpoint returns a much thinner
 // item shape (`{ taskId, createdAt, updatedAt }`) than the global
 // `client.tasks.list` (full `TaskListResponse.Item`, everything but

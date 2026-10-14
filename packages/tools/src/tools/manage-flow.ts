@@ -14,9 +14,8 @@
 //   - list_repairs / abort_execution: no SDK method exists for either
 //     (grepped the full shipped .d.ts tree — no repair-candidate listing, no
 //     execution cancel/abort; FlowExecution.status includes 'cancelled' as a
-//     terminal *state* but nothing sets it from the client). Not a
-//     chat-harness-style repair-candidate concept either — that's a
-//     separate feature outside this package's scope.
+//     terminal *state* but nothing sets it from the client). Repair-candidate
+//     listing is outside this package's scope.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -154,7 +153,7 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 'replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action\'s optional key is ' +
                 'carried over from the existing step matching flowActionId, or at the same position with the same actionId, when ' +
                 'omitted, and derived for genuinely new steps; when reordering or inserting steps, pass key or flowActionId for ' +
-                'every step you are keeping so it is not mistaken for a new one), ' +
+                'every step you are keeping so it is recognized as an existing step), ' +
                 'execution_metrics (optional flowId/triggerId/from/to — aggregate execution stats, not a single execution; ' +
                 'use get_workflow_resource(resource="execution") for one execution). ' +
                 'Check the flow\'s templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action\'s ' +

@@ -1,17 +1,6 @@
-// Devices bundle tools. Deliberate design choices worth noting:
-//   - create_device: no commerce balance check / PAYG-slot classification —
-//     the platform API itself enforces billing; errors just bubble up as
-//     thrown Errors from the backend.
-//   - terminate_device: no billing-strategy precheck or already-terminating/
-//     not-yet-terminatable classification — kept to what the public SDK's
-//     terminate() actually reports.
-//   - get_device_screenshot: no upload / redirect URL — returns the SDK's
-//     screenshot result directly (the SDK types this as a plain string;
-//     shape TBD — base64 or URL, see the open risk noted in the README).
-//   - No session-active telemetry (a chat-harness-only concern, out of
-//     scope for this package).
-//   - DEVICE_TYPES trimmed to @mobilerun/sdk's actual public enum (3 values —
-//     verified against the SDK's shipped .d.ts).
+// Device tools delegate lifecycle and billing checks to the platform API.
+// Screenshot results pass through as a base64 image or signed URL.
+// Device types are a curated subset of the public SDK's deviceType union.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -32,8 +21,7 @@ const DEVICE_STATES = [
 ] as const;
 
 // @mobilerun/sdk's DeviceCreateParams.deviceType / DeviceListParams.type union
-// (verified against the SDK's shipped .d.ts) — narrower than devices-api's
-// internal type set.
+// (verified against the SDK's shipped .d.ts).
 const DEVICE_TYPES = ['dedicated_physical_device', 'dedicated_premium_device', 'dedicated_ios_device'] as const;
 
 const DEFAULT_LIST_STATES = DEVICE_STATES.filter((state) => state !== 'terminated');
@@ -81,7 +69,7 @@ export function registerDeviceTools(server: McpServer, ctx: ToolCtx): void {
         'get_device_screenshot',
         {
             description:
-                'Capture a device screenshot and return the raw SDK result (contents/shape may be a base64 payload or a signed URL — not R2-mediated as in the internal orchestrator).',
+                'Capture a device screenshot. Returns { deviceId, screenshot }, where screenshot is the string the API returns (a base64 image or a signed URL).',
             inputSchema: { deviceId: z.string() },
         },
         async ({ deviceId }) => asTextResult(await ctx.backend.devices.getDeviceScreenshot(deviceId)),
@@ -145,7 +133,7 @@ export function registerDeviceTools(server: McpServer, ctx: ToolCtx): void {
         'create_device',
         {
             description:
-                'Provision a new device. Public variant of the orchestrator\'s create_pay_as_you_go_device — no commerce balance check here, the API enforces billing itself and returns its own error if you\'re out of credits. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.',
+                'Provision a new device. The API bills it to your account and returns an error if your credits are insufficient. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.',
             inputSchema: {
                 deviceType: z.enum(DEVICE_TYPES).optional(),
                 name: z.string().max(64).optional(),

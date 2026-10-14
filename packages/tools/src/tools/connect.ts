@@ -4,7 +4,7 @@
 // list_connections (a proxy's connection history), list_users, get_user,
 // list_user_connections (a user's connection history). User mutations
 // (create_user/update_user/delete_user) are intentionally not exposed —
-// not public product surface. buy_proxy/cancel_proxy are COMMERCE — each is
+// not public product surface. buy_proxy/cancel_proxy affect billing — each is
 // its own operation value so a policy profile can deny exactly those two
 // without touching reads.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -113,9 +113,9 @@ export function registerConnectTools(server: McpServer, ctx: ToolCtx): void {
         'connect',
         {
             description:
-                "Manage droidrun-connect residential SOCKS5 proxies and their bound users (distinct from the device-bound " +
-                "`proxies` tool). Operations: list_countries, list_proxies, get_proxy, buy_proxy (COMMERCE — provisions and " +
-                "bills a residential proxy), cancel_proxy (COMMERCE), ping_proxy (cached latency), list_connections (a proxy's " +
+                "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound " +
+                "`proxies` tool). Operations: list_countries, list_proxies, get_proxy, buy_proxy (billed — provisions and " +
+                "bills a residential proxy), cancel_proxy (ends a billed proxy), ping_proxy (cached latency), list_connections (a proxy's " +
                 "connection history), list_users, get_user, list_user_connections (a user's connection history)." +
                 allowedValuesNote(operationValues, CONNECT_OPERATIONS),
             inputSchema: {

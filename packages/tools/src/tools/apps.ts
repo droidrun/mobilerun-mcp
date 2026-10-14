@@ -102,7 +102,7 @@ export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
         {
             description:
                 'Manage uploaded apps (APKs) and inspect versions. Operations: list, get, versions (all versions visible to the ' +
-                'user), create_upload_url (starts the 3-step upload flow: returns pre-signed R2 PUT URLs per file — PUT the raw ' +
+                'user), create_upload_url (starts the 3-step upload flow: returns pre-signed upload URLs per file — PUT the raw ' +
                 'file bytes to those URLs yourself, outside this tool, then call confirm_upload; call mark_failed instead if the ' +
                 'PUT fails or is abandoned), confirm_upload, mark_failed, delete.' +
                 allowedValuesNote(operationValues, APPS_OPERATIONS),

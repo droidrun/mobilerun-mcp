@@ -6,8 +6,8 @@
 // no documented masking. The `list_credentials` tool description promises
 // "metadata only — values never leave credentials storage"; whether the
 // live API actually redacts `value` server-side is UNVERIFIED from the
-// SDK's .d.ts alone. Flagged for the orchestrator — this DTO types the
-// field as shipped, it does not redact it.
+// SDK's .d.ts alone. This DTO types the field as shipped; it does not
+// redact it.
 import type { PageMeta } from './devices.js';
 
 export interface CredentialFieldDto {
