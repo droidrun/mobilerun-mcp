@@ -57,15 +57,13 @@ const MANAGE_CREDENTIALS_SHARED_FIELDS = {
     value: z.string().min(1).max(4096).optional(),
 };
 
+export const MANAGE_CREDENTIALS_INTRO = "Manage the credentials vault; list_credentials and list_credential_packages provide reads. Field values are write-only: every response returns metadata only (fieldType, never the plaintext value). Keep the value you sent yourself if you need it again.";
 export const MANAGE_CREDENTIALS_TABLE = [
     operation({
         op: 'init_package',
         input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName },
         access: 'write',
-        describe: {
-            order: 0,
-            text: 'Write path for the credentials vault (see list_credentials/list_credential_packages for reads). Operations: init_package (packageName — create a new app package before its first credential), ',
-        },
+        doc: "Create a new app package before its first credential (packageName).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
@@ -81,7 +79,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
         .min(1)
         .optional() },
         access: 'write',
-        describe: { order: 1, text: 'create_credential (packageName, credentialName, fields[{fieldType, value}]), ' },
+        doc: "Create a credential (packageName, credentialName, fields[{fieldType, value}]).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
@@ -97,7 +95,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
         op: 'delete_credential',
         input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName },
         access: 'write',
-        describe: { order: 2, text: 'delete_credential (packageName, credentialName), ' },
+        doc: "Delete a credential (packageName, credentialName).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
@@ -115,7 +113,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
         op: 'add_field',
         input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType, value: MANAGE_CREDENTIALS_SHARED_FIELDS.value },
         access: 'write',
-        describe: { order: 3, text: 'add_field (packageName, credentialName, fieldType, value), ' },
+        doc: "Add a field (packageName, credentialName, fieldType, value).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
@@ -139,7 +137,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
         op: 'update_field',
         input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType, value: MANAGE_CREDENTIALS_SHARED_FIELDS.value },
         access: 'write',
-        describe: { order: 4, text: 'update_field (packageName, credentialName, fieldType, value), ' },
+        doc: "Update a field (packageName, credentialName, fieldType, value).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
@@ -163,10 +161,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
         op: 'delete_field',
         input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType },
         access: 'write',
-        describe: {
-            order: 5,
-            text: 'delete_field (packageName, credentialName, fieldType). Field values are write-only: every response returns metadata only (fieldType, never the plaintext value) — keep the value you sent yourself if you need it again. Additional operations: ',
-        },
+        doc: "Delete a field (packageName, credentialName, fieldType).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.credentials;
@@ -181,11 +176,11 @@ export const MANAGE_CREDENTIALS_TABLE = [
             return asTextResult(await backend.deleteField({ packageName, credentialName, fieldType }));
         },
     }),
-    sdkOp('get', manageCredentialsGetSchema, (ctx, params) => ctx.backend.credentials.manageCredentialsGet(params), 'read', { describe: { order: 6, text: 'get: Read credential metadata; secret values stay in storage.' } }),
+    sdkOp('get', manageCredentialsGetSchema, (ctx, params) => ctx.backend.credentials.manageCredentialsGet(params), 'read', { doc: "Read credential metadata; secret values stay in storage." }),
 ] as const;
 
 
 export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'manage_credentials', MANAGE_CREDENTIALS_TABLE, { shared: MANAGE_CREDENTIALS_SHARED_FIELDS });
+    registerBundle(server, ctx, 'manage_credentials', MANAGE_CREDENTIALS_TABLE, { intro: MANAGE_CREDENTIALS_INTRO, shared: MANAGE_CREDENTIALS_SHARED_FIELDS });
 }

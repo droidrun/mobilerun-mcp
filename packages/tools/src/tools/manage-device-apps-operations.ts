@@ -18,16 +18,14 @@ export const MANAGE_APPS_SHARED_FIELDS = {
 
 
 
+export const MANAGE_APPS_INTRO = "Manage apps on a device.";
 export const MANAGE_APPS_TABLE = [
     operation({
         op: 'install',
         input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, bundleId: z.string().optional().describe('iOS bundle identifier (install only).'), deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 3,
         access: 'write',
-        describe: {
-            order: 0,
-            text: 'Mutate apps on a device. Operations: install (packageName and/or bundleId — at least one), ',
-        },
+        doc: "Install an app; at least one of packageName or bundleId is required.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -43,7 +41,7 @@ export const MANAGE_APPS_TABLE = [
         input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 4,
         access: 'write',
-        describe: { order: 1, text: 'delete (packageName), ' },
+        doc: "Delete packageName.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -58,7 +56,7 @@ export const MANAGE_APPS_TABLE = [
         input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, activity: z.string().optional().describe('start only: specific activity to launch.'), deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 5,
         access: 'write',
-        describe: { order: 2, text: 'start (packageName, activity?), ' },
+        doc: "Start packageName, optionally at activity.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -73,7 +71,7 @@ export const MANAGE_APPS_TABLE = [
         input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'write',
-        describe: { order: 3, text: 'stop (packageName), ' },
+        doc: "Stop packageName.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -88,10 +86,7 @@ export const MANAGE_APPS_TABLE = [
         input: { includeSystemPackages: z.boolean().optional(), includeProtectedPackages: z.boolean().optional(), deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'read',
-        describe: {
-            order: 4,
-            text: 'list_packages (raw installed package names, includeSystemPackages?, includeProtectedPackages?). Read app metadata (label, versions) via list_apps_on_device instead. Additional operations: ',
-        },
+        doc: "List raw installed package names, optionally including system or protected packages. Read app metadata (label, versions) via list_apps_on_device instead.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -103,7 +98,7 @@ export const MANAGE_APPS_TABLE = [
             );
         },
     }),
-    sdkOp('grant_permission', manageDeviceAppsGrantPermissionSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsGrantPermission(deviceId, params), 'write', { fieldOrder: 0, describe: { order: 5, text: 'grant_permission: Grant an app notification permission. ' }, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
-    sdkOp('revoke_permission', manageDeviceAppsRevokePermissionSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsRevokePermission(deviceId, params), 'write', { fieldOrder: 1, describe: { order: 6, text: 'revoke_permission: Revoke an app notification permission. ' }, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
-    sdkOp('list_installs', manageDeviceAppsListInstallsSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsListInstalls(deviceId, params), 'read', { fieldOrder: 2, describe: { order: 7, text: 'list_installs: Read app installation jobs.' }, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
+    sdkOp('grant_permission', manageDeviceAppsGrantPermissionSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsGrantPermission(deviceId, params), 'write', { fieldOrder: 0, doc: "Grant an app notification permission.", deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
+    sdkOp('revoke_permission', manageDeviceAppsRevokePermissionSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsRevokePermission(deviceId, params), 'write', { fieldOrder: 1, doc: "Revoke an app notification permission.", deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
+    sdkOp('list_installs', manageDeviceAppsListInstallsSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceAppsListInstalls(deviceId, params), 'read', { fieldOrder: 2, doc: "Read app installation jobs.", deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId }),
 ] as const;

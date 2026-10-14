@@ -17,13 +17,14 @@ export const MANAGE_FILES_SHARED_FIELDS = {
 
 
 
+export const MANAGE_FILES_INTRO = "Device filesystem access. path is required for every operation.";
 export const MANAGE_FILES_TABLE = [
     operation({
         op: 'list',
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 0,
         access: 'read',
-        describe: { order: 0, text: 'Device filesystem access. Operations: list (directory entries at `path`), ' },
+        doc: "List directory entries at path.",
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;
             const backend = ctx.backend.deviceControl;
@@ -35,10 +36,7 @@ export const MANAGE_FILES_TABLE = [
         input: { contentBase64: z.string().max(MAX_INLINE_BASE64_CHARS).optional(), fileName: z.string().optional(), contentType: z.string().optional(), deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 1,
         access: 'write',
-        describe: {
-            order: 1,
-            text: 'upload (write `contentBase64` to `path`; decoded payload capped at 256KB — larger files are rejected), ',
-        },
+        doc: `Write contentBase64 to path; decoded payload capped at ${MAX_INLINE_FILE_BYTES / 1024}KB, larger files are rejected.`,
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;
             const backend = ctx.backend.deviceControl;
@@ -62,7 +60,7 @@ export const MANAGE_FILES_TABLE = [
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 2,
         access: 'read',
-        describe: { order: 2, text: 'download (read `path`; oversized results are rejected the same way), ' },
+        doc: "Read path; oversized results are rejected with the same inline transfer limit.",
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;
             const backend = ctx.backend.deviceControl;
@@ -80,7 +78,7 @@ export const MANAGE_FILES_TABLE = [
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 3,
         access: 'write',
-        describe: { order: 3, text: 'delete (`path`). `path` is required for every operation.' },
+        doc: "Delete path.",
         run: async (ctx, input) => {
             const { operation, deviceId, path } = input;
             const backend = ctx.backend.deviceControl;

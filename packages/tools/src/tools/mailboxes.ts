@@ -60,14 +60,15 @@ const MAILBOXES_SHARED_FIELDS = {
     connectionId: z.string().optional().describe('Required for connection. Identifier returned by connect.'),
 };
 
+export const MAILBOXES_INTRO = "Manage mailboxes, external inbox links and email messages.";
 export const MAILBOXES_TABLE = [
-    sdkOp('list', mailboxesListSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesList(params), 'read', { describe: { order: 0, text: 'list: List owned mailboxes. ' } }),
-    sdkOp('capacity', z.object({}), (ctx, params) => ctx.backend.mailboxes.mailboxesCapacity(), 'read', { describe: { order: 1, text: 'capacity: Read included mailbox capacity. ' } }),
+    sdkOp('list', mailboxesListSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesList(params), 'read', { doc: "List owned mailboxes." }),
+    sdkOp('capacity', z.object({}), (ctx, params) => ctx.backend.mailboxes.mailboxesCapacity(), 'read', { doc: "Read included mailbox capacity." }),
     operation({
         op: 'create',
         input: { ...mailboxesCreateSchema.partial().shape, billingPreference: MAILBOXES_SHARED_FIELDS.billingPreference, domainId: MAILBOXES_SHARED_FIELDS.domainId, label: MAILBOXES_SHARED_FIELDS.label, localPart: MAILBOXES_SHARED_FIELDS.localPart, clientRequestId: MAILBOXES_SHARED_FIELDS.clientRequestId },
         access: 'commerce',
-        describe: { order: 2, text: 'create: Create a mailbox; may start paid service. ' },
+        doc: "Create a mailbox; may start paid service.",
         run: async (ctx, raw) => {
             const { operation, ...input } = raw;
             const backend = ctx.backend.mailboxes;
@@ -80,23 +81,20 @@ export const MAILBOXES_TABLE = [
             );
         },
     }),
-    sdkOp('get', mailboxesGetSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesGet(params), 'read', { describe: { order: 3, text: 'get: Read a mailbox. ' } }),
-    sdkOp('update', mailboxesUpdateSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUpdate(params), 'write', { describe: { order: 4, text: 'update: Update the mailbox label. ' } }),
-    sdkOp('delete', mailboxesDeleteSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDelete(params), 'commerce', { describe: { order: 5, text: 'delete: Cancel a pending mailbox or schedule paid cancellation. ' } }),
-    sdkOp('uncancel', mailboxesUncancelSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUncancel(params), 'commerce', { describe: { order: 6, text: 'uncancel: Withdraw a scheduled cancellation and continue service. ' } }),
-    sdkOp('restart', mailboxesRestartSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesRestart(params), 'commerce', { describe: { order: 7, text: 'restart: Restart an archived mailbox; may start paid service. ' } }),
-    sdkOp('disconnect', mailboxesDisconnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDisconnect(params), 'write', { describe: { order: 8, text: 'disconnect: Disconnect an external inbox link. ' } }),
-    sdkOp('otp', mailboxesOtpSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesOtp(params), 'read', { describe: { order: 9, text: 'otp: Read a recent email code; set after before requesting the code. ' } }),
-    sdkOp('messages', mailboxesMessagesSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessages(params), 'read', { describe: { order: 10, text: 'messages: Read recent email summaries. ' } }),
-    sdkOp('message', mailboxesMessageSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessage(params), 'read', { describe: { order: 11, text: 'message: Read a single email with attachment metadata. ' } }),
-    sdkOp('connect', mailboxesConnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesConnect(params), 'write', { describe: {
-            order: 12,
-            text: 'connect: Link an external inbox; the user completes consent using the returned redirect URL. ',
-        } }),
-    sdkOp('connection', mailboxesConnectionSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesConnection(params), 'read', { describe: { order: 13, text: 'connection: Read the connection status after consent.' } }),
+    sdkOp('get', mailboxesGetSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesGet(params), 'read', { doc: "Read a mailbox." }),
+    sdkOp('update', mailboxesUpdateSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUpdate(params), 'write', { doc: "Update the mailbox label." }),
+    sdkOp('delete', mailboxesDeleteSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDelete(params), 'commerce', { doc: "Cancel a pending mailbox or schedule paid cancellation." }),
+    sdkOp('uncancel', mailboxesUncancelSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUncancel(params), 'commerce', { doc: "Withdraw a scheduled cancellation and continue service." }),
+    sdkOp('restart', mailboxesRestartSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesRestart(params), 'commerce', { doc: "Restart an archived mailbox; may start paid service." }),
+    sdkOp('disconnect', mailboxesDisconnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDisconnect(params), 'write', { doc: "Disconnect an external inbox link." }),
+    sdkOp('otp', mailboxesOtpSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesOtp(params), 'read', { doc: "Read a recent email code; set after before requesting the code." }),
+    sdkOp('messages', mailboxesMessagesSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessages(params), 'read', { doc: "Read recent email summaries." }),
+    sdkOp('message', mailboxesMessageSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessage(params), 'read', { doc: "Read a single email with attachment metadata." }),
+    sdkOp('connect', mailboxesConnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesConnect(params), 'write', { doc: "Link an external inbox; the user completes consent using the returned redirect URL." }),
+    sdkOp('connection', mailboxesConnectionSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesConnection(params), 'read', { doc: "Read the connection status after consent." }),
 ] as const;
 
 export function registerMailboxesTools(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'mailboxes', MAILBOXES_TABLE, { shared: MAILBOXES_SHARED_FIELDS });
+    registerBundle(server, ctx, 'mailboxes', MAILBOXES_TABLE, { intro: MAILBOXES_INTRO, shared: MAILBOXES_SHARED_FIELDS });
 }

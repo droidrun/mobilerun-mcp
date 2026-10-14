@@ -28,13 +28,14 @@ export const DEVICE_ACTION_SHARED_FIELDS = {
 
 
 
+export const DEVICE_ACTION_INTRO = "Low-level device input. pacedInput (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices.";
 export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'tap',
         input: { x: z.number().optional(), y: z.number().optional(), pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         fieldOrder: 4,
         access: 'write',
-        describe: { order: 0, text: 'Low-level device input. Operations: tap (x, y), ' },
+        doc: "Tap x, y.",
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
             const backend = ctx.backend.deviceControl;
@@ -55,7 +56,7 @@ export const DEVICE_ACTION_TABLE = [
         input: { startX: z.number().optional(), startY: z.number().optional(), endX: z.number().optional(), endY: z.number().optional(), duration: z.number().int().positive().optional().describe('Swipe duration in milliseconds.'), pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         fieldOrder: 5,
         access: 'write',
-        describe: { order: 1, text: 'swipe (startX, startY, endX, endY, duration ms), ' },
+        doc: "Swipe startX, startY to endX, endY with duration in milliseconds.",
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
             const backend = ctx.backend.deviceControl;
@@ -87,7 +88,7 @@ export const DEVICE_ACTION_TABLE = [
         .describe('keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.'), displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'write',
-        describe: { order: 2, text: 'keyboard_write (text, clear?, errorRate?, wpm?, pacedInput?), ' },
+        doc: "Type text with optional clear, errorRate, wpm and pacedInput.",
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
             const backend = ctx.backend.deviceControl;
@@ -110,7 +111,7 @@ export const DEVICE_ACTION_TABLE = [
         input: { key: z.number().int().optional().describe('keyboard_key: Android keycode.'), displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'write',
-        describe: { order: 3, text: 'keyboard_key (key: Android keycode), ' },
+        doc: "Send an Android keycode.",
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
             const backend = ctx.backend.deviceControl;
@@ -128,7 +129,7 @@ export const DEVICE_ACTION_TABLE = [
         input: { displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         fieldOrder: 8,
         access: 'write',
-        describe: { order: 4, text: 'keyboard_clear, ' },
+        doc: "Clear keyboard input.",
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
             const backend = ctx.backend.deviceControl;
@@ -142,10 +143,7 @@ export const DEVICE_ACTION_TABLE = [
         input: { action: DEVICE_ACTION_SHARED_FIELDS.action, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         fieldOrder: 9,
         access: 'write',
-        describe: {
-            order: 5,
-            text: 'global_action (action: Android global-action code, e.g. back/home/recents). `pacedInput` (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call `displayId` targets a specific display on multi-display devices. Additional operations: ',
-        },
+        doc: "Send an Android global-action code, e.g. back/home/recents.",
         run: async (ctx, input) => {
             const { operation, deviceId, displayId } = input;
             const backend = ctx.backend.deviceControl;
@@ -161,8 +159,8 @@ export const DEVICE_ACTION_TABLE = [
             return asTextResult({ status: 'ok', operation, deviceId });
         },
     }),
-    sdkOp('clipboard_get', deviceActionClipboardGetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardGet(deviceId, params), 'read', { fieldOrder: 0, fieldRepeats: ['displayId'], describe: { order: 6, text: 'clipboard_get: Read clipboard text. ' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
-    sdkOp('clipboard_set', deviceActionClipboardSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardSet(deviceId, params), 'write', { fieldOrder: 1, fieldRepeats: ['displayId'], describe: { order: 7, text: 'clipboard_set: Write clipboard text. ' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
-    sdkOp('deep_link', deviceActionDeepLinkSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionDeepLink(deviceId, params), 'write', { fieldOrder: 2, fieldRepeats: ['displayId'], describe: { order: 8, text: 'deep_link: Open a URL or app link. ' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
-    sdkOp('browser_script', deviceActionBrowserScriptSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionBrowserScript(deviceId, params), 'write', { fieldOrder: 3, fieldRepeats: ['displayId'], describe: { order: 9, text: 'browser_script: Run a script in the device browser.' }, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('clipboard_get', deviceActionClipboardGetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardGet(deviceId, params), 'read', { fieldOrder: 0, fieldRepeats: ['displayId'], doc: "Read clipboard text.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('clipboard_set', deviceActionClipboardSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardSet(deviceId, params), 'write', { fieldOrder: 1, fieldRepeats: ['displayId'], doc: "Write clipboard text.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('deep_link', deviceActionDeepLinkSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionDeepLink(deviceId, params), 'write', { fieldOrder: 2, fieldRepeats: ['displayId'], doc: "Open a URL or app link.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('browser_script', deviceActionBrowserScriptSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionBrowserScript(deviceId, params), 'write', { fieldOrder: 3, fieldRepeats: ['displayId'], doc: "Run a script in the device browser.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
 ] as const;

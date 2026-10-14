@@ -59,15 +59,13 @@ const CONNECT_SHARED_FIELDS = {
     orderBy: connectionFilterShape.orderBy,
 };
 
+export const CONNECT_INTRO = "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool).";
 export const CONNECT_TABLE = [
     operation({
         op: 'list_countries',
         input: { type: CONNECT_SHARED_FIELDS.type, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize },
         access: 'read',
-        describe: {
-            order: 0,
-            text: 'Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound `proxies` tool). Operations: list_countries, ',
-        },
+        doc: "List available countries.",
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
             return asTextResult(await backend.listCountries({ type: input.type, page: input.page, pageSize: input.pageSize }));
@@ -77,7 +75,7 @@ export const CONNECT_TABLE = [
         op: 'list_proxies',
         input: { country: CONNECT_SHARED_FIELDS.country, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize },
         access: 'read',
-        describe: { order: 1, text: 'list_proxies, ' },
+        doc: "List residential proxies.",
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
             return asTextResult(await backend.listConnectProxies({ country: input.country, page: input.page, pageSize: input.pageSize }));
@@ -87,7 +85,7 @@ export const CONNECT_TABLE = [
         op: 'get_proxy',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'read',
-        describe: { order: 2, text: 'get_proxy, ' },
+        doc: "Read a residential proxy.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -98,7 +96,7 @@ export const CONNECT_TABLE = [
         op: 'buy_proxy',
         input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type },
         access: 'commerce',
-        describe: { order: 3, text: 'buy_proxy (billed — provisions and bills a residential proxy), ' },
+        doc: "Provision and bill a residential proxy.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -112,7 +110,7 @@ export const CONNECT_TABLE = [
         op: 'cancel_proxy',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'commerce',
-        describe: { order: 4, text: 'cancel_proxy (ends a billed proxy), ' },
+        doc: "End a billed proxy.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -124,7 +122,7 @@ export const CONNECT_TABLE = [
         op: 'ping_proxy',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'read',
-        describe: { order: 5, text: 'ping_proxy (cached latency), ' },
+        doc: "Read cached latency.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -135,7 +133,7 @@ export const CONNECT_TABLE = [
         op: 'list_connections',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId, country: CONNECT_SHARED_FIELDS.country, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize, status: CONNECT_SHARED_FIELDS.status, protocol: CONNECT_SHARED_FIELDS.protocol, provider: CONNECT_SHARED_FIELDS.provider, dstHost: CONNECT_SHARED_FIELDS.dstHost, dstPort: CONNECT_SHARED_FIELDS.dstPort, sessionId: CONNECT_SHARED_FIELDS.sessionId, startedAfter: CONNECT_SHARED_FIELDS.startedAfter, startedBefore: CONNECT_SHARED_FIELDS.startedBefore, endedAfter: CONNECT_SHARED_FIELDS.endedAfter, endedBefore: CONNECT_SHARED_FIELDS.endedBefore, order: CONNECT_SHARED_FIELDS.order, orderBy: CONNECT_SHARED_FIELDS.orderBy },
         access: 'read',
-        describe: { order: 6, text: "list_connections (a proxy's connection history), " },
+        doc: "Read a proxy's connection history.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -149,7 +147,7 @@ export const CONNECT_TABLE = [
         op: 'list_users',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize },
         access: 'read',
-        describe: { order: 7, text: 'list_users, ' },
+        doc: "List bound users.",
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
             return asTextResult(await backend.listConnectUsers({ proxyId: input.proxyId, page: input.page, pageSize: input.pageSize }));
@@ -159,7 +157,7 @@ export const CONNECT_TABLE = [
         op: 'get_user',
         input: { userId: CONNECT_SHARED_FIELDS.userId },
         access: 'read',
-        describe: { order: 8, text: 'get_user, ' },
+        doc: "Read a bound user.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -170,7 +168,7 @@ export const CONNECT_TABLE = [
         op: 'list_user_connections',
         input: { userId: CONNECT_SHARED_FIELDS.userId, country: CONNECT_SHARED_FIELDS.country, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize, status: CONNECT_SHARED_FIELDS.status, protocol: CONNECT_SHARED_FIELDS.protocol, provider: CONNECT_SHARED_FIELDS.provider, dstHost: CONNECT_SHARED_FIELDS.dstHost, dstPort: CONNECT_SHARED_FIELDS.dstPort, sessionId: CONNECT_SHARED_FIELDS.sessionId, startedAfter: CONNECT_SHARED_FIELDS.startedAfter, startedBefore: CONNECT_SHARED_FIELDS.startedBefore, endedAfter: CONNECT_SHARED_FIELDS.endedAfter, endedBefore: CONNECT_SHARED_FIELDS.endedBefore, order: CONNECT_SHARED_FIELDS.order, orderBy: CONNECT_SHARED_FIELDS.orderBy },
         access: 'read',
-        describe: { order: 9, text: "list_user_connections (a user's connection history). Additional operations: " },
+        doc: "Read a user's connection history.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.connect;
@@ -180,8 +178,8 @@ export const CONNECT_TABLE = [
             ));
         },
     }),
-    sdkOp('update_proxy', connectUpdateProxySchema, (ctx, params) => ctx.backend.connect.connectUpdateProxy(params), 'write', { describe: { order: 10, text: 'update_proxy: Update a residential proxy label. ' } }),
-    sdkOp('ensure_healthy', connectEnsureHealthySchema, (ctx, params) => ctx.backend.connect.connectEnsureHealthy(params), 'write', { describe: { order: 11, text: 'ensure_healthy: Repair an unhealthy residential proxy.' } }),
+    sdkOp('update_proxy', connectUpdateProxySchema, (ctx, params) => ctx.backend.connect.connectUpdateProxy(params), 'write', { doc: "Update a residential proxy label." }),
+    sdkOp('ensure_healthy', connectEnsureHealthySchema, (ctx, params) => ctx.backend.connect.connectEnsureHealthy(params), 'write', { doc: "Repair an unhealthy residential proxy." }),
 ] as const;
 type ConnectInput = z.infer<z.ZodObject<typeof CONNECT_SHARED_FIELDS>>;
 
@@ -208,5 +206,5 @@ function connectionOpts(input: ConnectInput) {
 
 export function registerConnectTools(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'connect', CONNECT_TABLE, { shared: CONNECT_SHARED_FIELDS });
+    registerBundle(server, ctx, 'connect', CONNECT_TABLE, { intro: CONNECT_INTRO, shared: CONNECT_SHARED_FIELDS });
 }

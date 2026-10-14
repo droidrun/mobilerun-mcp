@@ -24,15 +24,13 @@ const PROXIES_SHARED_FIELDS = {
     config: z.string().optional().describe('Wireguard config text. Required for protocol=wireguard on create/update.'),
 };
 
+export const PROXIES_INTRO = "Manage device-bound proxy configs (socks5 or wireguard), the outbound network path a device can be assigned.";
 export const PROXIES_TABLE = [
     operation({
         op: 'list',
         input: { protocol: PROXIES_SHARED_FIELDS.protocol },
         access: 'read',
-        describe: {
-            order: 0,
-            text: 'Manage device-bound proxy configs (socks5 or wireguard) — the outbound network path a device can be assigned. Operations: list, ',
-        },
+        doc: "List device-bound proxy configurations.",
         run: async (ctx, input) => {
             const backend = ctx.backend.proxies;
             return asTextResult(await backend.listProxies({ protocol: input.protocol }));
@@ -42,7 +40,7 @@ export const PROXIES_TABLE = [
         op: 'get',
         input: { proxyId: PROXIES_SHARED_FIELDS.proxyId },
         access: 'read',
-        describe: { order: 1, text: 'get, ' },
+        doc: "Read a proxy configuration.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.proxies;
@@ -54,10 +52,7 @@ export const PROXIES_TABLE = [
         op: 'create',
         input: { protocol: PROXIES_SHARED_FIELDS.protocol, name: PROXIES_SHARED_FIELDS.name, host: PROXIES_SHARED_FIELDS.host, port: PROXIES_SHARED_FIELDS.port, user: PROXIES_SHARED_FIELDS.user, password: PROXIES_SHARED_FIELDS.password, config: PROXIES_SHARED_FIELDS.config },
         access: 'write',
-        describe: {
-            order: 2,
-            text: 'create (protocol + either socks5:{host,port,user,password} or wireguard:{config}, both also need name), ',
-        },
+        doc: "Create a proxy (protocol and either socks5:{host,port,user,password} or wireguard:{config}; both require name).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.proxies;
@@ -68,7 +63,7 @@ export const PROXIES_TABLE = [
         op: 'update',
         input: { proxyId: PROXIES_SHARED_FIELDS.proxyId, protocol: PROXIES_SHARED_FIELDS.protocol, name: PROXIES_SHARED_FIELDS.name, host: PROXIES_SHARED_FIELDS.host, port: PROXIES_SHARED_FIELDS.port, user: PROXIES_SHARED_FIELDS.user, password: PROXIES_SHARED_FIELDS.password, config: PROXIES_SHARED_FIELDS.config },
         access: 'write',
-        describe: { order: 3, text: 'update (same shape as create), ' },
+        doc: "Update a proxy with the same shape as create.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.proxies;
@@ -80,7 +75,7 @@ export const PROXIES_TABLE = [
         op: 'delete',
         input: { proxyId: PROXIES_SHARED_FIELDS.proxyId },
         access: 'write',
-        describe: { order: 4, text: 'delete.' },
+        doc: "Delete a proxy configuration.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.proxies;
@@ -113,5 +108,5 @@ function buildProxyParams(input: ProxiesInput, operation: string) {
 
 export function registerProxiesTools(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'proxies', PROXIES_TABLE, { shared: PROXIES_SHARED_FIELDS });
+    registerBundle(server, ctx, 'proxies', PROXIES_TABLE, { intro: PROXIES_INTRO, shared: PROXIES_SHARED_FIELDS });
 }

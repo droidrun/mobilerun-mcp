@@ -13,30 +13,25 @@ const PLATFORM_CATALOG_SHARED_FIELDS = {
 
 };
 
+export const PLATFORM_CATALOG_INTRO = "Read-only platform reference data, chosen via catalog.";
 export const PLATFORM_CATALOG_TABLE = [
     operation({
         op: 'models',
         input: {  },
         access: 'read',
-        describe: {
-            order: 0,
-            text: 'Read-only platform reference data, chosen via `catalog`: models (available LLM model ids), ',
-        },
+        doc: "Read available LLM model ids.",
         run: async (ctx) => asTextResult(await ctx.backend.platformCatalog.listModels()),
     }),
     operation({
         op: 'timezones',
         input: {  },
         access: 'read',
-        describe: {
-            order: 1,
-            text: "timezones (supported IANA timezone strings — use for workflows create_trigger scheduleRule's timezone field).",
-        },
+        doc: "Read supported IANA timezone strings; use for the scheduleRule timezone field in create_trigger.",
         run: async (ctx) => asTextResult(await ctx.backend.platformCatalog.listTimezones()),
     }),
 ] as const;
 
 export function registerPlatformCatalogTools(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'platform_catalog', PLATFORM_CATALOG_TABLE, { shared: PLATFORM_CATALOG_SHARED_FIELDS, field: 'catalog' });
+    registerBundle(server, ctx, 'platform_catalog', PLATFORM_CATALOG_TABLE, { intro: PLATFORM_CATALOG_INTRO, shared: PLATFORM_CATALOG_SHARED_FIELDS, field: 'catalog' });
 }

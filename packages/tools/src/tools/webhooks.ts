@@ -33,12 +33,13 @@ const WEBHOOK_SHARED_FIELDS = {
     since: z.string().optional().describe('ISO 8601 timestamp filter for operation=delivery_stats.'),
 };
 
+export const WEBHOOK_INTRO = "Manage outbound customer webhooks and inspect deliveries. Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery: verify by eventId in delivery records.";
 export const WEBHOOK_TABLE = [
     operation({
         op: 'create',
         input: { url: z.string().url().max(2048).optional(), eventTypes: WEBHOOK_SHARED_FIELDS.eventTypes, description: WEBHOOK_SHARED_FIELDS.description },
         access: 'write',
-        describe: { order: 1, text: 'create (url; returns one-time secret + endpoint id), ' },
+        doc: "Create a webhook (url); returns an endpoint id and a secret shown exactly once.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -57,7 +58,7 @@ export const WEBHOOK_TABLE = [
         op: 'list',
         input: { status: WEBHOOK_SHARED_FIELDS.status, page: WEBHOOK_SHARED_FIELDS.page, pageSize: WEBHOOK_SHARED_FIELDS.pageSize },
         access: 'read',
-        describe: { order: 2, text: 'list, ' },
+        doc: "List webhook subscriptions.",
         run: async (ctx, input) => {
             const backend = ctx.backend.webhooks;
             return asTextResult(await backend.listWebhooks({
@@ -71,7 +72,7 @@ export const WEBHOOK_TABLE = [
         op: 'get',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'read',
-        describe: { order: 3, text: 'get, ' },
+        doc: "Read a webhook subscription.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -83,7 +84,7 @@ export const WEBHOOK_TABLE = [
         op: 'update',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId, eventTypes: WEBHOOK_SHARED_FIELDS.eventTypes, state: z.enum(['ACTIVE', 'DISABLED']).optional(), description: WEBHOOK_SHARED_FIELDS.description },
         access: 'write',
-        describe: { order: 4, text: 'update, ' },
+        doc: "Update a webhook subscription.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -103,7 +104,7 @@ export const WEBHOOK_TABLE = [
         op: 'rotate_secret',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'write',
-        describe: { order: 5, text: 'rotate_secret (explicit consent; returns one-time secret), ' },
+        doc: "Rotate the signing secret only with explicit consent; returns a secret shown exactly once.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -119,7 +120,7 @@ export const WEBHOOK_TABLE = [
         op: 'test',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'write',
-        describe: { order: 6, text: 'test, ' },
+        doc: "Send a test delivery.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -131,7 +132,7 @@ export const WEBHOOK_TABLE = [
         op: 'list_deliveries',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId, page: WEBHOOK_SHARED_FIELDS.page, pageSize: WEBHOOK_SHARED_FIELDS.pageSize },
         access: 'read',
-        describe: { order: 7, text: 'list_deliveries, ' },
+        doc: "Read deliveries for an endpoint.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -143,7 +144,7 @@ export const WEBHOOK_TABLE = [
         op: 'get_delivery',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId, deliveryId: z.string().uuid().optional() },
         access: 'read',
-        describe: { order: 8, text: 'get_delivery, ' },
+        doc: "Read one endpoint delivery.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.webhooks;
@@ -156,22 +157,16 @@ export const WEBHOOK_TABLE = [
         op: 'delivery_stats',
         input: { since: WEBHOOK_SHARED_FIELDS.since },
         access: 'read',
-        describe: {
-            order: 9,
-            text: 'delivery_stats (account-wide aggregate, optional `since`). Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery—verify by eventId in delivery records. Additional operations: ',
-        },
+        doc: "Read account-wide delivery statistics, optionally since an ISO timestamp.",
         run: async (ctx, input) => {
             const backend = ctx.backend.webhooks;
             return asTextResult(await backend.getWebhookDeliveryStats({ since: input.since }));
         },
     }),
-    sdkOp('delete', webhooksDeleteSchema, (ctx, params) => ctx.backend.webhooks.webhooksDelete(params), 'write', { describe: {
-            order: 10,
-            text: 'delete: Delete a webhook subscription. deliveries: Read deliveries across all subscriptions. ',
-        } }),
-    sdkOp('deliveries', webhooksDeliveriesSchema, (ctx, params) => ctx.backend.webhooks.webhooksDeliveries(params), 'read', { describe: { order: 0, text: 'Manage outbound customer webhooks and inspect deliveries. Operations: ' } }),
-    sdkOp('integrations', z.object({}), (ctx, params) => ctx.backend.webhooks.webhooksIntegrations(), 'read', { describe: { order: 11, text: 'integrations: Read connected delivery integrations. ' } }),
-    sdkOp('integration_targets', webhooksIntegrationTargetsSchema, (ctx, params) => ctx.backend.webhooks.webhooksIntegrationTargets(params), 'read', { describe: { order: 12, text: 'integration_targets: Read delivery targets for an integration.' } }),
+    sdkOp('delete', webhooksDeleteSchema, (ctx, params) => ctx.backend.webhooks.webhooksDelete(params), 'write', { doc: "Delete a webhook subscription." }),
+    sdkOp('deliveries', webhooksDeliveriesSchema, (ctx, params) => ctx.backend.webhooks.webhooksDeliveries(params), 'read', { doc: "Read deliveries across all subscriptions." }),
+    sdkOp('integrations', z.object({}), (ctx, params) => ctx.backend.webhooks.webhooksIntegrations(), 'read', { doc: "Read connected delivery integrations." }),
+    sdkOp('integration_targets', webhooksIntegrationTargetsSchema, (ctx, params) => ctx.backend.webhooks.webhooksIntegrationTargets(params), 'read', { doc: "Read delivery targets for an integration." }),
 ] as const;
 
 // Full-set schema — used to type WebhookToolInput regardless of any
@@ -187,5 +182,5 @@ function withSecretHandling(result: unknown, secretHandling: string): Record<str
 
 export function registerWebhookTools(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'webhooks', WEBHOOK_TABLE, { shared: WEBHOOK_SHARED_FIELDS });
+    registerBundle(server, ctx, 'webhooks', WEBHOOK_TABLE, { intro: WEBHOOK_INTRO, shared: WEBHOOK_SHARED_FIELDS });
 }

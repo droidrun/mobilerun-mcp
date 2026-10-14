@@ -28,6 +28,7 @@ const APPS_SHARED_FIELDS = {
     id: z.string().uuid().optional(),
 };
 
+export const APPS_INTRO = "Manage uploaded apps (APKs) and inspect versions.";
 export const APPS_TABLE = [
     operation({
         op: 'list',
@@ -36,7 +37,7 @@ export const APPS_TABLE = [
         .optional()
         .describe('Filter for operation=list.'), sortBy: z.enum(['createdAt', 'name']).optional(), order: z.enum(['asc', 'desc']).optional(), page: z.number().int().positive().optional(), pageSize: z.number().int().positive().max(100).optional() },
         access: 'read',
-        describe: { order: 1, text: 'list, ' },
+        doc: "List uploaded apps with optional filters.",
         run: async (ctx, input) => {
             const backend = ctx.backend.apps;
             return asTextResult(await backend.listApps({
@@ -54,7 +55,7 @@ export const APPS_TABLE = [
         op: 'get',
         input: { id: APPS_SHARED_FIELDS.id },
         access: 'read',
-        describe: { order: 2, text: 'get, versions (all versions visible to the user), ' },
+        doc: "Read an uploaded app.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
@@ -66,7 +67,7 @@ export const APPS_TABLE = [
         op: 'versions',
         input: { id: APPS_SHARED_FIELDS.id },
         access: 'read',
-        describe: { order: 0, text: 'Manage uploaded apps (APKs) and inspect versions. Operations: ' },
+        doc: "Read all versions visible to the user.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
@@ -86,10 +87,7 @@ export const APPS_TABLE = [
         .optional()
         .describe('Country code for search results. Optional for operation=create_upload_url.'), description: z.string().optional(), developerName: z.string().optional(), iconURL: z.string().url().optional(), targetSdk: z.number().int().optional() },
         access: 'write',
-        describe: {
-            order: 3,
-            text: 'create_upload_url (starts the 3-step upload flow: returns pre-signed upload URLs per file — PUT the raw file bytes to those URLs yourself, outside this tool, then call ',
-        },
+        doc: "Start the 3-step upload flow: return pre-signed upload URLs per file. PUT the raw file bytes to those URLs yourself, outside this tool, then call confirm_upload; call mark_failed instead if the PUT fails or is abandoned.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
@@ -113,7 +111,7 @@ export const APPS_TABLE = [
         op: 'confirm_upload',
         input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
-        describe: { order: 4, text: 'confirm_upload; call ' },
+        doc: "Confirm that the uploaded file arrived.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
@@ -125,10 +123,7 @@ export const APPS_TABLE = [
         op: 'mark_failed',
         input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
-        describe: {
-            order: 5,
-            text: 'mark_failed instead if the PUT fails or is abandoned), confirm_upload, mark_failed, ',
-        },
+        doc: "Mark a failed or abandoned upload.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
@@ -140,7 +135,7 @@ export const APPS_TABLE = [
         op: 'delete',
         input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
-        describe: { order: 6, text: 'delete. Additional operations: ' },
+        doc: "Delete an uploaded app.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.apps;
@@ -148,11 +143,11 @@ export const APPS_TABLE = [
             return asTextResult(await backend.deleteApp(id));
         },
     }),
-    sdkOp('storage_usage', z.object({}), (ctx, params) => ctx.backend.apps.appsStorageUsage(), 'read', { describe: { order: 7, text: 'storage_usage: Read app storage usage.' } }),
+    sdkOp('storage_usage', z.object({}), (ctx, params) => ctx.backend.apps.appsStorageUsage(), 'read', { doc: "Read app storage usage." }),
 ] as const;
 
 
 export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'apps', APPS_TABLE, { shared: APPS_SHARED_FIELDS });
+    registerBundle(server, ctx, 'apps', APPS_TABLE, { intro: APPS_INTRO, shared: APPS_SHARED_FIELDS });
 }

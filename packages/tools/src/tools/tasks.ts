@@ -64,12 +64,13 @@ const GET_TASK_SHARED_FIELDS = {
         .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
 };
 
+export const GET_TASK_INTRO = "Fetch one task by id, chosen via view. Poll status or trajectory to follow a running task.";
 export const GET_TASK_TABLE = [
     operation({
         op: 'summary',
         input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
         access: 'read',
-        describe: { order: 0, text: 'Fetch one task by id, chosen via `view`: summary (full record, minus ' },
+        doc: "Read the full task record, minus trajectory.",
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             return asTextResult(await ctx.backend.tasks.getTaskSummary(taskId));
@@ -79,10 +80,7 @@ export const GET_TASK_TABLE = [
         op: 'status',
         input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
         access: 'read',
-        describe: {
-            order: 2,
-            text: 'status (lightweight polling: status/message/output/steps/succeeded), trajectory (paged agent event log — capped per call, page with `offset`/the returned `nextOffset`). Poll status or trajectory to follow a running task.',
-        },
+        doc: "Read lightweight polling fields: status/message/output/steps/succeeded.",
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             return asTextResult(await ctx.backend.tasks.getTaskStatus(taskId));
@@ -92,7 +90,7 @@ export const GET_TASK_TABLE = [
         op: 'trajectory',
         input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
         access: 'read',
-        describe: { order: 1, text: 'trajectory), ' },
+        doc: "Read the paged agent event log, capped per call; page with offset and the returned nextOffset.",
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             const raw = await ctx.backend.tasks.getTaskTrajectory(taskId);
@@ -105,22 +103,20 @@ const GET_TASK_MEDIA_SHARED_FIELDS = {
     index: z.number().int().nonnegative().optional(),
 };
 
+export const GET_TASK_MEDIA_INTRO = "Fetch a task's captured media, chosen via kind. Omit index to list all available URLs for that kind; pass index to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.";
 export const GET_TASK_MEDIA_TABLE = [
     operation({
         op: 'screenshot',
         input: { taskId: GET_TASK_MEDIA_SHARED_FIELDS.taskId, index: GET_TASK_MEDIA_SHARED_FIELDS.index },
         access: 'read',
-        describe: { order: 0, text: "Fetch a task's captured media, chosen via `kind` (screenshot | " },
+        doc: "Read captured screenshot URLs.",
         run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
     }),
     operation({
         op: 'ui_state',
         input: { taskId: GET_TASK_MEDIA_SHARED_FIELDS.taskId, index: GET_TASK_MEDIA_SHARED_FIELDS.index },
         access: 'read',
-        describe: {
-            order: 1,
-            text: "ui_state). Omit `index` to list all available URLs for that kind; pass `index` to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.",
-        },
+        doc: "Read captured UI state URLs.",
         run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
     }),
 ] as const;
@@ -198,7 +194,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         async ({ pacedInput, ...params }) =>
             asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })),
     );
-    registerBundle(server, ctx, 'get_task', GET_TASK_TABLE, { shared: GET_TASK_SHARED_FIELDS, field: 'view' });
+    registerBundle(server, ctx, 'get_task', GET_TASK_TABLE, { intro: GET_TASK_INTRO, shared: GET_TASK_SHARED_FIELDS, field: 'view' });
     server.registerTool(
         'list_tasks',
         {
@@ -237,7 +233,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         },
         async ({ taskId, message }) => asTextResult(await ctx.backend.tasks.sendTaskMessage(taskId, message)),
     );
-    registerBundle(server, ctx, 'get_task_media', GET_TASK_MEDIA_TABLE, { shared: GET_TASK_MEDIA_SHARED_FIELDS, field: 'kind' });
+    registerBundle(server, ctx, 'get_task_media', GET_TASK_MEDIA_TABLE, { intro: GET_TASK_MEDIA_INTRO, shared: GET_TASK_MEDIA_SHARED_FIELDS, field: 'kind' });
 }
 async function executeTaskMediaOperation(
     ctx: ToolCtx,

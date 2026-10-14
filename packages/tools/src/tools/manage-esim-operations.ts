@@ -20,13 +20,14 @@ export const MANAGE_ESIM_SHARED_FIELDS = {
 
 
 
+export const MANAGE_ESIM_INTRO = "Manage eSIM subscriptions and connectivity.";
 export const MANAGE_ESIM_TABLE = [
     operation({
         op: 'list',
         input: { deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 5,
         access: 'read',
-        describe: { order: 0, text: 'eSIM subscription management. Operations: list, ' },
+        doc: "List eSIM subscriptions.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -38,7 +39,7 @@ export const MANAGE_ESIM_TABLE = [
         input: { enable: z.boolean().optional(), smDpAddr: z.string().optional(), confirmationCode: z.string().optional(), matchingId: z.string().optional(), deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'commerce',
-        describe: { order: 1, text: 'activate (smDpAddr required, ' },
+        doc: "Download an eSIM profile (smDpAddr required). enable controls whether to enable the downloaded profile. confirmationCode requires matchingId; these are only needed when the SM-DP+ challenges for a code.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -57,10 +58,7 @@ export const MANAGE_ESIM_TABLE = [
         input: { subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'write',
-        describe: {
-            order: 2,
-            text: 'enable: whether to also enable the downloaded profile, confirmationCode?/matchingId? — confirmationCode requires matchingId, only needed when the SM-DP+ challenges for it), enable (subId), ',
-        },
+        doc: "Enable subId.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -74,7 +72,7 @@ export const MANAGE_ESIM_TABLE = [
         input: { subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 8,
         access: 'write',
-        describe: { order: 3, text: 'remove (subId). Additional operations: ' },
+        doc: "Remove subId.",
         run: async (ctx, input) => {
             const { operation, deviceId } = input;
             const backend = ctx.backend.deviceControl;
@@ -83,9 +81,9 @@ export const MANAGE_ESIM_TABLE = [
             return asTextResult({ status: 'ok', operation, deviceId, subId });
         },
     }),
-    sdkOp('set_roaming', manageEsimSetRoamingSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimSetRoaming(deviceId, params), 'write', { fieldOrder: 0, describe: { order: 4, text: 'set_roaming: Enable or disable eSIM roaming. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
-    sdkOp('status', manageEsimStatusSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimStatus(deviceId, params), 'read', { fieldOrder: 1, describe: { order: 5, text: 'status: Read eSIM connectivity status. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
-    sdkOp('apn_list', manageEsimApnListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnList(deviceId, params), 'read', { fieldOrder: 2, describe: { order: 6, text: 'apn_list: List available access point settings. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
-    sdkOp('apn_select', manageEsimApnSelectSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnSelect(deviceId, params), 'write', { fieldOrder: 3, describe: { order: 7, text: 'apn_select: Select an access point. ' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
-    sdkOp('apn_set', manageEsimApnSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnSet(deviceId, params), 'write', { fieldOrder: 4, describe: { order: 8, text: 'apn_set: Set access point settings.' }, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('set_roaming', manageEsimSetRoamingSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimSetRoaming(deviceId, params), 'write', { fieldOrder: 0, doc: "Enable or disable eSIM roaming.", deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('status', manageEsimStatusSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimStatus(deviceId, params), 'read', { fieldOrder: 1, doc: "Read eSIM connectivity status.", deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('apn_list', manageEsimApnListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnList(deviceId, params), 'read', { fieldOrder: 2, doc: "List available access point settings.", deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('apn_select', manageEsimApnSelectSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnSelect(deviceId, params), 'write', { fieldOrder: 3, doc: "Select an access point.", deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
+    sdkOp('apn_set', manageEsimApnSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageEsimApnSet(deviceId, params), 'write', { fieldOrder: 4, doc: "Set access point settings.", deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId }),
 ] as const;

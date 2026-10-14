@@ -84,16 +84,14 @@ const MANAGE_FLOW_SHARED_FIELDS = {
     triggerId: z.string().optional().describe('Filter for operation=execution_metrics.'),
 };
 
+export const MANAGE_FLOW_INTRO = "Flow lifecycle operations beyond create_flow. Check the flow's templateResolutionVersion (get_workflow_resource(resource=\"flow\")): on version 3, an action's overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the triggering event); older flows use name/slug-based references instead.";
 export const MANAGE_FLOW_TABLE = [
-    sdkOp('execution_screenshot', manageFlowExecutionScreenshotSchema, (ctx, params) => ctx.backend.workflows.manageFlowExecutionScreenshot(params), 'read', { describe: { order: 23, text: 'execution_screenshot: Read a short-lived signed download URL.' } }),
+    sdkOp('execution_screenshot', manageFlowExecutionScreenshotSchema, (ctx, params) => ctx.backend.workflows.manageFlowExecutionScreenshot(params), 'read', { doc: "Read a short-lived signed download URL." }),
     operation({
         op: 'clone',
         input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, name: MANAGE_FLOW_SHARED_FIELDS.name, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds },
         access: 'write',
-        describe: {
-            order: 0,
-            text: 'Flow lifecycle operations beyond create_flow. Operations: clone (flowId, optional name/deviceIds — copies a flow), ',
-        },
+        doc: "Copy a flow (flowId, optional name/deviceIds).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
@@ -105,10 +103,7 @@ export const MANAGE_FLOW_TABLE = [
         op: 'unblock',
         input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'write',
-        describe: {
-            order: 1,
-            text: 'unblock (flowId — clears blocked status after fixing the underlying issue, idempotent), ',
-        },
+        doc: "Clear blocked status after fixing the underlying issue (flowId, idempotent).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
@@ -132,10 +127,7 @@ export const MANAGE_FLOW_TABLE = [
         .optional()
         .describe('Nested loop/branch child actions for operation=add_action.') },
         access: 'write',
-        describe: {
-            order: 2,
-            text: 'add_action (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children — key is derived from the step if omitted), ',
-        },
+        doc: "Add a step (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children). The key is derived from the step if omitted.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
@@ -160,7 +152,7 @@ export const MANAGE_FLOW_TABLE = [
         .optional()
         .describe('The flow-action binding id (not the actionId) for operation=remove_action.'), flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'write',
-        describe: { order: 3, text: 'remove_action (flowActionId, flowId), ' },
+        doc: "Remove a step (flowActionId, flowId).",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
@@ -174,10 +166,7 @@ export const MANAGE_FLOW_TABLE = [
         op: 'replace_actions',
         input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, actions: MANAGE_FLOW_SHARED_FIELDS.actions },
         access: 'write',
-        describe: {
-            order: 4,
-            text: "replace_actions (flowId, actions[] — replaces the ENTIRE action list for the flow; each action's optional key is carried over from the existing step matching flowActionId, or at the same position with the same actionId, when omitted, and derived for genuinely new steps; when reordering or inserting steps, pass key or flowActionId for every step you are keeping so it is recognized as an existing step), ",
-        },
+        doc: "Replace the ENTIRE action list (flowId, actions[]). An omitted key is carried over from the existing step matching flowActionId, or at the same position with the same actionId, and derived for genuinely new steps. When reordering or inserting steps, pass key or flowActionId for every step you are keeping so it is recognized as existing.",
         run: async (ctx, input) => {
             const { operation } = input;
             const backend = ctx.backend.workflows;
@@ -202,10 +191,7 @@ export const MANAGE_FLOW_TABLE = [
         op: 'execution_metrics',
         input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId, from: z.string().nullable().optional().describe('ISO 8601 range start for operation=execution_metrics.'), to: z.string().nullable().optional().describe('ISO 8601 range end for operation=execution_metrics.') },
         access: 'read',
-        describe: {
-            order: 5,
-            text: 'execution_metrics (optional flowId/triggerId/from/to — aggregate execution stats, not a single execution; use get_workflow_resource(resource="execution") for one execution). Check the flow\'s templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action\'s overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the triggering event); older flows use name/slug-based references instead. Use ',
-        },
+        doc: "Aggregate execution stats (optional flowId/triggerId/from/to), not a single execution; use get_workflow_resource(resource=\"execution\") for one execution.",
         run: async (ctx, input) => {
             const backend = ctx.backend.workflows;
             return asTextResult(await backend.getExecutionMetrics({
@@ -216,33 +202,27 @@ export const MANAGE_FLOW_TABLE = [
             }));
         },
     }),
-    sdkOp('update', manageFlowUpdateSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdate(params), 'write', { describe: { order: 7, text: 'update: Update flow configuration. ' } }),
-    sdkOp('delete', manageFlowDeleteSchema, (ctx, params) => ctx.backend.workflows.manageFlowDelete(params), 'write', { describe: { order: 8, text: 'delete: Delete a flow. ' } }),
-    sdkOp('activate', manageFlowActivateSchema, (ctx, params) => ctx.backend.workflows.manageFlowActivate(params), 'commerce', { describe: { order: 9, text: 'activate: Activate a flow; may start paid automation. ' } }),
-    sdkOp('run', manageFlowRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowRun(params), 'commerce', { describe: { order: 10, text: 'run: Start a flow execution; usage may be billed. ' } }),
-    sdkOp('validate', manageFlowValidateSchema, (ctx, params) => ctx.backend.workflows.manageFlowValidate(params), 'read', { describe: { order: 11, text: 'validate: Validate a draft flow without saving it. ' } }),
-    sdkOp('verify', manageFlowVerifySchema, (ctx, params) => ctx.backend.workflows.manageFlowVerify(params), 'commerce', { describe: {
-            order: 12,
-            text: 'verify: Verify flow configuration. dry_run: Simulate a flow without executing actions. ',
-        } }),
-    sdkOp('dry_run', manageFlowDryRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowDryRun(params), 'read', { describe: {
-            order: 6,
-            text: 'dry_run to simulate one flow, or workflow_events(operation="dry_run") to simulate event routing without side effects. Additional operations: ',
-        } }),
-    sdkOp('capacity', z.object({}), (ctx, params) => ctx.backend.workflows.manageFlowCapacity(), 'read', { describe: { order: 13, text: 'capacity: Read included flow capacity. ' } }),
-    sdkOp('delivery_options', manageFlowDeliveryOptionsSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeliveryOptions(params), 'read', { describe: { order: 14, text: 'delivery_options: Read available delivery options. ' } }),
-    sdkOp('template_context', manageFlowTemplateContextSchema, (ctx, params) => ctx.backend.workflows.manageFlowTemplateContext(params), 'read', { describe: { order: 15, text: 'template_context: Read template variables. ' } }),
-    sdkOp('list_repairs', manageFlowListRepairsSchema, (ctx, params) => ctx.backend.workflows.manageFlowListRepairs(params), 'read', { describe: { order: 16, text: 'list_repairs: Read suggested flow repairs. ' } }),
-    sdkOp('update_action', manageFlowUpdateActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdateAction(params), 'write', { describe: { order: 17, text: 'update_action: Update a workflow action. ' } }),
-    sdkOp('delete_action', manageFlowDeleteActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteAction(params), 'write', { describe: { order: 18, text: 'delete_action: Delete a workflow action. ' } }),
-    sdkOp('update_trigger', manageFlowUpdateTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdateTrigger(params), 'write', { describe: { order: 19, text: 'update_trigger: Update a workflow trigger. ' } }),
-    sdkOp('delete_trigger', manageFlowDeleteTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteTrigger(params), 'write', { describe: { order: 20, text: 'delete_trigger: Delete a workflow trigger. ' } }),
-    sdkOp('fire_trigger', manageFlowFireTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowFireTrigger(params), 'commerce', { describe: { order: 21, text: 'fire_trigger: Fire a workflow trigger. ' } }),
-    sdkOp('abort_execution', manageFlowAbortExecutionSchema, (ctx, params) => ctx.backend.workflows.manageFlowAbortExecution(params), 'write', { describe: { order: 22, text: 'abort_execution: Abort a running execution. ' } }),
+    sdkOp('update', manageFlowUpdateSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdate(params), 'write', { doc: "Update flow configuration." }),
+    sdkOp('delete', manageFlowDeleteSchema, (ctx, params) => ctx.backend.workflows.manageFlowDelete(params), 'write', { doc: "Delete a flow." }),
+    sdkOp('activate', manageFlowActivateSchema, (ctx, params) => ctx.backend.workflows.manageFlowActivate(params), 'commerce', { doc: "Activate a flow; may start paid automation." }),
+    sdkOp('run', manageFlowRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowRun(params), 'commerce', { doc: "Start a flow execution; usage may be billed." }),
+    sdkOp('validate', manageFlowValidateSchema, (ctx, params) => ctx.backend.workflows.manageFlowValidate(params), 'read', { doc: "Validate a draft flow without saving it." }),
+    sdkOp('verify', manageFlowVerifySchema, (ctx, params) => ctx.backend.workflows.manageFlowVerify(params), 'commerce', { doc: "Verify flow configuration." }),
+    sdkOp('dry_run', manageFlowDryRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowDryRun(params), 'read', { doc: "Simulate one flow without executing actions. Use workflow_events(operation=\"dry_run\") to simulate event routing without side effects." }),
+    sdkOp('capacity', z.object({}), (ctx, params) => ctx.backend.workflows.manageFlowCapacity(), 'read', { doc: "Read included flow capacity." }),
+    sdkOp('delivery_options', manageFlowDeliveryOptionsSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeliveryOptions(params), 'read', { doc: "Read available delivery options." }),
+    sdkOp('template_context', manageFlowTemplateContextSchema, (ctx, params) => ctx.backend.workflows.manageFlowTemplateContext(params), 'read', { doc: "Read template variables." }),
+    sdkOp('list_repairs', manageFlowListRepairsSchema, (ctx, params) => ctx.backend.workflows.manageFlowListRepairs(params), 'read', { doc: "Read suggested flow repairs." }),
+    sdkOp('update_action', manageFlowUpdateActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdateAction(params), 'write', { doc: "Update a workflow action." }),
+    sdkOp('delete_action', manageFlowDeleteActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteAction(params), 'write', { doc: "Delete a workflow action." }),
+    sdkOp('update_trigger', manageFlowUpdateTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdateTrigger(params), 'write', { doc: "Update a workflow trigger." }),
+    sdkOp('delete_trigger', manageFlowDeleteTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteTrigger(params), 'write', { doc: "Delete a workflow trigger." }),
+    sdkOp('fire_trigger', manageFlowFireTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowFireTrigger(params), 'commerce', { doc: "Fire a workflow trigger." }),
+    sdkOp('abort_execution', manageFlowAbortExecutionSchema, (ctx, params) => ctx.backend.workflows.manageFlowAbortExecution(params), 'write', { doc: "Abort a running execution." }),
 ] as const;
 
 
 export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
     
-    registerBundle(server, ctx, 'manage_flow', MANAGE_FLOW_TABLE, { shared: MANAGE_FLOW_SHARED_FIELDS });
+    registerBundle(server, ctx, 'manage_flow', MANAGE_FLOW_TABLE, { intro: MANAGE_FLOW_INTRO, shared: MANAGE_FLOW_SHARED_FIELDS });
 }

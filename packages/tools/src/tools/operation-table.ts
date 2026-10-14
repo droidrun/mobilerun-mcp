@@ -17,16 +17,12 @@ export type Operation<Input, Result = unknown> = {
     access: 'read' | 'write' | 'commerce';
     /** Assistant writes retain their existing full-profile gate. */
     fullOnly?: boolean;
-    /** Ordered fragments preserve existing prose even when enum and prose orders differ. */
-    describe: {
-        order: number;
-        text: string;
-    };
+    doc: string;
     run: (ctx: ToolCtx, input: Input) => Promise<Result>;
 };
 type SurfaceOperation = Pick<
     Operation<never>,
-    'op' | 'input' | 'access' | 'fullOnly' | 'describe' | 'fieldOrder' | 'fieldRepeats'
+    'op' | 'input' | 'access' | 'fullOnly' | 'doc' | 'fieldOrder' | 'fieldRepeats'
 >;
 export function operationValues<T extends SurfaceOperation>(table: readonly T[]): [T['op'], ...T['op'][]] {
     if (table.length === 0) throw new Error('An operation table must not be empty');
@@ -55,10 +51,7 @@ export function operationInput<Table extends readonly SurfaceOperation[], Shared
     return Object.fromEntries(Object.entries(merged).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) as MergedShape<Table, Shared>;
 }
 export function operationDescription(table: readonly SurfaceOperation[]): string {
-    return [...table]
-        .sort((a, b) => a.describe.order - b.describe.order)
-        .map(({ describe }) => describe.text)
-        .join('');
+    return table.map(({ op, doc }) => `${op}: ${doc}`).join(' ');
 }
 export function operationFields<T extends SurfaceOperation>(table: readonly T[]): Record<T['op'], readonly string[]> {
     return Object.fromEntries(
@@ -78,7 +71,7 @@ export async function runOperation<Table extends readonly (SurfaceOperation & { 
     return await entry.run(ctx, { ...input, operation: op } as never) as Awaited<ReturnType<Table[number]['run']>>;
 }
 
-type SdkMetadata = Pick<Operation<never>, 'describe' | 'fieldOrder' | 'fieldRepeats' | 'required'>;
+type SdkMetadata = Pick<Operation<never>, 'doc' | 'fieldOrder' | 'fieldRepeats' | 'required'>;
 
 /** Pure SDK passthrough, with an optional device path argument and stripped body. */
 export function sdkOp<const Op extends string, S extends z.ZodRawShape, Device extends z.ZodType<string | undefined> | undefined = undefined>(
@@ -104,6 +97,7 @@ export function sdkOp<const Op extends string, S extends z.ZodRawShape, Device e
 
 type BundleTable = readonly Operation<never, CallToolResult>[];
 type BundleOptions = {
+    intro: string;
     shared?: z.ZodRawShape;
     field?: string;
     checkFields?: boolean;
@@ -112,7 +106,7 @@ type BundleOptions = {
 };
 
 /** Register the complete enum once; enforcePolicy supplies the profile's dispatch gate. */
-export function registerBundle(server: McpServer, ctx: ToolCtx, name: string, table: BundleTable, opts: BundleOptions = {}): void {
+export function registerBundle(server: McpServer, ctx: ToolCtx, name: string, table: BundleTable, opts: BundleOptions): void {
     const all = operationValues(table);
     const values = narrowedValues(all, ctx.policy.operationAllowlist?.get(name));
     const field = opts.field ?? 'operation';
@@ -121,7 +115,7 @@ export function registerBundle(server: McpServer, ctx: ToolCtx, name: string, ta
     const common = Object.keys(fields).filter((key) => !fields[key]!.isOptional());
     const keys = Object.keys(fields).filter((key) => !common.includes(key));
     server.registerTool(name, {
-        description: operationDescription(table) + allowedValuesNote(values, all),
+        description: opts.intro + ' ' + operationDescription(table) + allowedValuesNote(values, all),
         // Keep the FULL enum: policy denials must reach enforcePolicy, before any backend call.
         inputSchema: { [field]: z.enum(all), ...fields },
     }, async (input) => {
