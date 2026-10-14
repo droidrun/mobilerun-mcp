@@ -151,14 +151,14 @@ function registerManageDevice(server: McpServer, ctx: ToolCtx): void {
 const DEVICE_ACTION_OPERATIONS = ['tap', 'swipe', 'keyboard_write', 'keyboard_key', 'keyboard_clear', 'global_action'] as const;
 type DeviceActionOperation = (typeof DEVICE_ACTION_OPERATIONS)[number];
 const DEVICE_ACTION_FIELDS: Record<DeviceActionOperation, readonly string[]> = {
-    tap: ['x', 'y', 'stealth'],
-    swipe: ['startX', 'startY', 'endX', 'endY', 'duration', 'stealth'],
-    keyboard_write: ['text', 'clear', 'errorRate', 'stealth', 'wpm'],
+    tap: ['x', 'y', 'pacedInput'],
+    swipe: ['startX', 'startY', 'endX', 'endY', 'duration', 'pacedInput'],
+    keyboard_write: ['text', 'clear', 'errorRate', 'pacedInput', 'wpm'],
     keyboard_key: ['key'],
     keyboard_clear: [],
     global_action: ['action'],
 };
-const DEVICE_ACTION_FIELD_KEYS = ['x', 'y', 'startX', 'startY', 'endX', 'endY', 'duration', 'stealth', 'text', 'clear', 'errorRate', 'wpm', 'key', 'action'] as const;
+const DEVICE_ACTION_FIELD_KEYS = ['x', 'y', 'startX', 'startY', 'endX', 'endY', 'duration', 'pacedInput', 'text', 'clear', 'errorRate', 'wpm', 'key', 'action'] as const;
 
 function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
     const values = narrowedValues(DEVICE_ACTION_OPERATIONS, ctx.policy.operationAllowlist?.get('device_action'));
@@ -166,7 +166,7 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
         'device_action',
         {
             description:
-                'Low-level device input. Operations: tap (x, y), swipe (startX, startY, endX, endY, duration ms), keyboard_write (text, clear?, errorRate?, wpm?, stealth?), keyboard_key (key: Android keycode), keyboard_clear, global_action (action: Android global-action code, e.g. back/home/recents). `stealth` (tap/swipe/keyboard_write) enables natural input timing and motion where the endpoint supports it. Per-call `displayId` targets a specific display on multi-display devices.' +
+                'Low-level device input. Operations: tap (x, y), swipe (startX, startY, endX, endY, duration ms), keyboard_write (text, clear?, errorRate?, wpm?, pacedInput?), keyboard_key (key: Android keycode), keyboard_clear, global_action (action: Android global-action code, e.g. back/home/recents). `pacedInput` (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call `displayId` targets a specific display on multi-display devices.' +
                 allowedValuesNote(values, DEVICE_ACTION_OPERATIONS),
             inputSchema: {
                 operation: z.enum(DEVICE_ACTION_OPERATIONS),
@@ -179,11 +179,11 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
                 endX: z.number().optional(),
                 endY: z.number().optional(),
                 duration: z.number().int().positive().optional().describe('Swipe duration in milliseconds.'),
-                stealth: z.boolean().optional(),
+                pacedInput: z.boolean().optional().describe('tap/swipe/keyboard_write: send input with variable timing and gesture paths.'),
                 text: z.string().optional(),
                 clear: z.boolean().optional().describe('keyboard_write: clear existing input before typing.'),
-                errorRate: z.number().optional().describe('keyboard_write with stealth: per-character rate of characters typed and then corrected. -1 uses the server default.'),
-                wpm: z.number().optional().describe('keyboard_write with stealth: typing speed in words per minute. 0 uses the default.'),
+                errorRate: z.number().optional().describe('keyboard_write with pacedInput: correction rate per character (backspace and retype). -1 uses the default.'),
+                wpm: z.number().optional().describe('keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.'),
                 key: z.number().int().optional().describe('keyboard_key: Android keycode.'),
                 action: z.number().int().optional().describe('global_action: Android global-action code.'),
             },
@@ -194,7 +194,8 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
-            const stealth = input.stealth as boolean | undefined;
+            // The API names this parameter `stealth`.
+            const stealth = input.pacedInput as boolean | undefined;
 
             if (operation === 'tap') {
                 await backend.tap({
