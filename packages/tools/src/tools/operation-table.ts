@@ -13,6 +13,8 @@ export type Operation<Input, Result = unknown> = {
     access: 'read' | 'write' | 'commerce';
     /** Assistant writes retain their existing full-profile gate. */
     fullOnly?: boolean;
+    /** A payload may require another operation's access in addition to its declared operation. */
+    effectiveOp?: (input: Record<string, unknown>) => string;
     doc: string;
     run: (ctx: ToolCtx, input: Input) => Promise<Result>;
 };
@@ -51,7 +53,7 @@ export function operationDescription(table: readonly SurfaceOperation[]): string
 }
 /** Per-operation fields and the deduplicated union, both in table order. */
 export function operationFields<T extends SurfaceOperation>(table: readonly T[]) {
-    const byOperation = Object.fromEntries(table.map(({ op, input }) => [op, Object.keys(input)])) as Record<T['op'], readonly string[]>;
+    const byOperation = Object.fromEntries(table.map(({ op, input }) => [op, Object.keys(input)])) as unknown as Record<T['op'], readonly string[]>;
     return { byOperation, keys: [...new Set(Object.values<readonly string[]>(byOperation).flat())] };
 }
 export async function runOperation<Table extends readonly (SurfaceOperation & { run: (ctx: ToolCtx, input: never) => Promise<unknown> })[]>(
@@ -65,7 +67,7 @@ export async function runOperation<Table extends readonly (SurfaceOperation & { 
     return await entry.run(ctx, { ...input, operation: op } as never) as Awaited<ReturnType<Table[number]['run']>>;
 }
 
-type SdkMetadata = Pick<Operation<never>, 'doc' | 'required'>;
+type SdkMetadata = Pick<Operation<never>, 'doc' | 'required' | 'effectiveOp'>;
 
 /** Pure SDK passthrough, with an optional device path argument and stripped body. */
 export function sdkOp<const Op extends string, S extends z.ZodRawShape, Device extends z.ZodType<string | undefined> | undefined = undefined>(

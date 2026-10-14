@@ -1,4 +1,4 @@
-import { BUNDLE_TOOLS } from './tools/bundle-tools.js';
+import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
 import { registerFilesTools } from './tools/files.js';
 import { registerMessagesTools } from './tools/messages.js';
 import { registerMailboxesTools } from './tools/mailboxes.js';
@@ -55,15 +55,8 @@ export function fullAccessPolicy(): Policy {
 }
 
 /**
- * Maps a bundle tool name to the input field carrying its operation/resource
- * enum, for `Policy.operationAllowlist` dispatch-time gating. Tools not
- * listed here have no operation-level surface (their tool-level allowlist
- * gate is the only gate).
+ * Bundle metadata supplies selector fields and effective operations for dispatch-time policy gates.
  */
-const OPERATION_FIELD: Readonly<Record<string, string>> = Object.fromEntries(
-    Object.entries(BUNDLE_TOOLS).map(([name, { field }]) => [name, field]),
-);
-
 export type ToolCallOutcome = 'ok' | 'error' | 'denied';
 
 /**
@@ -107,7 +100,7 @@ type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
  *   "Tool X not found" protocol error — never reaching this package's
  *   handler.
  * - Operation-level (same fail-closed principle, one level deeper): for a tool present in
- *   `OPERATION_FIELD`, if `policy.operationAllowlist` has an entry for that
+ *   `BUNDLE_TOOLS`, if `policy.operationAllowlist` has an entry for that
  *   tool name, the input field it names is checked before the real handler
  *   runs; a value outside the allowed set is rejected with a typed error
  *   result. (Tool authors additionally narrow the zod enum + description to
@@ -122,7 +115,8 @@ type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: ToolCallEvent) => void): void {
     const original = server.registerTool.bind(server);
     server.registerTool = ((name: string, def: unknown, handler: (...args: unknown[]) => unknown) => {
-        const opField = OPERATION_FIELD[name];
+        const bundle = BUNDLE_TOOLS[name as keyof typeof BUNDLE_TOOLS];
+        const opField = bundle?.field;
         const wrapped = async (...args: unknown[]) => {
             const startedAt = Date.now();
             const extra = args[1] as Extra | undefined;
@@ -143,15 +137,10 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
 
             if (opField) {
                 const allowedOps = ctx.policy.operationAllowlist?.get(name);
-                const enablesFlow =
-                    name === 'manage_flow' &&
-                    operation === 'update' &&
-                    (input?.enabled === true || input?.lifecycleStatus === 'enabled');
-                if (
-                    allowedOps &&
-                    operation !== undefined &&
-                    (!allowedOps.has(operation) || (enablesFlow && !allowedOps.has('activate')))
-                ) {
+                const entry = bundle?.operations.find((entry) => entry.op === operation);
+                const effective = entry?.effectiveOp?.(input ?? {}) ?? operation;
+                if (allowedOps && operation !== undefined &&
+                    (!allowedOps.has(operation) || (effective !== undefined && !allowedOps.has(effective)))) {
                     report('denied');
                     return asErrorResult(
                         `Operation "${operation}" of tool "${name}" is not available for this credential.`,
@@ -216,29 +205,7 @@ export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): Mcp
     return server;
 }
 
-/** Discover names through the real registrations without exposing a callable backend. */
-function registeredToolNames(): readonly string[] {
-    const names: string[] = [];
-    const metadataContext: ToolCtx = {
-        policy: { toolAllowlist: new Set() },
-        get backend(): ToolCtx['backend'] {
-            throw new Error('Tool registration must not call a backend');
-        },
-        get auth(): ToolCtx['auth'] {
-            throw new Error('Tool registration must not inspect identity');
-        },
-    };
-    buildMcpServer(metadataContext, {
-        wrapRegisterTool(server) {
-            const original = server.registerTool.bind(server);
-            server.registerTool = ((...args: [string, ...unknown[]]) => {
-                names.push(args[0]);
-                return Reflect.apply(original, server, args);
-            }) as typeof server.registerTool;
-        },
-    });
-    return Object.freeze(names);
-}
+type ToolNames<Metadata extends readonly { name: string }[]> = { readonly [K in keyof Metadata]: Metadata[K]['name'] };
 
-/** Canonical names derived from exactly the registrations used by buildMcpServer. */
-export const ALL_TOOL_NAMES = registeredToolNames();
+/** Canonical const tuple derived from static registration metadata, without constructing a server. */
+export const ALL_TOOL_NAMES = Object.freeze(TOOL_METADATA.map(({ name }) => name)) as ToolNames<typeof TOOL_METADATA>;

@@ -202,7 +202,7 @@ export const MANAGE_FLOW_TABLE = [
             }));
         },
     }),
-    sdkOp('update', manageFlowUpdateSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdate(params), 'write', { doc: "Update flow configuration." }),
+    sdkOp('update', manageFlowUpdateSchema, (ctx, params) => ctx.backend.workflows.manageFlowUpdate(params), 'write', { doc: "Update flow configuration.", effectiveOp: (input) => input.enabled === true || input.lifecycleStatus === 'enabled' ? 'activate' : 'update' }),
     sdkOp('delete', manageFlowDeleteSchema, (ctx, params) => ctx.backend.workflows.manageFlowDelete(params), 'write', { doc: "Delete a flow." }),
     sdkOp('activate', manageFlowActivateSchema, (ctx, params) => ctx.backend.workflows.manageFlowActivate(params), 'commerce', { doc: "Activate a flow; may start paid automation." }),
     sdkOp('run', manageFlowRunSchema, (ctx, params) => ctx.backend.workflows.manageFlowRun(params), 'commerce', { doc: "Start a flow execution; usage may be billed." }),

@@ -20,29 +20,51 @@ import { WEBHOOK_TABLE } from './webhooks.js';
 import { WORKFLOW_EVENTS_TABLE } from './workflow-events.js';
 import { LIST_WORKFLOW_RESOURCES_TABLE, GET_WORKFLOW_RESOURCE_TABLE } from './workflows.js';
 
-/** Bundle metadata used by policy construction and dispatch-time enforcement. */
-export const BUNDLE_TOOLS = {
-    files: { field: 'operation', operations: FILES_TABLE },
-    messages: { field: 'operation', operations: MESSAGES_TABLE },
-    mailboxes: { field: 'operation', operations: MAILBOXES_TABLE },
-    numbers: { field: 'operation', operations: NUMBERS_TABLE },
-    webhooks: { field: 'operation', operations: WEBHOOK_TABLE },
-    assistant: { field: 'operation', operations: ASSISTANT_TABLE },
-    list_workflow_resources: { field: 'resource', operations: LIST_WORKFLOW_RESOURCES_TABLE },
-    get_workflow_resource: { field: 'resource', operations: GET_WORKFLOW_RESOURCE_TABLE },
-    get_task: { field: 'view', operations: GET_TASK_TABLE },
-    get_task_media: { field: 'kind', operations: GET_TASK_MEDIA_TABLE },
-    manage_device: { field: 'operation', operations: MANAGE_DEVICE_TABLE },
-    device_action: { field: 'operation', operations: DEVICE_ACTION_TABLE },
-    manage_device_apps: { field: 'operation', operations: MANAGE_APPS_TABLE },
-    manage_device_files: { field: 'operation', operations: MANAGE_FILES_TABLE },
-    configure_device: { field: 'operation', operations: CONFIGURE_DEVICE_TABLE },
-    manage_esim: { field: 'operation', operations: MANAGE_ESIM_TABLE },
-    manage_flow: { field: 'operation', operations: MANAGE_FLOW_TABLE },
-    workflow_events: { field: 'operation', operations: WORKFLOW_EVENTS_TABLE },
-    apps: { field: 'operation', operations: APPS_TABLE },
-    manage_credentials: { field: 'operation', operations: MANAGE_CREDENTIALS_TABLE },
-    proxies: { field: 'operation', operations: PROXIES_TABLE },
-    connect: { field: 'operation', operations: CONNECT_TABLE },
-    platform_catalog: { field: 'catalog', operations: PLATFORM_CATALOG_TABLE },
-} as const;
+/** Static registration metadata: bundles own operation access; standalone tools own one access value. */
+export const TOOL_METADATA = [
+    { name: 'numbers', field: 'operation', operations: NUMBERS_TABLE },
+    { name: 'mailboxes', field: 'operation', operations: MAILBOXES_TABLE },
+    { name: 'messages', field: 'operation', operations: MESSAGES_TABLE },
+    { name: 'files', field: 'operation', operations: FILES_TABLE },
+    { name: 'list_devices', access: 'read' },
+    { name: 'get_device', access: 'read' },
+    { name: 'get_device_screenshot', access: 'read' },
+    { name: 'get_device_ui_state', access: 'read' },
+    { name: 'list_apps_on_device', access: 'read' },
+    { name: 'create_device', access: 'commerce' },
+    { name: 'terminate_device', access: 'commerce' },
+    { name: 'list_workflow_resources', field: 'resource', operations: LIST_WORKFLOW_RESOURCES_TABLE },
+    { name: 'get_workflow_resource', field: 'resource', operations: GET_WORKFLOW_RESOURCE_TABLE },
+    { name: 'create_action', access: 'write' },
+    { name: 'create_trigger', access: 'write' },
+    { name: 'create_flow', access: 'write' },
+    { name: 'manage_flow', field: 'operation', operations: MANAGE_FLOW_TABLE },
+    { name: 'workflow_events', field: 'operation', operations: WORKFLOW_EVENTS_TABLE },
+    { name: 'webhooks', field: 'operation', operations: WEBHOOK_TABLE },
+    { name: 'assistant', field: 'operation', operations: ASSISTANT_TABLE },
+    { name: 'list_credentials', access: 'read' },
+    { name: 'list_credential_packages', access: 'read' },
+    { name: 'run_task', access: 'write' },
+    { name: 'get_task', field: 'view', operations: GET_TASK_TABLE },
+    { name: 'list_tasks', access: 'read' },
+    { name: 'stop_task', access: 'write' },
+    { name: 'send_task_message', access: 'write' },
+    { name: 'get_task_media', field: 'kind', operations: GET_TASK_MEDIA_TABLE },
+    { name: 'manage_device', field: 'operation', operations: MANAGE_DEVICE_TABLE },
+    { name: 'device_action', field: 'operation', operations: DEVICE_ACTION_TABLE },
+    { name: 'manage_device_apps', field: 'operation', operations: MANAGE_APPS_TABLE },
+    { name: 'manage_device_files', field: 'operation', operations: MANAGE_FILES_TABLE },
+    { name: 'configure_device', field: 'operation', operations: CONFIGURE_DEVICE_TABLE },
+    { name: 'manage_esim', field: 'operation', operations: MANAGE_ESIM_TABLE },
+    { name: 'apps', field: 'operation', operations: APPS_TABLE },
+    { name: 'manage_credentials', field: 'operation', operations: MANAGE_CREDENTIALS_TABLE },
+    { name: 'proxies', field: 'operation', operations: PROXIES_TABLE },
+    { name: 'connect', field: 'operation', operations: CONNECT_TABLE },
+    { name: 'platform_catalog', field: 'catalog', operations: PLATFORM_CATALOG_TABLE },
+] as const;
+
+type Bundle = Extract<(typeof TOOL_METADATA)[number], { operations: unknown }>;
+/** The keyed view shares the same operation declarations as registration and profiles. */
+export const BUNDLE_TOOLS = Object.fromEntries(
+    TOOL_METADATA.filter((tool) => 'operations' in tool).map((tool) => [tool.name, tool]),
+) as { [Name in Bundle['name']]: Extract<Bundle, { name: Name }> };

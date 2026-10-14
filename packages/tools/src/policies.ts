@@ -10,25 +10,11 @@
 // Operation classifications come from the same tables as schemas and dispatch.
 
 import { type Policy } from './ctx.js';
-import { ALL_TOOL_NAMES, fullAccessPolicy } from './register.js';
-import { BUNDLE_TOOLS } from './tools/bundle-tools.js';
+import { fullAccessPolicy } from './register.js';
+import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
 
 export const POLICY_PROFILES = ['readonly', 'no-commerce', 'full'] as const;
 export type PolicyProfile = (typeof POLICY_PROFILES)[number];
-
-/** Tools that only ever read: list_/get_ prefixed standalone tools, plus
- * reference data. Bundle tools are NOT here — they're tool-allowlisted below with a per-tool
- * `operationAllowlist` entry instead. */
-const READONLY_TOOL_NAMES = new Set<string>([
-    'list_devices',
-    'get_device',
-    'get_device_screenshot',
-    'get_device_ui_state',
-    'list_apps_on_device',
-    'list_credentials',
-    'list_credential_packages',
-    'list_tasks',
-]);
 
 /** Classifications deliberately preserve each existing profile's operation surface. */
 function bundleOperations(profile: 'readonly' | 'no-commerce'): ReadonlyMap<string, ReadonlySet<string>> {
@@ -51,11 +37,11 @@ function bundleOperations(profile: 'readonly' | 'no-commerce'): ReadonlyMap<stri
 const READONLY_BUNDLE_OPERATIONS = bundleOperations('readonly');
 const NO_COMMERCE_BUNDLE_OPERATIONS = bundleOperations('no-commerce');
 
-/** Existing tool-level exclusions for provisioning and destroying billed devices. */
-const COMMERCE_TOOL_NAMES = new Set<string>(['create_device', 'terminate_device']);
-
-function toolNames(filter: (name: string) => boolean): ReadonlySet<string> {
-    return new Set(ALL_TOOL_NAMES.filter(filter));
+function toolNames(profile: 'readonly' | 'no-commerce'): ReadonlySet<string> {
+    return new Set(TOOL_METADATA.filter((tool) => 'access' in tool
+        ? profile === 'readonly' ? tool.access === 'read' : tool.access !== 'commerce'
+        : profile === 'no-commerce' || READONLY_BUNDLE_OPERATIONS.has(tool.name)
+    ).map(({ name }) => name));
 }
 
 /**
@@ -76,14 +62,12 @@ export function policyForProfile(profile: PolicyProfile): Policy {
             return fullAccessPolicy();
         case 'no-commerce':
             return {
-                toolAllowlist: toolNames((name) => !COMMERCE_TOOL_NAMES.has(name)),
+                toolAllowlist: toolNames('no-commerce'),
                 operationAllowlist: NO_COMMERCE_BUNDLE_OPERATIONS,
             };
         case 'readonly':
             return {
-                toolAllowlist: toolNames(
-                    (name) => READONLY_TOOL_NAMES.has(name) || READONLY_BUNDLE_OPERATIONS.has(name),
-                ),
+                toolAllowlist: toolNames('readonly'),
                 operationAllowlist: READONLY_BUNDLE_OPERATIONS,
             };
     }

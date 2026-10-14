@@ -195,6 +195,7 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
+    // Traffic-session reads redact stream tokens when policy denies this creation operation.
     sdkOp('traffic_sessions_create', manageDeviceTrafficSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsCreate(deviceId, params), 'write', { doc: "Create a traffic session to capture network activity.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'traffic_sessions_retrieve',
