@@ -1,4 +1,3 @@
-import { z } from 'zod';
 // Connect port — residential SOCKS5 proxies + bound
 // users, distinct from device-bound `proxies` (proxies.ts). Mirrors
 // @mobilerun/sdk's connect.* response shapes (verified against the SDK's
@@ -6,7 +5,9 @@ import { z } from 'zod';
 // its own tool-input `operation` value so a policy profile (e.g.
 // `no-commerce`) can deny them
 // individually without touching the rest of this bundle; see tools/connect.ts.
-import type { PageMeta } from './devices.js';
+
+import { z } from 'zod';
+import { type PageMeta } from './devices.js';
 
 type ConnectionStatus = 'active' | 'closed';
 type ConnectionProtocol = 'tcp' | 'udp' | 'unknown';
@@ -161,13 +162,13 @@ export interface ConnectBackend {
 
 export const connectUpdateProxySchema = z
     .object({
-        id: z.string(),
+        proxyId: z.string(),
         name: z.union([z.string(), z.null()]).optional(),
     })
     .strict();
 
 export const connectEnsureHealthySchema = z
     .object({
-        id: z.string(),
+        proxyId: z.string(),
     })
     .strict();

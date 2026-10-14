@@ -1,9 +1,10 @@
-import { z } from 'zod';
 // Device-control port — see devices.ts's file header for the DTO
 // philosophy. Backs the device-control bundle tools:
 // manage_device, device_action, manage_device_apps, manage_device_files,
 // configure_device, manage_esim.
 //
+import { z } from 'zod';
+
 export interface DeviceCapabilitiesDto {
     carrier: Record<string, unknown>;
     display: { densityDpi?: number; height?: number; width?: number };
@@ -90,7 +91,7 @@ export interface FileUploadOpts {
     contentType?: string;
 }
 export interface FileDownloadDto {
-    /** Raw SDK response — shape (base64 vs plain text) is undocumented upstream, same open caveat as the device screenshot tool. */
+    /** Raw client response; the device-file endpoint does not document whether content is base64 or plain text. */
     content: string;
 }
 
@@ -149,13 +150,10 @@ export interface DeviceControlBackend {
         deviceId: string,
         params: z.infer<typeof manageDeviceScreenshotsImageSchema>,
     ): Promise<unknown>;
-    manageDeviceStop(deviceId: string, params: z.infer<typeof manageDeviceStopSchema>): Promise<unknown>;
-    manageDeviceResume(deviceId: string, params: z.infer<typeof manageDeviceResumeSchema>): Promise<unknown>;
-    manageDeviceSummary(deviceId: string, params: z.infer<typeof manageDeviceSummarySchema>): Promise<unknown>;
-    manageDeviceRetrieveCapabilities(
-        deviceId: string,
-        params: z.infer<typeof manageDeviceRetrieveCapabilitiesSchema>,
-    ): Promise<unknown>;
+    manageDeviceStop(deviceId: string): Promise<unknown>;
+    manageDeviceResume(deviceId: string): Promise<unknown>;
+    manageDeviceSummary(params: z.infer<typeof manageDeviceSummarySchema>): Promise<unknown>;
+    manageDeviceRetrieveCapabilities(deviceId: string): Promise<unknown>;
     deviceActionClipboardGet(
         deviceId: string,
         params: z.infer<typeof deviceActionClipboardGetSchema>,
@@ -237,7 +235,7 @@ export interface DeviceControlBackend {
     manageDeviceScreenshotsCapture(
         deviceId: string,
         params: z.infer<typeof manageDeviceScreenshotsCaptureSchema>,
-    ): Promise<unknown>;
+    ): Promise<{ mimeType: 'image/png'; contentBase64: string }>;
     manageDeviceTrafficSessionsCreate(
         deviceId: string,
         params: z.infer<typeof manageDeviceTrafficSessionsCreateSchema>,
@@ -266,10 +264,7 @@ export interface DeviceControlBackend {
         deviceId: string,
         params: z.infer<typeof manageDeviceMediaSessionsActivateSchema>,
     ): Promise<unknown>;
-    manageDeviceMediaSessionsRetrieveCurrent(
-        deviceId: string,
-        params: z.infer<typeof manageDeviceMediaSessionsRetrieveCurrentSchema>,
-    ): Promise<unknown>;
+    manageDeviceMediaSessionsRetrieveCurrent(deviceId: string): Promise<unknown>;
     // manage_device
     rebootDevice(deviceId: string): Promise<void>;
     resetDevice(deviceId: string): Promise<void>;

@@ -2,10 +2,11 @@
 // (a public server that forgets to set a profile must never fail open to
 // `full`); `readonly` must hide every mutation, including at the
 // `webhooks` bundle's operation level.
+
 import { describe, expect, test } from 'bun:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { Backend } from '../backend/index.js';
+import { type Backend } from '../backend/index.js';
 import { createAuthContext } from '../ctx.js';
 import { ALL_TOOL_NAMES, buildMcpServer } from '../register.js';
 import { policyForProfile } from '../policies.js';
@@ -65,7 +66,8 @@ function stubBackend(): Backend & { calls: string[] } {
             listDevices: () => record('devices.listDevices'),
             getDevice: () => record('devices.getDevice'),
             getDeviceScreenshot: () => record('devices.getDeviceScreenshot'),
-            getDeviceUiState: () => record('devices.getDeviceUiState', { a11y_tree: { children: [] }, phone_state: {} }),
+            getDeviceUiState: () =>
+                record('devices.getDeviceUiState', { a11y_tree: { children: [] }, phone_state: {} }),
             listAppsOnDevice: () => record('devices.listAppsOnDevice'),
             createDevice: () => record('devices.createDevice'),
             terminateDevice: () => record('devices.terminateDevice'),
@@ -129,7 +131,6 @@ function stubBackend(): Backend & { calls: string[] } {
             listWebhookDeliveries: () => record('webhooks.listWebhookDeliveries'),
             getWebhookDelivery: () => record('webhooks.getWebhookDelivery'),
             getWebhookDeliveryStats: () => record('webhooks.getWebhookDeliveryStats'),
-
         },
         assistant: {
             listSessions: () => record('assistant.listSessions', { sessions: [] }),
@@ -146,17 +147,50 @@ function stubBackend(): Backend & { calls: string[] } {
             manageCredentialsGet: () => record('credentials.manageCredentialsGet'),
             listCredentials: () => record('credentials.listCredentials'),
             listCredentialPackages: () => record('credentials.listCredentialPackages'),
-            initPackage: () => record('credentials.initPackage', { data: { packageName: 'p' }, message: 'ok', success: true }),
+            initPackage: () =>
+                record('credentials.initPackage', { data: { packageName: 'p' }, message: 'ok', success: true }),
             createCredential: () =>
-                record('credentials.createCredential', { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] }, message: 'ok', success: true }),
+                record('credentials.createCredential', {
+                    data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] },
+                    message: 'ok',
+                    success: true,
+                }),
             deleteCredential: () =>
-                record('credentials.deleteCredential', { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] }, message: 'ok', success: true }),
+                record('credentials.deleteCredential', {
+                    data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] },
+                    message: 'ok',
+                    success: true,
+                }),
             addField: () =>
-                record('credentials.addField', { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [{ fieldType: 'password' }] }, message: 'ok', success: true }),
+                record('credentials.addField', {
+                    data: {
+                        credentialName: 'c',
+                        packageName: 'p',
+                        userId: 'u',
+                        secretPath: 's',
+                        fields: [{ fieldType: 'password' }],
+                    },
+                    message: 'ok',
+                    success: true,
+                }),
             updateField: () =>
-                record('credentials.updateField', { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [{ fieldType: 'password' }] }, message: 'ok', success: true }),
+                record('credentials.updateField', {
+                    data: {
+                        credentialName: 'c',
+                        packageName: 'p',
+                        userId: 'u',
+                        secretPath: 's',
+                        fields: [{ fieldType: 'password' }],
+                    },
+                    message: 'ok',
+                    success: true,
+                }),
             deleteField: () =>
-                record('credentials.deleteField', { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] }, message: 'ok', success: true }),
+                record('credentials.deleteField', {
+                    data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] },
+                    message: 'ok',
+                    success: true,
+                }),
         },
         apps: {
             appsStorageUsage: () => record('apps.appsStorageUsage'),
@@ -174,7 +208,6 @@ function stubBackend(): Backend & { calls: string[] } {
             createProxy: () => record('proxies.createProxy'),
             updateProxy: () => record('proxies.updateProxy'),
             deleteProxy: () => record('proxies.deleteProxy'),
-
         },
         connect: {
             connectUpdateProxy: () => record('connect.connectUpdateProxy'),
@@ -244,7 +277,8 @@ function stubBackend(): Backend & { calls: string[] } {
             manageDeviceMediaSessionsCreate: () => record('deviceControl.manageDeviceMediaSessionsCreate'),
             manageDeviceMediaSessionsDelete: () => record('deviceControl.manageDeviceMediaSessionsDelete'),
             manageDeviceMediaSessionsActivate: () => record('deviceControl.manageDeviceMediaSessionsActivate'),
-            manageDeviceMediaSessionsRetrieveCurrent: () => record('deviceControl.manageDeviceMediaSessionsRetrieveCurrent'),
+            manageDeviceMediaSessionsRetrieveCurrent: () =>
+                record('deviceControl.manageDeviceMediaSessionsRetrieveCurrent'),
             rebootDevice: () => record('deviceControl.rebootDevice'),
             resetDevice: () => record('deviceControl.resetDevice'),
             renameDevice: () => record('deviceControl.renameDevice'),
@@ -313,10 +347,15 @@ describe('policyForProfile', () => {
         expect(names).not.toContain('create_device');
         expect(names).not.toContain('terminate_device');
         expect(tools).toHaveLength(37);
-        expect(names).toEqual([...ALL_TOOL_NAMES].filter((n) => n !== 'create_device' && n !== 'terminate_device').sort());
+        expect(names).toEqual(
+            [...ALL_TOOL_NAMES].filter((n) => n !== 'create_device' && n !== 'terminate_device').sort(),
+        );
 
         // Everything else, including other mutations, stays reachable.
-        const created = await client.callTool({ name: 'create_action', arguments: { catalogEntryId: 'c1', name: 'a' } });
+        const created = await client.callTool({
+            name: 'create_action',
+            arguments: { catalogEntryId: 'c1', name: 'a' },
+        });
         expect(created.isError).not.toBe(true);
         expect(backend.calls).toContain('workflows.createAction');
     });
@@ -389,7 +428,11 @@ describe('policyForProfile', () => {
             backend.calls.length = 0;
             const result = await client.callTool({
                 name: 'webhooks',
-                arguments: { operation: mutating, url: 'https://example.com/hook', endpointId: '550e8400-e29b-41d4-a716-446655440000' },
+                arguments: {
+                    operation: mutating,
+                    url: 'https://example.com/hook',
+                    endpointId: '550e8400-e29b-41d4-a716-446655440000',
+                },
             });
             expect(result.isError).toBe(true);
             const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
@@ -403,15 +446,23 @@ describe('policyForProfile', () => {
         const client = await connectedClient(backend, 'readonly');
         const listed = await client.callTool({ name: 'assistant', arguments: { operation: 'list_sessions' } });
         expect(listed.isError).not.toBe(true);
-        const history = await client.callTool({ name: 'assistant', arguments: { operation: 'get_messages', sessionId: 's1' } });
+        const history = await client.callTool({
+            name: 'assistant',
+            arguments: { operation: 'get_messages', sessionId: 's1' },
+        });
         expect(history.isError).not.toBe(true);
         expect(backend.calls).toContain('assistant.listSessions');
         expect(backend.calls).toContain('assistant.getMessages');
 
         backend.calls.length = 0;
-        const denied = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
+        const denied = await client.callTool({
+            name: 'assistant',
+            arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' },
+        });
         expect(denied.isError).toBe(true);
-        expect((denied.content as Array<{ text?: string }>)[0]?.text).toContain('Operation "send_message" of tool "assistant" is not available');
+        expect((denied.content as Array<{ text?: string }>)[0]?.text).toContain(
+            'Operation "send_message" of tool "assistant" is not available',
+        );
         expect(backend.calls).toEqual([]);
     });
 
@@ -423,7 +474,10 @@ describe('policyForProfile', () => {
         expect(flow.isError).not.toBe(true);
         expect(backend.calls).toContain('workflows.listFlows');
 
-        const execution = await client.callTool({ name: 'get_workflow_resource', arguments: { resource: 'execution', id: 'e1' } });
+        const execution = await client.callTool({
+            name: 'get_workflow_resource',
+            arguments: { resource: 'execution', id: 'e1' },
+        });
         expect(execution.isError).not.toBe(true);
         expect(backend.calls).toContain('workflows.getExecution');
     });
@@ -438,7 +492,10 @@ describe('policyForProfile', () => {
 
         for (const mutating of ['reboot', 'reset', 'rename']) {
             backend.calls.length = 0;
-            const result = await client.callTool({ name: 'manage_device', arguments: { operation: mutating, deviceId: 'd1' } });
+            const result = await client.callTool({
+                name: 'manage_device',
+                arguments: { operation: mutating, deviceId: 'd1' },
+            });
             expect(result.isError).toBe(true);
             const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
             expect(text).toContain(`Operation "${mutating}" of tool "manage_device" is not available`);
@@ -456,7 +513,10 @@ describe('policyForProfile', () => {
 
         for (const mutating of ['buy_proxy', 'cancel_proxy']) {
             backend.calls.length = 0;
-            const result = await client.callTool({ name: 'connect', arguments: { operation: mutating, country: 'us', proxyId: 'p1', userId: 'u1' } });
+            const result = await client.callTool({
+                name: 'connect',
+                arguments: { operation: mutating, country: 'us', proxyId: 'p1', userId: 'u1' },
+            });
             expect(result.isError).toBe(true);
             expect(backend.calls).toEqual([]);
         }
@@ -474,7 +534,10 @@ describe('policyForProfile', () => {
 
         for (const denied of ['buy_proxy', 'cancel_proxy']) {
             backend.calls.length = 0;
-            const result = await client.callTool({ name: 'connect', arguments: { operation: denied, country: 'us', proxyId: 'p1' } });
+            const result = await client.callTool({
+                name: 'connect',
+                arguments: { operation: denied, country: 'us', proxyId: 'p1' },
+            });
             expect(result.isError).toBe(true);
             const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
             expect(text).toContain(`Operation "${denied}" of tool "connect" is not available`);
@@ -486,10 +549,7 @@ describe('policyForProfile', () => {
         const backend = stubBackend();
         const client = await connectedClient(backend, 'no-commerce');
 
-        for (const args of [
-            { operation: 'list_sessions' },
-            { operation: 'get_messages', sessionId: 's1' },
-        ]) {
+        for (const args of [{ operation: 'list_sessions' }, { operation: 'get_messages', sessionId: 's1' }]) {
             const result = await client.callTool({ name: 'assistant', arguments: args });
             expect(result.isError).not.toBe(true);
         }
@@ -512,8 +572,80 @@ describe('policyForProfile', () => {
     test('"full" allows assistant send_message', async () => {
         const backend = stubBackend();
         const client = await connectedClient(backend, 'full');
-        const result = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
+        const result = await client.callTool({
+            name: 'assistant',
+            arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' },
+        });
         expect(result.isError).not.toBe(true);
         expect(backend.calls).toContain('assistant.sendMessage');
     });
+});
+
+test('no-commerce blocks flow activation through update before any backend call', async () => {
+    const backend = stubBackend();
+    const client = await connectedClient(backend, 'no-commerce');
+    try {
+        for (const fields of [
+            { enabled: true },
+            { lifecycleStatus: 'enabled' },
+            { enabled: false, lifecycleStatus: 'enabled' },
+        ]) {
+            const result = await client.callTool({
+                name: 'manage_flow',
+                arguments: { operation: 'update', flowId: 'f1', ...fields },
+            });
+            expect(result.isError).toBe(true);
+            expect((result.content as Array<{ text: string }>)[0]!.text).toContain('not available for this credential');
+            expect(backend.calls).toEqual([]);
+        }
+        for (const fields of [{ enabled: false }, { lifecycleStatus: 'disabled' }, { name: 'Renamed' }]) {
+            const result = await client.callTool({
+                name: 'manage_flow',
+                arguments: { operation: 'update', flowId: 'f1', ...fields },
+            });
+            expect(result.isError).not.toBe(true);
+        }
+        expect(backend.calls).toEqual(Array(3).fill('workflows.manageFlowUpdate'));
+    } finally {
+        await client.close();
+    }
+});
+
+test('full permits activation through flow update', async () => {
+    const backend = stubBackend();
+    const client = await connectedClient(backend, 'full');
+    try {
+        const result = await client.callTool({
+            name: 'manage_flow',
+            arguments: { operation: 'update', flowId: 'f1', enabled: true },
+        });
+        expect(result.isError).not.toBe(true);
+        expect(backend.calls).toEqual(['workflows.manageFlowUpdate']);
+    } finally {
+        await client.close();
+    }
+});
+
+test('no-commerce permits event simulation and denies ingest before dispatch', async () => {
+    const backend = stubBackend();
+    const client = await connectedClient(backend, 'no-commerce');
+    try {
+        const tool = (await client.listTools()).tools.find((tool) => tool.name === 'workflow_events')!;
+        expect(tool.description).toContain('Available for this credential: dry_run.');
+        const ingest = await client.callTool({
+            name: 'workflow_events',
+            arguments: { operation: 'ingest', eventType: 'example', payload: {} },
+        });
+        expect(ingest.isError).toBe(true);
+        expect((ingest.content as Array<{ text: string }>)[0]!.text).toContain('not available for this credential');
+        expect(backend.calls).toEqual([]);
+        const dryRun = await client.callTool({
+            name: 'workflow_events',
+            arguments: { operation: 'dry_run', eventType: 'example', payload: {} },
+        });
+        expect(dryRun.isError).not.toBe(true);
+        expect(backend.calls).toEqual(['workflows.dryRunEvent']);
+    } finally {
+        await client.close();
+    }
 });

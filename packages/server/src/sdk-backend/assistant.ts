@@ -1,5 +1,5 @@
-import type Mobilerun from '@mobilerun/sdk';
-import { APIConnectionError, APIConnectionTimeoutError, APIError } from '@mobilerun/sdk';
+import { idempotencyOpts } from './request-options.js';
+import { type default as Mobilerun, APIConnectionError, APIConnectionTimeoutError, APIError } from '@mobilerun/sdk';
 import { BackendError, type AssistantBackend, type AssistantSession } from '@mobilerun/mcp-tools';
 
 function sessionSummary(session: AssistantSession): AssistantSession {
@@ -15,10 +15,7 @@ export function createAssistantBackend(client: Mobilerun): AssistantBackend {
             return { sessions: result.sessions.map(sessionSummary) };
         },
         async createSession(title, description) {
-            const result = await conversations.create(
-                { title, description },
-                { headers: { 'Idempotency-Key': crypto.randomUUID() } },
-            );
+            const result = await conversations.create({ title, description }, idempotencyOpts(crypto.randomUUID()));
             return { session: sessionSummary(result.session) };
         },
         async updateSession(sessionId, params) {

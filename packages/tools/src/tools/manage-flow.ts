@@ -1,5 +1,7 @@
-import { manageFlowExecutionScreenshotSchema } from '../backend/workflows.js';
+// Flow lifecycle, configuration, validation and execution operations.
+
 import {
+    manageFlowExecutionScreenshotSchema,
     manageFlowUpdateSchema,
     manageFlowDeleteSchema,
     manageFlowActivateSchema,
@@ -7,7 +9,6 @@ import {
     manageFlowValidateSchema,
     manageFlowVerifySchema,
     manageFlowDryRunSchema,
-    manageFlowCapacitySchema,
     manageFlowDeliveryOptionsSchema,
     manageFlowTemplateContextSchema,
     manageFlowListRepairsSchema,
@@ -18,15 +19,14 @@ import {
     manageFlowFireTriggerSchema,
     manageFlowAbortExecutionSchema,
 } from '../backend/workflows.js';
-// Flow lifecycle, configuration, validation and execution operations.
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 import { replaceActionsNeedsExistingLookup, resolveReplaceActionKeys } from './step-key.js';
 
-const MANAGE_FLOW_OPERATIONS = [
+export const MANAGE_FLOW_OPERATIONS = [
     'execution_screenshot',
     'clone',
     'unblock',
@@ -62,6 +62,7 @@ const flowActionOverridesSchema = z
 const flowChildActionInputSchema = z.object({
     actionId: z.string(),
     position: z.number().int().min(0),
+    recordingEnabled: z.boolean().optional(),
     continueOnError: z.boolean().optional(),
     nameOverride: z.string().optional(),
     overrides: flowActionOverridesSchema,
@@ -89,8 +90,8 @@ const flowActionBindingSchema = flowChildActionInputSchema.extend({
 });
 
 type ManageFlowInput = {
-    params?: unknown;
     operation: z.infer<typeof manageFlowOperationSchema>;
+    [key: string]: unknown;
     flowId?: string;
     name?: string;
     deviceIds?: string[];
@@ -117,46 +118,40 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
 async function executeManageFlowOperation(input: ManageFlowInput, ctx: ToolCtx): Promise<unknown> {
     if (input.operation === 'execution_screenshot')
         return ctx.backend.workflows.manageFlowExecutionScreenshot(
-            manageFlowExecutionScreenshotSchema.parse(input.params ?? {}),
+            manageFlowExecutionScreenshotSchema.strip().parse(input),
         );
     if (input.operation === 'update')
-        return ctx.backend.workflows.manageFlowUpdate(manageFlowUpdateSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowUpdate(manageFlowUpdateSchema.strip().parse(input));
     if (input.operation === 'delete')
-        return ctx.backend.workflows.manageFlowDelete(manageFlowDeleteSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowDelete(manageFlowDeleteSchema.strip().parse(input));
     if (input.operation === 'activate')
-        return ctx.backend.workflows.manageFlowActivate(manageFlowActivateSchema.parse(input.params ?? {}));
-    if (input.operation === 'run')
-        return ctx.backend.workflows.manageFlowRun(manageFlowRunSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowActivate(manageFlowActivateSchema.strip().parse(input));
+    if (input.operation === 'run') return ctx.backend.workflows.manageFlowRun(manageFlowRunSchema.strip().parse(input));
     if (input.operation === 'validate')
-        return ctx.backend.workflows.manageFlowValidate(manageFlowValidateSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowValidate(manageFlowValidateSchema.strip().parse(input));
     if (input.operation === 'verify')
-        return ctx.backend.workflows.manageFlowVerify(manageFlowVerifySchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowVerify(manageFlowVerifySchema.strip().parse(input));
     if (input.operation === 'dry_run')
-        return ctx.backend.workflows.manageFlowDryRun(manageFlowDryRunSchema.parse(input.params ?? {}));
-    if (input.operation === 'capacity')
-        return ctx.backend.workflows.manageFlowCapacity(manageFlowCapacitySchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowDryRun(manageFlowDryRunSchema.strip().parse(input));
+    if (input.operation === 'capacity') return ctx.backend.workflows.manageFlowCapacity();
     if (input.operation === 'delivery_options')
-        return ctx.backend.workflows.manageFlowDeliveryOptions(
-            manageFlowDeliveryOptionsSchema.parse(input.params ?? {}),
-        );
+        return ctx.backend.workflows.manageFlowDeliveryOptions(manageFlowDeliveryOptionsSchema.strip().parse(input));
     if (input.operation === 'template_context')
-        return ctx.backend.workflows.manageFlowTemplateContext(
-            manageFlowTemplateContextSchema.parse(input.params ?? {}),
-        );
+        return ctx.backend.workflows.manageFlowTemplateContext(manageFlowTemplateContextSchema.strip().parse(input));
     if (input.operation === 'list_repairs')
-        return ctx.backend.workflows.manageFlowListRepairs(manageFlowListRepairsSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowListRepairs(manageFlowListRepairsSchema.strip().parse(input));
     if (input.operation === 'update_action')
-        return ctx.backend.workflows.manageFlowUpdateAction(manageFlowUpdateActionSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowUpdateAction(manageFlowUpdateActionSchema.strip().parse(input));
     if (input.operation === 'delete_action')
-        return ctx.backend.workflows.manageFlowDeleteAction(manageFlowDeleteActionSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowDeleteAction(manageFlowDeleteActionSchema.strip().parse(input));
     if (input.operation === 'update_trigger')
-        return ctx.backend.workflows.manageFlowUpdateTrigger(manageFlowUpdateTriggerSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowUpdateTrigger(manageFlowUpdateTriggerSchema.strip().parse(input));
     if (input.operation === 'delete_trigger')
-        return ctx.backend.workflows.manageFlowDeleteTrigger(manageFlowDeleteTriggerSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowDeleteTrigger(manageFlowDeleteTriggerSchema.strip().parse(input));
     if (input.operation === 'fire_trigger')
-        return ctx.backend.workflows.manageFlowFireTrigger(manageFlowFireTriggerSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowFireTrigger(manageFlowFireTriggerSchema.strip().parse(input));
     if (input.operation === 'abort_execution')
-        return ctx.backend.workflows.manageFlowAbortExecution(manageFlowAbortExecutionSchema.parse(input.params ?? {}));
+        return ctx.backend.workflows.manageFlowAbortExecution(manageFlowAbortExecutionSchema.strip().parse(input));
     const { operation } = input;
     const backend = ctx.backend.workflows;
 
@@ -202,7 +197,7 @@ async function executeManageFlowOperation(input: ManageFlowInput, ctx: ToolCtx):
 
     // operation === 'replace_actions'
     const flowId = requireValue(input.flowId, 'flowId', operation);
-    const actions = requireValue(input.actions, 'actions', operation);
+    const actions = z.array(flowActionBindingSchema).parse(requireValue(input.actions, 'actions', operation));
     // Every node needs a key on a flow whose templateResolutionVersion is 3
     // (the server rejects a full replace missing one there; harmless on
     // v1/v2 flows, which still derive missing keys server-side). A caller-
@@ -236,38 +231,32 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 'Check the flow\'s templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action\'s ' +
                 'overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the ' +
                 'triggering event); older flows use name/slug-based references instead. ' +
-                'To simulate an event against flows without side effects, use workflow_events(operation="dry_run") instead — ' +
-                'there is no per-flow dry-run.' +
-                ' Additional operations (use params): update: Update flow configuration. delete: Delete a flow. activate: Activate a flow; may start paid automation. run: Start a flow execution; usage may be billed. validate: Validate a draft flow without saving it. verify: Verify flow configuration. dry_run: Simulate a flow without executing actions. capacity: Read included flow capacity. delivery_options: Read available delivery options. template_context: Read template variables. list_repairs: Read suggested flow repairs. update_action: Update a workflow action. delete_action: Delete a workflow action. update_trigger: Update a workflow trigger. delete_trigger: Delete a workflow trigger. fire_trigger: Fire a workflow trigger. abort_execution: Abort a running execution.' +
+                'Use dry_run to simulate one flow, or workflow_events(operation="dry_run") to simulate event routing without side effects.' +
+                ' Additional operations: update: Update flow configuration. delete: Delete a flow. activate: Activate a flow; may start paid automation. run: Start a flow execution; usage may be billed. validate: Validate a draft flow without saving it. verify: Verify flow configuration. dry_run: Simulate a flow without executing actions. capacity: Read included flow capacity. delivery_options: Read available delivery options. template_context: Read template variables. list_repairs: Read suggested flow repairs. update_action: Update a workflow action. delete_action: Delete a workflow action. update_trigger: Update a workflow trigger. delete_trigger: Delete a workflow trigger. fire_trigger: Fire a workflow trigger. abort_execution: Abort a running execution.' +
                 ' execution_screenshot: Read a short-lived signed download URL.' +
                 allowedValuesNote(operationValues, MANAGE_FLOW_OPERATIONS),
             inputSchema: {
                 // Enum stays the FULL set — dispatch-time rejection in register.ts
                 // is the actual enforcement point (see tools/webhooks.ts for why).
                 operation: manageFlowOperationSchema,
-                params: z
-                    .union([
-                        manageFlowExecutionScreenshotSchema,
-                        manageFlowUpdateSchema,
-                        manageFlowDeleteSchema,
-                        manageFlowActivateSchema,
-                        manageFlowRunSchema,
-                        manageFlowValidateSchema,
-                        manageFlowVerifySchema,
-                        manageFlowDryRunSchema,
-                        manageFlowCapacitySchema,
-                        manageFlowDeliveryOptionsSchema,
-                        manageFlowTemplateContextSchema,
-                        manageFlowListRepairsSchema,
-                        manageFlowUpdateActionSchema,
-                        manageFlowDeleteActionSchema,
-                        manageFlowUpdateTriggerSchema,
-                        manageFlowDeleteTriggerSchema,
-                        manageFlowFireTriggerSchema,
-                        manageFlowAbortExecutionSchema,
-                    ])
-                    .optional()
-                    .describe('Parameters for additional operations; the matching object shape is required.'),
+                ...manageFlowExecutionScreenshotSchema.partial().shape,
+                ...manageFlowUpdateSchema.partial().shape,
+                ...manageFlowDeleteSchema.partial().shape,
+                ...manageFlowActivateSchema.partial().shape,
+                ...manageFlowRunSchema.partial().shape,
+                ...manageFlowValidateSchema.partial().shape,
+                ...manageFlowVerifySchema.partial().shape,
+                ...manageFlowDryRunSchema.partial().shape,
+                ...manageFlowDeliveryOptionsSchema.partial().shape,
+                ...manageFlowTemplateContextSchema.partial().shape,
+                ...manageFlowListRepairsSchema.partial().shape,
+                ...manageFlowUpdateActionSchema.partial().shape,
+                ...manageFlowDeleteActionSchema.partial().shape,
+                ...manageFlowUpdateTriggerSchema.partial().shape,
+                ...manageFlowDeleteTriggerSchema.partial().shape,
+                ...manageFlowFireTriggerSchema.partial().shape,
+                ...manageFlowAbortExecutionSchema.partial().shape,
+                delivery: manageFlowUpdateSchema.shape.delivery,
                 flowId: z.string().optional(),
                 name: z
                     .string()
@@ -303,7 +292,7 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                     .optional()
                     .describe('The flow-action binding id (not the actionId) for operation=remove_action.'),
                 actions: z
-                    .array(flowActionBindingSchema)
+                    .union([z.array(flowActionBindingSchema), manageFlowValidateSchema.shape.actions])
                     .optional()
                     .describe('Full replacement action list for operation=replace_actions.'),
                 triggerId: z.string().optional().describe('Filter for operation=execution_metrics.'),

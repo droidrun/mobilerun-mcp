@@ -1,26 +1,16 @@
 import { z } from 'zod';
+import { smsDirectionSchema, smsStatusSchema } from './communication.js';
+
 export const messagesListSchema = z
     .object({
-        direction: z.union([z.literal('all'), z.literal('inbound'), z.literal('outbound')]).optional(),
+        direction: smsDirectionSchema.optional(),
         esimId: z.string().optional(),
         numberId: z.string().optional(),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(100).optional(),
         peerKey: z.string().optional(),
         peerNumber: z.string().optional(),
-        status: z
-            .union([
-                z.literal('all'),
-                z.literal('received'),
-                z.literal('queued'),
-                z.literal('claimed'),
-                z.literal('sending'),
-                z.literal('sent'),
-                z.literal('sent_unconfirmed'),
-                z.literal('delivered'),
-                z.literal('failed'),
-            ])
-            .optional(),
+        status: smsStatusSchema.optional(),
     })
     .strict();
 

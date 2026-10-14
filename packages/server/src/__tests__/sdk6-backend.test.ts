@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import Mobilerun from '@mobilerun/sdk';
+import { default as Mobilerun } from '@mobilerun/sdk';
 import { createSdkBackend } from '../sdk-backend/index.js';
-import { capturedImage, signedDownload } from '../sdk-backend/files.js';
+import { MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
+import { capturedImage, signedDownload } from '../sdk-backend/response.js';
 
 function setup(result: unknown = { data: { ok: true }, items: [] }) {
     const requests: Array<{ url: URL; method: string; headers: Headers; body: unknown }> = [];
@@ -23,11 +24,11 @@ function setup(result: unknown = { data: { ok: true }, items: [] }) {
 }
 
 describe('SDK 6 domain requests', () => {
-    test('numbers purchase is paid and retry-keyed; SMS uses the number messages endpoint', async () => {
+    test('numbers purchase respects API billing defaults and retry keys; SMS uses the number messages endpoint', async () => {
         const { backend, requests } = setup();
         await backend.numbers.numbersCreate({ country: 'de', label: 'Signup', clientRequestId: 'purchase-1' });
         expect(requests[0]!.url.pathname).toBe('/numbers/phones');
-        expect(requests[0]!.body).toEqual({ country: 'de', label: 'Signup', billingPreference: 'rent' });
+        expect(requests[0]!.body).toEqual({ country: 'de', label: 'Signup' });
         expect(requests[0]!.headers.get('Idempotency-Key')).toBe('purchase-1');
         await backend.numbers.numbersMessages({ numberId: 'n1', direction: 'inbound' });
         expect(requests[1]!.url.pathname).toBe('/numbers/phones/n1/messages');
@@ -182,7 +183,7 @@ test('screenshot capture preserves PNG bytes and enforces the inline limit', asy
     });
     expect(result.mimeType).toBe('image/png');
     expect(Buffer.from(result.contentBase64, 'base64')).toEqual(Buffer.from(png));
-    const oversized = new Uint8Array(2 * 1024 * 1024 + 1);
+    const oversized = new Uint8Array(MAX_INLINE_FILE_BYTES + 1);
     await expect(
         capturedImage({
             asResponse: async () => new Response(oversized, { headers: { 'content-type': 'image/png' } }),
@@ -197,4 +198,84 @@ test('device reads and creation forward canonical type identifiers', async () =>
     await backend.devices.createDevice({ deviceType: 'android_cloud_phone', country: 'de' });
     expect(requests[1]!.url.searchParams.get('deviceType')).toBe('android_cloud_phone');
     expect(requests[1]!.url.searchParams.get('country')).toBe('DE');
+});
+
+test('number billing preferences pass through without a hard-coded default', async () => {
+    const { backend, requests } = setup();
+    for (const billingPreference of ['included', 'included_only', 'rent'] as const) {
+        await backend.numbers.numbersCreate({ billingPreference });
+        expect(requests.at(-1)!.body).toEqual({ billingPreference });
+    }
+});
+
+test('mailbox create treats null as an omitted initial label', async () => {
+    const { backend, requests } = setup();
+    await backend.mailboxes.mailboxesCreate({ label: null });
+    expect(requests[0]!.body).toEqual({});
+});
+
+test('screenshot body timeout cancels a stalled stream', async () => {
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+        cancel() {
+            cancelled = true;
+        },
+    });
+    await expect(
+        capturedImage(
+            {
+                asResponse: async () => new Response(stream, { headers: { 'content-type': 'image/png' } }),
+            },
+            15,
+        ),
+    ).rejects.toThrow('timed out');
+    expect(cancelled).toBe(true);
+});
+
+test('signed URLs use manual redirects without fetching the object', async () => {
+    const requests: Array<{ url: string; redirect: string | undefined }> = [];
+    const client = new Mobilerun({
+        apiKey: 'test-key',
+        baseURL: 'https://example.com',
+        maxRetries: 0,
+        fetch: async (input, init) => {
+            requests.push({ url: String(input), redirect: init?.redirect });
+            return new Response(null, { status: 302, headers: { location: 'https://example.com/signed-object' } });
+        },
+    });
+    const backend = createSdkBackend(client);
+    for (const result of [
+        await backend.files.filesDownload({ fileId: 'f1' }),
+        await backend.deviceControl.manageDeviceScreenshotsImage('d1', { screenshotId: 's1' }),
+        await backend.workflows.manageFlowExecutionScreenshot({ executionId: 'e1', screenshotId: 's1' }),
+    ])
+        expect(result).toEqual({ url: 'https://example.com/signed-object' });
+    expect(requests).toHaveLength(3);
+    expect(requests.every((request) => request.redirect === 'manual' && !request.url.includes('signed-object'))).toBe(
+        true,
+    );
+});
+
+test('standalone and bundle screenshot methods share the PNG capture endpoint', async () => {
+    const requests: Array<{ path: string; save: string | null }> = [];
+    const png = new Uint8Array([137, 80, 78, 71]);
+    const client = new Mobilerun({
+        apiKey: 'test-key',
+        baseURL: 'https://example.com',
+        fetch: async (input, init) => {
+            const url = new URL(String(input));
+            requests.push({ path: url.pathname, save: url.searchParams.get('save') });
+            return new Response(png, { headers: { 'content-type': 'image/png' } });
+        },
+    });
+    const backend = createSdkBackend(client);
+    expect(await backend.devices.getDeviceScreenshot('d1')).toEqual({
+        deviceId: 'd1',
+        screenshot: Buffer.from(png).toString('base64'),
+    });
+    expect(await backend.deviceControl.manageDeviceScreenshotsCapture('d1', { save: false })).toEqual({
+        mimeType: 'image/png',
+        contentBase64: Buffer.from(png).toString('base64'),
+    });
+    expect(requests).toEqual(Array(2).fill({ path: '/devices/d1/screenshots', save: 'false' }));
 });

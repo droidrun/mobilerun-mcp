@@ -1,8 +1,9 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { awaitCheckoutUrl } from './checkout.js';
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { billingPreferenceSchema } from '../backend/communication.js';
 import {
     mailboxesListSchema,
-    mailboxesCapacitySchema,
     mailboxesCreateSchema,
     mailboxesGetSchema,
     mailboxesUpdateSchema,
@@ -16,11 +17,11 @@ import {
     mailboxesConnectSchema,
     mailboxesConnectionSchema,
 } from '../backend/mailboxes.js';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-const OPERATIONS = [
+export const MAILBOXES_OPERATIONS = [
     'list',
     'capacity',
     'create',
@@ -38,19 +39,18 @@ const OPERATIONS = [
 ] as const;
 
 export function registerMailboxesTools(server: McpServer, ctx: ToolCtx): void {
-    const values = narrowedValues(OPERATIONS, ctx.policy.operationAllowlist?.get('mailboxes'));
+    const values = narrowedValues(MAILBOXES_OPERATIONS, ctx.policy.operationAllowlist?.get('mailboxes'));
     server.registerTool(
         'mailboxes',
         {
             description:
                 'list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read a recent email code; set after before requesting the code. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.' +
-                allowedValuesNote(values, OPERATIONS),
+                allowedValuesNote(values, MAILBOXES_OPERATIONS),
             inputSchema: {
-                operation: z.enum(OPERATIONS),
+                operation: z.enum(MAILBOXES_OPERATIONS),
                 page: z.number().int().positive().optional(),
                 pageSize: z.number().int().positive().max(100).optional(),
-                billingPreference: z
-                    .union([z.literal('included'), z.literal('included_only'), z.literal('rent')])
+                billingPreference: billingPreferenceSchema
                     .optional()
                     .describe(
                         'create/restart: included may fall back to paid service; included_only refuses paid fallback; rent requests paid service.',
@@ -90,160 +90,42 @@ export function registerMailboxesTools(server: McpServer, ctx: ToolCtx): void {
             const backend = ctx.backend.mailboxes;
             switch (operation) {
                 case 'list':
-                    return asTextResult(
-                        await backend.mailboxesList(
-                            mailboxesListSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['page', 'pageSize'].includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesList(mailboxesListSchema.strip().parse(input)));
                 case 'capacity':
-                    return asTextResult(
-                        await backend.mailboxesCapacity(
-                            mailboxesCapacitySchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ([] as string[]).includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesCapacity());
                 case 'create':
                     return asTextResult(
-                        await backend.mailboxesCreate(
-                            mailboxesCreateSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) =>
-                                        [
-                                            'billingPreference',
-                                            'domainId',
-                                            'label',
-                                            'localPart',
-                                            'clientRequestId',
-                                        ].includes(key),
-                                    ),
-                                ),
-                            ),
+                        await awaitCheckoutUrl(
+                            await backend.mailboxesCreate(mailboxesCreateSchema.strip().parse(input)),
+                            'id',
+                            (id) => backend.mailboxesGet({ mailboxId: id }),
                         ),
                     );
                 case 'get':
-                    return asTextResult(
-                        await backend.mailboxesGet(
-                            mailboxesGetSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['mailboxId'].includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesGet(mailboxesGetSchema.strip().parse(input)));
                 case 'update':
-                    return asTextResult(
-                        await backend.mailboxesUpdate(
-                            mailboxesUpdateSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['mailboxId', 'label'].includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesUpdate(mailboxesUpdateSchema.strip().parse(input)));
                 case 'delete':
-                    return asTextResult(
-                        await backend.mailboxesDelete(
-                            mailboxesDeleteSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['mailboxId'].includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesDelete(mailboxesDeleteSchema.strip().parse(input)));
                 case 'uncancel':
-                    return asTextResult(
-                        await backend.mailboxesUncancel(
-                            mailboxesUncancelSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['mailboxId'].includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesUncancel(mailboxesUncancelSchema.strip().parse(input)));
                 case 'restart':
-                    return asTextResult(
-                        await backend.mailboxesRestart(
-                            mailboxesRestartSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) =>
-                                        ['mailboxId', 'billingPreference'].includes(key),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesRestart(mailboxesRestartSchema.strip().parse(input)));
                 case 'disconnect':
                     return asTextResult(
-                        await backend.mailboxesDisconnect(
-                            mailboxesDisconnectSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['mailboxId'].includes(key)),
-                                ),
-                            ),
-                        ),
+                        await backend.mailboxesDisconnect(mailboxesDisconnectSchema.strip().parse(input)),
                     );
                 case 'otp':
-                    return asTextResult(
-                        await backend.mailboxesOtp(
-                            mailboxesOtpSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) =>
-                                        ['mailboxId', 'after', 'maxLength', 'minLength', 'sender'].includes(key),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesOtp(mailboxesOtpSchema.strip().parse(input)));
                 case 'messages':
-                    return asTextResult(
-                        await backend.mailboxesMessages(
-                            mailboxesMessagesSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) =>
-                                        ['mailboxId', 'after', 'cursor', 'hasOtp', 'limit', 'sender'].includes(key),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesMessages(mailboxesMessagesSchema.strip().parse(input)));
                 case 'message':
-                    return asTextResult(
-                        await backend.mailboxesMessage(
-                            mailboxesMessageSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['messageId', 'mailboxId'].includes(key)),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesMessage(mailboxesMessageSchema.strip().parse(input)));
                 case 'connect':
-                    return asTextResult(
-                        await backend.mailboxesConnect(
-                            mailboxesConnectSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) =>
-                                        ['bindingHash', 'label', 'clientRequestId'].includes(key),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    );
+                    return asTextResult(await backend.mailboxesConnect(mailboxesConnectSchema.strip().parse(input)));
                 case 'connection':
                     return asTextResult(
-                        await backend.mailboxesConnection(
-                            mailboxesConnectionSchema.parse(
-                                Object.fromEntries(
-                                    Object.entries(input).filter(([key]) => ['connectionId'].includes(key)),
-                                ),
-                            ),
-                        ),
+                        await backend.mailboxesConnection(mailboxesConnectionSchema.strip().parse(input)),
                     );
             }
         },

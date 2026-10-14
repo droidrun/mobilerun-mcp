@@ -1,9 +1,10 @@
-import { z } from 'zod';
 // Apps port — see devices.ts's file header for the DTO philosophy.
 // Mirrors @mobilerun/sdk's apps.* response shapes (verified against the
 // SDK's shipped apps.d.ts).
 //
-import type { PageMeta } from './devices.js';
+
+import { z } from 'zod';
+import { type PageMeta } from './devices.js';
 
 export interface ListAppsOpts {
     query?: string;
@@ -100,7 +101,7 @@ interface AppSimpleResultDto {
 }
 
 export interface AppsBackend {
-    appsStorageUsage(params: z.infer<typeof appsStorageUsageSchema>): Promise<unknown>;
+    appsStorageUsage(): Promise<unknown>;
     listApps(opts: ListAppsOpts): Promise<AppListDto>;
     getApp(id: string): Promise<AppEnvelopeDto>;
     listAppVersions(id: string): Promise<AppVersionListDto>;

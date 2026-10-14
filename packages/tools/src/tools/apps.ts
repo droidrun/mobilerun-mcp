@@ -1,4 +1,3 @@
-import { appsStorageUsageSchema } from '../backend/apps.js';
 // apps bundle. Upload is a 3-step flow: (1) create_upload_url returns
 // pre-signed object-storage PUT URLs per file — the actual file bytes are
 // PUT directly to those URLs by the caller, OUTSIDE this MCP tool (binary
@@ -7,13 +6,14 @@ import { appsStorageUsageSchema } from '../backend/apps.js';
 // landed in storage and flips the app to `available` — or mark_failed(id) if
 // the PUT failed/was abandoned.
 //
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-const APPS_OPERATIONS = [
+export const APPS_OPERATIONS = [
     'list',
     'get',
     'versions',
@@ -32,8 +32,8 @@ const appFileSchema = z.object({
 });
 
 type AppsToolInput = {
-    params?: unknown;
     operation: z.infer<typeof appsOperationSchema>;
+    [key: string]: unknown;
     id?: string;
     query?: string;
     platform?: 'all' | 'android' | 'ios';
@@ -62,8 +62,7 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
 }
 
 async function executeAppsOperation(input: AppsToolInput, ctx: ToolCtx): Promise<unknown> {
-    if (input.operation === 'storage_usage')
-        return ctx.backend.apps.appsStorageUsage(appsStorageUsageSchema.parse(input.params ?? {}));
+    if (input.operation === 'storage_usage') return ctx.backend.apps.appsStorageUsage();
     const { operation } = input;
     const backend = ctx.backend.apps;
 
@@ -115,11 +114,10 @@ export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
                 'user), create_upload_url (starts the 3-step upload flow: returns pre-signed upload URLs per file — PUT the raw ' +
                 'file bytes to those URLs yourself, outside this tool, then call confirm_upload; call mark_failed instead if the ' +
                 'PUT fails or is abandoned), confirm_upload, mark_failed, delete.' +
-                ' Additional operations (use params): storage_usage: Read app storage usage.' +
+                ' Additional operations: storage_usage: Read app storage usage.' +
                 allowedValuesNote(operationValues, APPS_OPERATIONS),
             inputSchema: {
                 operation: appsOperationSchema,
-                params: appsStorageUsageSchema.optional(),
                 id: z.string().uuid().optional(),
                 query: z.string().optional().describe('Search filter for operation=list.'),
                 platform: z.enum(['all', 'android', 'ios']).optional().describe('Filter for operation=list.'),

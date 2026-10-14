@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { smsDirectionSchema, billingPreferenceSchema } from './communication.js';
+
 export const numbersCountriesSchema = z.object({}).strict();
 
 export const numbersCapacitySchema = z
@@ -22,6 +24,7 @@ export const numbersGetSchema = z
 
 export const numbersCreateSchema = z
     .object({
+        billingPreference: billingPreferenceSchema.optional(),
         country: z.string().optional(),
         label: z.union([z.string(), z.null()]).optional(),
         clientRequestId: z.string().min(1).max(128).optional(),
@@ -44,7 +47,7 @@ export const numbersDeleteSchema = z
 export const numbersMessagesSchema = z
     .object({
         numberId: z.string(),
-        direction: z.union([z.literal('all'), z.literal('inbound'), z.literal('outbound')]).optional(),
+        direction: smsDirectionSchema.optional(),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(100).optional(),
         since: z.string().optional(),
@@ -61,7 +64,7 @@ export const numbersSendSchema = z
     .strict();
 
 export interface NumbersBackend {
-    numbersCountries(params: z.infer<typeof numbersCountriesSchema>): Promise<unknown>;
+    numbersCountries(): Promise<unknown>;
     numbersCapacity(params: z.infer<typeof numbersCapacitySchema>): Promise<unknown>;
     numbersList(params: z.infer<typeof numbersListSchema>): Promise<unknown>;
     numbersGet(params: z.infer<typeof numbersGetSchema>): Promise<unknown>;

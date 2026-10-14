@@ -79,7 +79,7 @@ export interface DeviceListDto {
 
 export interface DeviceScreenshotDto {
     deviceId: string;
-    /** Raw SDK screenshot result — base64 payload or a signed URL, shape undocumented upstream (see README caveat). */
+    /** Base64 PNG content, bounded by the shared inline transfer limit. */
     screenshot: string;
 }
 

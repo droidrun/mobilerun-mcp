@@ -1,12 +1,18 @@
-import type Mobilerun from '@mobilerun/sdk';
-import type { CreateDeviceOpts, DevicesBackend, ListAppsOnDeviceOpts, ListDevicesOpts } from '@mobilerun/mcp-tools';
-
 /**
  * DevicesBackend over @mobilerun/sdk's `client.devices.*`. Every mapping
  * here was verified against the SDK's shipped .d.ts (not guessed) — see the
  * deviation/gap comments below for the spots where the public SDK's typed
  * surface has rough edges.
  */
+import { captureDeviceScreenshot } from './response.js';
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import {
+    type CreateDeviceOpts,
+    type DevicesBackend,
+    type ListAppsOnDeviceOpts,
+    type ListDevicesOpts,
+} from '@mobilerun/mcp-tools';
+
 export function createDevicesBackend(client: Mobilerun): DevicesBackend {
     return {
         async listDevices(opts: ListDevicesOpts) {
@@ -23,12 +29,8 @@ export function createDevicesBackend(client: Mobilerun): DevicesBackend {
             return client.devices.retrieve(deviceId);
         },
         async getDeviceScreenshot(deviceId: string) {
-            // SDK types this as APIPromise<string> (StateScreenshotResponse = string).
-            // Shape (base64 payload vs signed URL) is not documented in the
-            // .d.ts — passed through as-is; see this repo's README for the
-            // caveat surfaced to callers.
-            const screenshot = await client.devices.state.screenshot(deviceId);
-            return { deviceId, screenshot };
+            const { contentBase64 } = await captureDeviceScreenshot(client, deviceId, { save: false });
+            return { deviceId, screenshot: contentBase64 };
         },
         async getDeviceUiState(deviceId: string) {
             // `filter: true` lets the device drop tiny/offscreen nodes before

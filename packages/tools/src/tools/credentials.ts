@@ -1,8 +1,9 @@
-import { manageCredentialsGetSchema } from '../backend/credentials.js';
 // Credentials read and mutation tools use separate policy operation gates.
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+import { manageCredentialsGetSchema } from '../backend/credentials.js';
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
@@ -37,7 +38,7 @@ export function registerCredentialTools(server: McpServer, ctx: ToolCtx): void {
 // backend/credentials.ts's CredentialMetaDto (fieldType only, no `value`
 // field in the type at all, so there is nothing to redact here).
 
-const MANAGE_CREDENTIALS_OPERATIONS = [
+export const MANAGE_CREDENTIALS_OPERATIONS = [
     'init_package',
     'create_credential',
     'delete_credential',
@@ -59,8 +60,8 @@ const fieldTypeSchema = z.enum([
 ]);
 
 type ManageCredentialsInput = {
-    params?: unknown;
     operation: z.infer<typeof manageCredentialsOperationSchema>;
+    [key: string]: unknown;
     packageName?: string;
     credentialName?: string;
     fieldType?: z.infer<typeof fieldTypeSchema>;
@@ -75,7 +76,7 @@ function requireCredentialValue<T>(value: T | undefined, name: string, operation
 
 async function executeManageCredentialsOperation(input: ManageCredentialsInput, ctx: ToolCtx): Promise<unknown> {
     if (input.operation === 'get')
-        return ctx.backend.credentials.manageCredentialsGet(manageCredentialsGetSchema.parse(input.params ?? {}));
+        return ctx.backend.credentials.manageCredentialsGet(manageCredentialsGetSchema.strip().parse(input));
     const { operation } = input;
     const backend = ctx.backend.credentials;
 
@@ -141,11 +142,11 @@ export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): 
                 'delete_field (packageName, credentialName, fieldType). ' +
                 'Field values are write-only: every response returns metadata only (fieldType, never the plaintext value) — ' +
                 'keep the value you sent yourself if you need it again.' +
-                ' Additional operations (use params): get: Read credential metadata; secret values stay in storage.' +
+                ' Additional operations: get: Read credential metadata; secret values stay in storage.' +
                 allowedValuesNote(operationValues, MANAGE_CREDENTIALS_OPERATIONS),
             inputSchema: {
                 operation: manageCredentialsOperationSchema,
-                params: manageCredentialsGetSchema.optional(),
+                ...manageCredentialsGetSchema.partial().shape,
                 packageName: z.string().min(1).max(256).optional(),
                 credentialName: z.string().min(1).max(256).optional(),
                 fieldType: fieldTypeSchema.optional(),

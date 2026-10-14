@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { billingPreferenceSchema } from './communication.js';
+
 export const mailboxesListSchema = z
     .object({
         page: z.number().int().positive().optional(),
@@ -10,9 +12,9 @@ export const mailboxesCapacitySchema = z.object({}).strict();
 
 export const mailboxesCreateSchema = z
     .object({
-        billingPreference: z.union([z.literal('included'), z.literal('included_only'), z.literal('rent')]).optional(),
+        billingPreference: billingPreferenceSchema.optional(),
         domainId: z.string().optional(),
-        label: z.string().optional(),
+        label: z.string().nullable().optional(),
         localPart: z.string().optional(),
         clientRequestId: z.string().min(1).max(128).optional(),
     })
@@ -46,7 +48,7 @@ export const mailboxesUncancelSchema = z
 export const mailboxesRestartSchema = z
     .object({
         mailboxId: z.string(),
-        billingPreference: z.union([z.literal('included'), z.literal('included_only'), z.literal('rent')]).optional(),
+        billingPreference: billingPreferenceSchema.optional(),
     })
     .strict();
 
@@ -100,7 +102,7 @@ export const mailboxesConnectionSchema = z
 
 export interface MailboxesBackend {
     mailboxesList(params: z.infer<typeof mailboxesListSchema>): Promise<unknown>;
-    mailboxesCapacity(params: z.infer<typeof mailboxesCapacitySchema>): Promise<unknown>;
+    mailboxesCapacity(): Promise<unknown>;
     mailboxesCreate(params: z.infer<typeof mailboxesCreateSchema>): Promise<unknown>;
     mailboxesGet(params: z.infer<typeof mailboxesGetSchema>): Promise<unknown>;
     mailboxesUpdate(params: z.infer<typeof mailboxesUpdateSchema>): Promise<unknown>;

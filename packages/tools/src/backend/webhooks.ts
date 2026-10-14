@@ -1,11 +1,12 @@
-import { z } from 'zod';
 // Webhooks port — see devices.ts's file header for the DTO philosophy.
 // Mirrors @mobilerun/sdk's webhooks / webhooks.deliveries response shapes
 // (verified against the SDK's shipped .d.ts) — including which endpoints
 // wrap their payload in a `{ data: ... }` envelope and which don't; this
 // package doesn't normalize that inconsistency away, it types it faithfully
 // so tool output shapes don't silently change.
-import type { PageMeta } from './devices.js';
+
+import { z } from 'zod';
+import { type PageMeta } from './devices.js';
 
 export interface ListWebhooksOpts {
     status?: 'active' | 'failing' | 'blocked' | 'disabled';
@@ -112,7 +113,7 @@ interface WebhookDeliveryStatsDto {
 export interface WebhooksBackend {
     webhooksDelete(params: z.infer<typeof webhooksDeleteSchema>): Promise<unknown>;
     webhooksDeliveries(params: z.infer<typeof webhooksDeliveriesSchema>): Promise<unknown>;
-    webhooksIntegrations(params: z.infer<typeof webhooksIntegrationsSchema>): Promise<unknown>;
+    webhooksIntegrations(): Promise<unknown>;
     webhooksIntegrationTargets(params: z.infer<typeof webhooksIntegrationTargetsSchema>): Promise<unknown>;
     createWebhook(params: CreateWebhookParams): Promise<WebhookEnvelopeDto>;
     listWebhooks(opts: ListWebhooksOpts): Promise<WebhookListDto>;
@@ -127,7 +128,7 @@ export interface WebhooksBackend {
 
 export const webhooksDeleteSchema = z
     .object({
-        id: z.string(),
+        endpointId: z.string(),
     })
     .strict();
 

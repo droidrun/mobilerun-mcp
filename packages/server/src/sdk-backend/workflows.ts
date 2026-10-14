@@ -1,29 +1,29 @@
-import { signedDownload } from './files.js';
-import type Mobilerun from '@mobilerun/sdk';
-import { isScheduleRule } from '@mobilerun/mcp-tools';
-import type {
-    AddFlowActionParams,
-    CloneFlowParams,
-    CreateActionParams,
-    CreateFlowParams,
-    CreateTriggerParams,
-    DryRunEventParams,
-    ExecutionMetricsOpts,
-    IngestEventParams,
-    ListActionCatalogOpts,
-    ListActionsOpts,
-    ListExecutionsOpts,
-    ListFlowsOpts,
-    ListTriggersOpts,
-    RemoveFlowActionParams,
-    ReplaceFlowActionsParams,
-    WorkflowService,
-    WorkflowsBackend,
-} from '@mobilerun/mcp-tools';
-
 // GAP: @mobilerun/sdk's flow-action types do not yet declare the stable `key`
 // field added for template resolution v3. Keep it at this adapter boundary
 // until the SDK types include it.
+import { signedDownload, signedDownloadOpts } from './response.js';
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import {
+    isScheduleRule,
+    type AddFlowActionParams,
+    type CloneFlowParams,
+    type CreateActionParams,
+    type CreateFlowParams,
+    type CreateTriggerParams,
+    type DryRunEventParams,
+    type ExecutionMetricsOpts,
+    type IngestEventParams,
+    type ListActionCatalogOpts,
+    type ListActionsOpts,
+    type ListExecutionsOpts,
+    type ListFlowsOpts,
+    type ListTriggersOpts,
+    type RemoveFlowActionParams,
+    type ReplaceFlowActionsParams,
+    type WorkflowService,
+    type WorkflowsBackend,
+} from '@mobilerun/mcp-tools';
+
 function withFlowActionKey<T extends object>(value: T): T & { key: string } {
     return value as T & { key: string };
 }
@@ -39,30 +39,34 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
     return {
         async manageFlowExecutionScreenshot(params) {
             return signedDownload(
-                client.workflows.executions.screenshots.retrieve(params.screenshotId, {
-                    executionId: params.executionId,
-                }),
+                client.workflows.executions.screenshots.retrieve(
+                    params.screenshotId,
+                    {
+                        executionId: params.executionId,
+                    },
+                    signedDownloadOpts,
+                ),
             );
         },
         async manageFlowUpdate(params) {
             return client.workflows.flows.update(params.flowId, {
-                cooldownScope: params['cooldownScope'],
-                cooldownSeconds: params['cooldownSeconds'],
-                delivery: params['delivery'],
-                description: params['description'],
-                deviceIds: params['deviceIds'],
-                enabled: params['enabled'],
-                healthMonitoringEnabled: params['healthMonitoringEnabled'],
-                lifecycleStatus: params['lifecycleStatus'],
-                name: params['name'],
-                notifyOnFailure: params['notifyOnFailure'],
-                notifyOnSuccess: params['notifyOnSuccess'],
-                notifyWebhookId: params['notifyWebhookId'],
-                recordingEnabled: params['recordingEnabled'],
-                recordingPolicy: params['recordingPolicy'],
-                selfHealingEnabled: params['selfHealingEnabled'],
-                selfHealingMaxAttempts: params['selfHealingMaxAttempts'],
-                triggerId: params['triggerId'],
+                cooldownScope: params.cooldownScope,
+                cooldownSeconds: params.cooldownSeconds,
+                delivery: params.delivery,
+                description: params.description,
+                deviceIds: params.deviceIds,
+                enabled: params.enabled,
+                healthMonitoringEnabled: params.healthMonitoringEnabled,
+                lifecycleStatus: params.lifecycleStatus,
+                name: params.name,
+                notifyOnFailure: params.notifyOnFailure,
+                notifyOnSuccess: params.notifyOnSuccess,
+                notifyWebhookId: params.notifyWebhookId,
+                recordingEnabled: params.recordingEnabled,
+                recordingPolicy: params.recordingPolicy,
+                selfHealingEnabled: params.selfHealingEnabled,
+                selfHealingMaxAttempts: params.selfHealingMaxAttempts,
+                triggerId: params.triggerId,
             });
         },
         async manageFlowDelete(params) {
@@ -70,47 +74,47 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async manageFlowActivate(params) {
             return client.workflows.flows.activate(params.flowId, {
-                verificationExecutionId: params['verificationExecutionId'],
+                verificationExecutionId: params.verificationExecutionId,
             });
         },
         async manageFlowRun(params) {
             return client.workflows.flows.run(params.flowId, {
-                captureScreenshots: params['captureScreenshots'],
-                payload: params['payload'],
+                captureScreenshots: params.captureScreenshots,
+                payload: params.payload,
             });
         },
         async manageFlowValidate(params) {
             return client.workflows.flows.validate({
-                actions: params['actions'],
-                name: params['name'],
-                cooldownScope: params['cooldownScope'],
-                cooldownSeconds: params['cooldownSeconds'],
-                delivery: params['delivery'],
-                description: params['description'],
-                deviceIds: params['deviceIds'],
-                enabled: params['enabled'],
-                healthMonitoringEnabled: params['healthMonitoringEnabled'],
-                notifyOnFailure: params['notifyOnFailure'],
-                notifyOnSuccess: params['notifyOnSuccess'],
-                notifyWebhookId: params['notifyWebhookId'],
-                recordingEnabled: params['recordingEnabled'],
-                recordingPolicy: params['recordingPolicy'],
-                selfHealingEnabled: params['selfHealingEnabled'],
-                selfHealingMaxAttempts: params['selfHealingMaxAttempts'],
-                triggerId: params['triggerId'],
+                actions: params.actions,
+                name: params.name,
+                cooldownScope: params.cooldownScope,
+                cooldownSeconds: params.cooldownSeconds,
+                delivery: params.delivery,
+                description: params.description,
+                deviceIds: params.deviceIds,
+                enabled: params.enabled,
+                healthMonitoringEnabled: params.healthMonitoringEnabled,
+                notifyOnFailure: params.notifyOnFailure,
+                notifyOnSuccess: params.notifyOnSuccess,
+                notifyWebhookId: params.notifyWebhookId,
+                recordingEnabled: params.recordingEnabled,
+                recordingPolicy: params.recordingPolicy,
+                selfHealingEnabled: params.selfHealingEnabled,
+                selfHealingMaxAttempts: params.selfHealingMaxAttempts,
+                triggerId: params.triggerId,
             });
         },
         async manageFlowVerify(params) {
             return client.workflows.flows.verify(params.flowId, {
-                invocationId: params['invocationId'],
-                deviceId: params['deviceId'],
-                payload: params['payload'],
+                invocationId: params.invocationId,
+                deviceId: params.deviceId,
+                payload: params.payload,
             });
         },
         async manageFlowDryRun(params) {
-            return client.workflows.flows.dryRun(params.flowId, { payload: params['payload'] });
+            return client.workflows.flows.dryRun(params.flowId, { payload: params.payload });
         },
-        async manageFlowCapacity(params) {
+        async manageFlowCapacity() {
             return client.workflows.flows.capacity();
         },
         async manageFlowDeliveryOptions(params) {
@@ -118,7 +122,7 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async manageFlowTemplateContext(params) {
             return client.workflows.flows.templateContext({
-                templateResolutionVersion: params['templateResolutionVersion'],
+                templateResolutionVersion: params.templateResolutionVersion,
             });
         },
         async manageFlowListRepairs(params) {
@@ -126,9 +130,9 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async manageFlowUpdateAction(params) {
             return client.workflows.actions.update(params.actionId, {
-                description: params['description'],
-                name: params['name'],
-                params: params['params'],
+                description: params.description,
+                name: params.name,
+                params: params.params,
             });
         },
         async manageFlowDeleteAction(params) {
@@ -136,21 +140,21 @@ export function createWorkflowsBackend(client: Mobilerun): WorkflowsBackend {
         },
         async manageFlowUpdateTrigger(params) {
             return client.workflows.triggers.update(params.triggerId, {
-                activation: params['activation'],
-                conditions: params['conditions'],
-                customPayloadSchema: params['customPayloadSchema'],
-                description: params['description'],
-                eventType: params['eventType'],
-                name: params['name'],
-                scheduleRule: params['scheduleRule'],
-                timezone: params['timezone'],
+                activation: params.activation,
+                conditions: params.conditions,
+                customPayloadSchema: params.customPayloadSchema,
+                description: params.description,
+                eventType: params.eventType,
+                name: params.name,
+                scheduleRule: params.scheduleRule,
+                timezone: params.timezone,
             });
         },
         async manageFlowDeleteTrigger(params) {
             return client.workflows.triggers.delete(params.triggerId);
         },
         async manageFlowFireTrigger(params) {
-            return client.workflows.triggers.fire(params.triggerId, { payload: params['payload'] });
+            return client.workflows.triggers.fire(params.triggerId, { payload: params.payload });
         },
         async manageFlowAbortExecution(params) {
             return client.workflows.executions.abort(params.executionId);

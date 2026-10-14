@@ -9,8 +9,19 @@
 //
 // Every operation name below is verified directly against the merged
 // `tools/*.ts` operation enums. Removed upstream operations are not allowlisted.
-import type { Policy } from './ctx.js';
+
+import { type Policy } from './ctx.js';
 import { ALL_TOOL_NAMES, fullAccessPolicy } from './register.js';
+import { ASSISTANT_OPERATIONS } from './tools/assistant.js';
+import { CONNECT_OPERATIONS } from './tools/connect.js';
+import { MANAGE_DEVICE_OPERATIONS, MANAGE_ESIM_OPERATIONS } from './tools/device-control.js';
+import { MANAGE_FLOW_OPERATIONS } from './tools/manage-flow.js';
+import { NUMBERS_OPERATIONS } from './tools/numbers.js';
+import { MAILBOXES_OPERATIONS } from './tools/mailboxes.js';
+
+function allExcept<T extends string>(operations: readonly T[], excluded: readonly T[]): ReadonlySet<string> {
+    return new Set(operations.filter((operation) => !excluded.includes(operation)));
+}
 
 export const POLICY_PROFILES = ['readonly', 'no-commerce', 'full'] as const;
 export type PolicyProfile = (typeof POLICY_PROFILES)[number];
@@ -142,93 +153,27 @@ const COMMERCE_TOOL_NAMES = new Set<string>(['create_device', 'terminate_device'
 /** `connect` operations excluded from `no-commerce` — buying/cancelling a
  * proxy is a billed action; the `connect` tool otherwise stays fully
  * available. */
-const NO_COMMERCE_CONNECT_OPERATIONS = new Set([
-    'update_proxy',
-    'ensure_healthy',
-    'list_countries',
-    'list_proxies',
-    'get_proxy',
-    'ping_proxy',
-    'list_connections',
-    'list_users',
-    'get_user',
-    'list_user_connections',
+const NO_COMMERCE_CONNECT_OPERATIONS = allExcept(CONNECT_OPERATIONS, ['buy_proxy', 'cancel_proxy']);
+
+const NO_COMMERCE_NUMBERS_OPERATIONS = allExcept(NUMBERS_OPERATIONS, ['create', 'delete', 'send']);
+const NO_COMMERCE_MAILBOXES_OPERATIONS = allExcept(MAILBOXES_OPERATIONS, ['create', 'delete', 'uncancel', 'restart']);
+const NO_COMMERCE_MANAGE_DEVICE_OPERATIONS = allExcept(MANAGE_DEVICE_OPERATIONS, ['stop', 'resume']);
+const NO_COMMERCE_MANAGE_ESIM_OPERATIONS = allExcept(MANAGE_ESIM_OPERATIONS, ['activate']);
+const NO_COMMERCE_MANAGE_FLOW_OPERATIONS = allExcept(MANAGE_FLOW_OPERATIONS, [
+    'activate',
+    'run',
+    'verify',
+    'fire_trigger',
 ]);
 
-const NO_COMMERCE_NUMBERS_OPERATIONS = new Set(['countries', 'capacity', 'list', 'get', 'update', 'messages']);
-const NO_COMMERCE_MAILBOXES_OPERATIONS = new Set([
-    'list',
-    'capacity',
-    'get',
-    'update',
-    'disconnect',
-    'otp',
-    'messages',
-    'message',
-    'connect',
-    'connection',
-]);
-const NO_COMMERCE_MANAGE_DEVICE_OPERATIONS = new Set([
-    'recordings_trajectory',
-    'recordings_video',
-    'screenshots_image',
-    'reboot',
-    'reset',
-    'rename',
-    'wait_ready',
-    'get_capabilities',
-    'count',
-    'summary',
-    'retrieve_capabilities',
-    'recordings_list',
-    'recordings_delete',
-    'recordings_screenshots',
-    'recordings_start',
-    'recordings_status',
-    'recordings_stop',
-    'screenshots_list',
-    'screenshots_delete',
-    'screenshots_capture',
-    'traffic_sessions_create',
-    'traffic_sessions_retrieve',
-    'traffic_sessions_list',
-    'traffic_sessions_delete',
-    'media_sessions_create',
-    'media_sessions_delete',
-    'media_sessions_activate',
-    'media_sessions_retrieve_current',
-]);
-const NO_COMMERCE_MANAGE_ESIM_OPERATIONS = new Set([
-    'list',
-    'enable',
-    'remove',
-    'set_roaming',
-    'status',
-    'apn_list',
-    'apn_select',
-    'apn_set',
-]);
-const NO_COMMERCE_MANAGE_FLOW_OPERATIONS = new Set([
-    'execution_screenshot',
-    'clone',
-    'unblock',
-    'add_action',
-    'remove_action',
-    'replace_actions',
-    'execution_metrics',
-    'update',
-    'delete',
-    'validate',
-    'dry_run',
-    'capacity',
-    'delivery_options',
-    'template_context',
-    'list_repairs',
-    'update_action',
-    'delete_action',
-    'update_trigger',
-    'delete_trigger',
-    'abort_execution',
+const NO_COMMERCE_ASSISTANT_OPERATIONS = allExcept(ASSISTANT_OPERATIONS, [
+    'create_session',
+    'update_session',
+    'send_message',
+    'abort',
+    'answer_permission',
+    'answer_question',
+    'reject_question',
 ]);
 
 function toolNames(filter: (name: string) => boolean): ReadonlySet<string> {
@@ -261,7 +206,8 @@ export function policyForProfile(profile: PolicyProfile): Policy {
                     ['manage_device', NO_COMMERCE_MANAGE_DEVICE_OPERATIONS],
                     ['manage_esim', NO_COMMERCE_MANAGE_ESIM_OPERATIONS],
                     ['manage_flow', NO_COMMERCE_MANAGE_FLOW_OPERATIONS],
-                    ['assistant', ASSISTANT_READ_OPERATIONS],
+                    ['assistant', NO_COMMERCE_ASSISTANT_OPERATIONS],
+                    ['workflow_events', new Set(['dry_run'])],
                 ]),
             };
         case 'readonly':

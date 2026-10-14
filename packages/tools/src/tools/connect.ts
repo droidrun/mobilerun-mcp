@@ -1,4 +1,3 @@
-import { connectUpdateProxySchema, connectEnsureHealthySchema } from '../backend/connect.js';
 // connect bundle — residential SOCKS5 proxies + bound users (distinct from
 // the device-bound `proxies` tool). Operations: list_countries,
 // list_proxies, get_proxy, buy_proxy, cancel_proxy, ping_proxy,
@@ -8,13 +7,15 @@ import { connectUpdateProxySchema, connectEnsureHealthySchema } from '../backend
 // not public product surface. buy_proxy/cancel_proxy affect billing — each is
 // its own operation value so a policy profile can deny exactly those two
 // without touching reads.
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+import { connectUpdateProxySchema, connectEnsureHealthySchema } from '../backend/connect.js';
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-const CONNECT_OPERATIONS = [
+export const CONNECT_OPERATIONS = [
     'list_countries',
     'list_proxies',
     'get_proxy',
@@ -46,8 +47,8 @@ const connectionFilterShape = {
 } as const;
 
 type ConnectToolInput = {
-    params?: unknown;
     operation: z.infer<typeof connectOperationSchema>;
+    [key: string]: unknown;
     proxyId?: string;
     userId?: string;
     country?: string;
@@ -83,9 +84,9 @@ function connectionOpts(input: ConnectToolInput) {
 
 async function executeConnectOperation(input: ConnectToolInput, ctx: ToolCtx): Promise<unknown> {
     if (input.operation === 'update_proxy')
-        return ctx.backend.connect.connectUpdateProxy(connectUpdateProxySchema.parse(input.params ?? {}));
+        return ctx.backend.connect.connectUpdateProxy(connectUpdateProxySchema.strip().parse(input));
     if (input.operation === 'ensure_healthy')
-        return ctx.backend.connect.connectEnsureHealthy(connectEnsureHealthySchema.parse(input.params ?? {}));
+        return ctx.backend.connect.connectEnsureHealthy(connectEnsureHealthySchema.strip().parse(input));
     const { operation } = input;
     const backend = ctx.backend.connect;
 
@@ -134,14 +135,12 @@ export function registerConnectTools(server: McpServer, ctx: ToolCtx): void {
                 '`proxies` tool). Operations: list_countries, list_proxies, get_proxy, buy_proxy (billed — provisions and ' +
                 "bills a residential proxy), cancel_proxy (ends a billed proxy), ping_proxy (cached latency), list_connections (a proxy's " +
                 "connection history), list_users, get_user, list_user_connections (a user's connection history)." +
-                ' Additional operations (use params): update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.' +
+                ' Additional operations: update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.' +
                 allowedValuesNote(operationValues, CONNECT_OPERATIONS),
             inputSchema: {
                 operation: connectOperationSchema,
-                params: z
-                    .union([connectUpdateProxySchema, connectEnsureHealthySchema])
-                    .optional()
-                    .describe('Parameters for additional operations; the matching object shape is required.'),
+                ...connectUpdateProxySchema.partial().shape,
+                ...connectEnsureHealthySchema.partial().shape,
                 proxyId: z.string().optional(),
                 userId: z.string().optional(),
                 country: z

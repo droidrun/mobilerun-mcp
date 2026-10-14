@@ -2,8 +2,9 @@
 // DTOs mirror @mobilerun/sdk's action-catalog / actions / triggers / flows /
 // executions response shapes (verified against the SDK's
 // shipped .d.ts), trimmed to what the tools surface.
+
 import { z } from 'zod';
-import type { PageMeta } from './devices.js';
+import { type PageMeta } from './devices.js';
 
 export type WorkflowService = 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks' | 'integrations_api';
 
@@ -356,7 +357,7 @@ export interface WorkflowsBackend {
     manageFlowValidate(params: z.infer<typeof manageFlowValidateSchema>): Promise<unknown>;
     manageFlowVerify(params: z.infer<typeof manageFlowVerifySchema>): Promise<unknown>;
     manageFlowDryRun(params: z.infer<typeof manageFlowDryRunSchema>): Promise<unknown>;
-    manageFlowCapacity(params: z.infer<typeof manageFlowCapacitySchema>): Promise<unknown>;
+    manageFlowCapacity(): Promise<unknown>;
     manageFlowDeliveryOptions(params: z.infer<typeof manageFlowDeliveryOptionsSchema>): Promise<unknown>;
     manageFlowTemplateContext(params: z.infer<typeof manageFlowTemplateContextSchema>): Promise<unknown>;
     manageFlowListRepairs(params: z.infer<typeof manageFlowListRepairsSchema>): Promise<unknown>;

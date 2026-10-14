@@ -1,16 +1,3 @@
-import type Mobilerun from '@mobilerun/sdk';
-import type {
-    AddFieldParams,
-    CreateCredentialParams,
-    CredentialFieldDto,
-    CredentialMetaDto,
-    CredentialsBackend,
-    DeleteCredentialParams,
-    DeleteFieldParams,
-    InitPackageParams,
-    UpdateFieldParams,
-} from '@mobilerun/mcp-tools';
-
 /**
  * Strips `value` from every field of a raw @mobilerun/sdk `Credential` —
  * the ONLY place in this codebase where a plaintext credential value from
@@ -19,6 +6,19 @@ import type {
  * type has no `value` field to begin with — see backend/credentials.ts's
  * SECRETS note).
  */
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import {
+    type AddFieldParams,
+    type CreateCredentialParams,
+    type CredentialFieldDto,
+    type CredentialMetaDto,
+    type CredentialsBackend,
+    type DeleteCredentialParams,
+    type DeleteFieldParams,
+    type InitPackageParams,
+    type UpdateFieldParams,
+} from '@mobilerun/mcp-tools';
+
 function toCredentialMeta(cred: {
     credentialName: string;
     packageName: string;
@@ -39,7 +39,7 @@ export function createCredentialsBackend(client: Mobilerun): CredentialsBackend 
     return {
         async manageCredentialsGet(params) {
             const result = await client.credentials.packages.credentials.retrieve(params.credentialName, {
-                packageName: params['packageName'],
+                packageName: params.packageName,
             });
             return { data: toCredentialMeta(result.data) };
         },

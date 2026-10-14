@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { Backend } from '../backend/index.js';
+import { type Backend } from '../backend/index.js';
 import { createAuthContext } from '../ctx.js';
 import { policyForProfile, type PolicyProfile } from '../policies.js';
 import { buildMcpServer } from '../register.js';
@@ -158,7 +158,7 @@ for (const [toolName, operations] of Object.entries(cases)) {
                         arguments: { operation: op.operation, ...op.args },
                     });
                     expect(result.isError, op.operation).not.toBe(true);
-                    expect(s.calls).toEqual([{ domain: toolName, method: op.method, params: op.args ?? {} }]);
+                    expect(s.calls).toEqual([{ domain: toolName, method: op.method, params: op.args }]);
                     expect(JSON.parse((result.content as Array<{ text: string }>)[0]!.text)).toEqual({
                         accepted: true,
                     });

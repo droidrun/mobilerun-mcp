@@ -1,13 +1,14 @@
 // Device tools delegate lifecycle and billing checks to the platform API.
-// Screenshot results pass through as a base64 image or signed URL.
+// Screenshot results use the shared bounded PNG capture path.
 // Device types are a curated subset of the public SDK's deviceType union.
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+// The exact set @mobilerun/sdk's DeviceListParams.state accepts (9 values).
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult, ifDefined } from '../text-result.js';
 import { compactUiState, type RawUiStateResponse, type UiStateFilter } from './ui-state.js';
 
-// The exact set @mobilerun/sdk's DeviceListParams.state accepts (9 values).
 const DEVICE_STATES = [
     'creating',
     'assigned',
@@ -75,11 +76,13 @@ export function registerDeviceTools(server: McpServer, ctx: ToolCtx): void {
     server.registerTool(
         'get_device_screenshot',
         {
-            description:
-                'Capture a device screenshot. Returns { deviceId, screenshot }, where screenshot is the string the API returns (a base64 image or a signed URL).',
+            description: 'Capture a device screenshot. Returns a PNG image (up to 256 KB).',
             inputSchema: { deviceId: z.string() },
         },
-        async ({ deviceId }) => asTextResult(await ctx.backend.devices.getDeviceScreenshot(deviceId)),
+        async ({ deviceId }) => {
+            const result = await ctx.backend.devices.getDeviceScreenshot(deviceId);
+            return { content: [{ type: 'image' as const, data: result.screenshot, mimeType: 'image/png' }] };
+        },
     );
 
     server.registerTool(

@@ -1,0 +1,83 @@
+import { APIError, type default as Mobilerun } from '@mobilerun/sdk';
+import { BackendError, MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
+
+export const signedDownloadOpts = { fetchOptions: { redirect: 'manual' as const }, maxRetries: 0 };
+
+/** Manual redirects avoid starting an object download just to read its URL.
+ * The client rejects non-2xx responses, exposing the redirect through APIError. */
+export async function signedDownload(request: { asResponse(): Promise<Response> }): Promise<{ url: string }> {
+    try {
+        const response = await request.asResponse();
+        await response.body?.cancel();
+        const location = response.headers.get('location');
+        if (response.status >= 300 && response.status < 400 && location) return { url: location };
+        if (response.redirected && response.url) return { url: response.url };
+    } catch (error) {
+        if (error instanceof APIError && error.status !== undefined && error.status >= 300 && error.status < 400) {
+            const url = error.headers?.get('location');
+            if (url) return { url };
+        }
+        throw error;
+    }
+    throw new BackendError('upstream_error', 'The download did not return a signed destination URL.');
+}
+
+export function captureDeviceScreenshot(
+    client: Mobilerun,
+    deviceId: string,
+    params: { hideOverlay?: boolean; save?: boolean; displayId?: number } = {},
+): Promise<{ mimeType: 'image/png'; contentBase64: string }> {
+    return capturedImage(
+        client.devices.screenshots.capture(deviceId, {
+            hideOverlay: params.hideOverlay,
+            save: params.save,
+            ...headerOpts(params.displayId),
+        }),
+    );
+}
+
+export function headerOpts(displayId: number | undefined) {
+    return displayId !== undefined ? { 'X-Device-Display-ID': displayId } : {};
+}
+
+/** Bound both decoded size and body-read time after the client returns headers. */
+export async function capturedImage(
+    request: { asResponse(): Promise<Response> },
+    timeoutMs = 5000,
+): Promise<{ mimeType: 'image/png'; contentBase64: string }> {
+    const response = await request.asResponse();
+    if (response.headers.get('content-type')?.split(';')[0] !== 'image/png') {
+        void response.body?.cancel().catch(() => {});
+        throw new BackendError('upstream_error', 'Screenshot capture did not return a PNG image.');
+    }
+    const reader = response.body?.getReader();
+    if (!reader) throw new BackendError('upstream_error', 'Screenshot capture returned an empty body.');
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+            reject(new BackendError('upstream_error', 'Screenshot body read timed out.'));
+            void reader.cancel().catch(() => {});
+        }, timeoutMs);
+    });
+    try {
+        while (true) {
+            const { done, value } = await Promise.race([reader.read(), timeout]);
+            if (done) break;
+            size += value.byteLength;
+            if (size > MAX_INLINE_FILE_BYTES) {
+                void reader.cancel().catch(() => {});
+                throw new BackendError(
+                    'upstream_error',
+                    `Screenshot exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit; use saved screenshot download URLs.`,
+                );
+            }
+            chunks.push(value);
+        }
+    } finally {
+        clearTimeout(timer);
+        reader.releaseLock();
+    }
+    return { mimeType: 'image/png', contentBase64: Buffer.concat(chunks).toString('base64') };
+}

@@ -1,5 +1,6 @@
 // Small result-shaping helpers shared by every tool. asErrorResult renders a
 // BackendError uniformly alongside plain string/Error messages.
+
 import { BackendError } from './backend/errors.js';
 
 export function asTextResult(payload: unknown) {
@@ -17,7 +18,10 @@ export function asTextResult(payload: unknown) {
  */
 export function asErrorResult(input: string | Error) {
     if (input instanceof BackendError) {
-        return { content: [{ type: 'text' as const, text: `[${input.code}] ${input.message}` }], isError: true as const };
+        return {
+            content: [{ type: 'text' as const, text: `[${input.code}] ${input.message}` }],
+            isError: true as const,
+        };
     }
     const message = input instanceof Error ? input.message : input;
     return { content: [{ type: 'text' as const, text: message }], isError: true as const };
@@ -28,10 +32,7 @@ export function asErrorResult(input: string | Error) {
  * Collapses the verbose `...(x !== undefined ? { x } : {})` spread pattern
  * used when forwarding optional filter params to SDK clients.
  */
-export function ifDefined<K extends string, V>(
-    key: K,
-    value: V | undefined,
-): { [P in K]?: V } {
+export function ifDefined<K extends string, V>(key: K, value: V | undefined): { [P in K]?: V } {
     return value !== undefined ? ({ [key]: value } as { [P in K]?: V }) : {};
 }
 
@@ -43,4 +44,8 @@ export function ifDefined<K extends string, V>(
 export function omitUserId<T extends { userId?: unknown }>(data: T): Omit<T, 'userId'> {
     const { userId: _userId, ...rest } = data;
     return rest;
+}
+
+export function asImageResult(image: { mimeType: string; contentBase64: string }) {
+    return { content: [{ type: 'image' as const, data: image.contentBase64, mimeType: image.mimeType }] };
 }

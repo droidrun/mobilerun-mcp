@@ -6,6 +6,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Removed
 
+- **Breaking (embedders):** Removed export `ProxyLookupParams` and port methods `lookupProxy`, `listWebhookEventTypes`, and `listAppEventCatalog`. `CredentialPackageListDto.derived` is now `boolean`. Replaced the `DeviceType` union with canonical device types. `Backend` requires `files`, `messages`, `mailboxes`, and `numbers` members, and the corresponding ports require the new methods listed below; device-control and workflow ports also require the new lifecycle, media, connectivity, and execution methods. Parameterless methods take no empty object, and account device summary takes no device id.
 - **Breaking:** `workflow_events.list_event_types`, `list_workflow_resources` resource `app_event_catalog`, and its `platform_catalog.app_event_types` alias — removed upstream in the API client 6.0.
 - **Breaking:** `webhooks.list_event_types` — removed upstream in the API client 6.0.
 - **Breaking:** `proxies.lookup` and its `lookupUser`/`lookupPassword` inputs — removed upstream in the API client 6.0.
@@ -27,6 +28,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 - The server uses `@mobilerun/sdk` 6.0.0.
 - `pacedInput` now maps to `humanize` for device actions, keyboard input and task requests. Deprecated `stealth` is no longer sent; existing task result fields are preserved.
 - App version responses support `pruned`, and webhook URLs may be null.
+- Screenshot tools return bounded PNG image content blocks. Bundle operation inputs use flat top-level fields.
 - Conversation creation sends its idempotency key as a request header.
 - `list_credential_packages` uses direct package listing and returns `derived: false`.
 
