@@ -88,7 +88,7 @@ describe('buildMcpServer', () => {
     test('operation-level denial: an operation outside operationAllowlist is rejected at dispatch, never reaching the backend', async () => {
         const backend = stubBackend();
         const ctx = ctxWith(backend, {
-            // Input schema stays the FULL enum (see tools/webhooks.ts) — 'list' is
+            // Input schema stays the FULL enum (see tools/operation-table.ts) — 'list' is
             // schema-valid, so this call reaches register.ts's dispatch-time gate,
             // which is where 'list' actually gets rejected for this credential.
             operationAllowlist: new Map([['webhooks', new Set(['get'])]]),

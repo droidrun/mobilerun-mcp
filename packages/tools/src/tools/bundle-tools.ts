@@ -1,24 +1,24 @@
 import { APPS_TABLE } from './apps.js';
 import { ASSISTANT_TABLE } from './assistant.js';
+import { CONFIGURE_DEVICE_TABLE } from './configure-device-operations.js';
 import { CONNECT_TABLE } from './connect.js';
 import { MANAGE_CREDENTIALS_TABLE } from './credentials.js';
-import { MANAGE_DEVICE_TABLE } from './manage-device-operations.js';
 import { DEVICE_ACTION_TABLE } from './device-action-operations.js';
-import { MANAGE_APPS_TABLE } from './manage-device-apps-operations.js';
-import { MANAGE_FILES_TABLE } from './manage-device-files-operations.js';
-import { CONFIGURE_DEVICE_TABLE } from './configure-device-operations.js';
-import { MANAGE_ESIM_TABLE } from './manage-esim-operations.js';
 import { FILES_TABLE } from './files.js';
 import { MAILBOXES_TABLE } from './mailboxes.js';
+import { MANAGE_APPS_TABLE } from './manage-device-apps-operations.js';
+import { MANAGE_FILES_TABLE } from './manage-device-files-operations.js';
+import { MANAGE_DEVICE_TABLE } from './manage-device-operations.js';
+import { MANAGE_ESIM_TABLE } from './manage-esim-operations.js';
 import { MANAGE_FLOW_TABLE } from './manage-flow.js';
 import { MESSAGES_TABLE } from './messages.js';
 import { NUMBERS_TABLE } from './numbers.js';
 import { PLATFORM_CATALOG_TABLE } from './platform-catalog.js';
 import { PROXIES_TABLE } from './proxies.js';
-import { GET_TASK_TABLE, GET_TASK_MEDIA_TABLE } from './tasks.js';
+import { GET_TASK_MEDIA_TABLE, GET_TASK_TABLE } from './tasks.js';
 import { WEBHOOK_TABLE } from './webhooks.js';
 import { WORKFLOW_EVENTS_TABLE } from './workflow-events.js';
-import { LIST_WORKFLOW_RESOURCES_TABLE, GET_WORKFLOW_RESOURCE_TABLE } from './workflows.js';
+import { GET_WORKFLOW_RESOURCE_TABLE, LIST_WORKFLOW_RESOURCES_TABLE } from './workflows.js';
 
 /** Static registration metadata: bundles own operation access; standalone tools own one access value. */
 export const TOOL_METADATA = [
@@ -65,6 +65,6 @@ export const TOOL_METADATA = [
 
 type Bundle = Extract<(typeof TOOL_METADATA)[number], { operations: unknown }>;
 /** The keyed view shares the same operation declarations as registration and profiles. */
-export const BUNDLE_TOOLS = Object.fromEntries(
-    TOOL_METADATA.filter((tool) => 'operations' in tool).map((tool) => [tool.name, tool]),
-) as { [Name in Bundle['name']]: Extract<Bundle, { name: Name }> };
+export const BUNDLE_TOOLS = Object.fromEntries(TOOL_METADATA.filter((tool) => 'operations' in tool).map((tool) => [tool.name, tool])) as {
+    [Name in Bundle['name']]: Extract<Bundle, { name: Name }>;
+};

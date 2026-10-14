@@ -1,10 +1,4 @@
-import {
-    operation,
-    operationValues,
-    operationInput,
-    operationDescription,
-    runOperation, registerBundle } from './operation-table.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { operation, registerBundle } from './operation-table.js';
 // Tasks tools (the platform's core product) — built directly against
 // @mobilerun/sdk's public surface.
 //
@@ -15,8 +9,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 // polling substitute for following a running task.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import type { RawTaskTrajectoryDto } from '../backend/tasks.js';
 import type { ToolCtx } from '../ctx.js';
-import type { RawTaskTrajectoryDto, TaskView, TaskMediaKind } from '../backend/tasks.js';
 import { asTextResult } from '../text-result.js';
 // Hard cap on trajectory events returned per call — a running/long task's
 // trajectory has one entry per agent step, screenshot, tool call, LLM
@@ -32,11 +26,7 @@ export interface CompactTrajectory {
     nextOffset?: number;
     events: RawTaskTrajectoryDto['events'];
 }
-export function compactTrajectory(
-    raw: RawTaskTrajectoryDto,
-    offset = 0,
-    limit = MAX_TRAJECTORY_EVENTS,
-): CompactTrajectory {
+export function compactTrajectory(raw: RawTaskTrajectoryDto, offset = 0, limit = MAX_TRAJECTORY_EVENTS): CompactTrajectory {
     const start = Math.max(0, Math.floor(offset));
     const cappedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_TRAJECTORY_EVENTS);
     const total = raw.events.length;
@@ -56,41 +46,47 @@ const GET_TASK_SHARED_FIELDS = {
     taskId: z.string(),
     offset: z.number().int().min(0).optional().describe('view=trajectory only. 0-based event index to start from.'),
     limit: z
-        .number()
-        .int()
-        .positive()
-        .max(MAX_TRAJECTORY_EVENTS)
-        .optional()
-        .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
+                    .number()
+                    .int()
+                    .positive()
+                    .max(MAX_TRAJECTORY_EVENTS)
+                    .optional()
+                    .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
 };
 
-export const GET_TASK_INTRO = "Fetch one task by id, chosen via view. Poll status or trajectory to follow a running task.";
+const GET_TASK_INTRO = 'Fetch one task by id, chosen via view. Poll status or trajectory to follow a running task.';
 export const GET_TASK_TABLE = [
     operation({
         op: 'summary',
-        input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
-        access: 'read',
-        doc: "Read the full task record, minus trajectory.",
-        run: async (ctx, input) => {
-            const { taskId, offset, limit } = input;
-            return asTextResult(await ctx.backend.tasks.getTaskSummary(taskId));
+        input: {
+            taskId: GET_TASK_SHARED_FIELDS.taskId,
+            offset: GET_TASK_SHARED_FIELDS.offset,
+            limit: GET_TASK_SHARED_FIELDS.limit,
         },
+        access: 'read',
+        doc: 'Read the full task record, minus trajectory.',
+        run: async (ctx, input) => asTextResult(await ctx.backend.tasks.getTaskSummary(input.taskId)),
     }),
     operation({
         op: 'status',
-        input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
-        access: 'read',
-        doc: "Read lightweight polling fields: status/message/output/steps/succeeded.",
-        run: async (ctx, input) => {
-            const { taskId, offset, limit } = input;
-            return asTextResult(await ctx.backend.tasks.getTaskStatus(taskId));
+        input: {
+            taskId: GET_TASK_SHARED_FIELDS.taskId,
+            offset: GET_TASK_SHARED_FIELDS.offset,
+            limit: GET_TASK_SHARED_FIELDS.limit,
         },
+        access: 'read',
+        doc: 'Read lightweight polling fields: status/message/output/steps/succeeded.',
+        run: async (ctx, input) => asTextResult(await ctx.backend.tasks.getTaskStatus(input.taskId)),
     }),
     operation({
         op: 'trajectory',
-        input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
+        input: {
+            taskId: GET_TASK_SHARED_FIELDS.taskId,
+            offset: GET_TASK_SHARED_FIELDS.offset,
+            limit: GET_TASK_SHARED_FIELDS.limit,
+        },
         access: 'read',
-        doc: "Read the paged agent event log, capped per call; page with offset and the returned nextOffset.",
+        doc: 'Read the paged agent event log, capped per call; page with offset and the returned nextOffset.',
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             const raw = await ctx.backend.tasks.getTaskTrajectory(taskId);
@@ -103,24 +99,24 @@ const GET_TASK_MEDIA_SHARED_FIELDS = {
     index: z.number().int().nonnegative().optional(),
 };
 
-export const GET_TASK_MEDIA_INTRO = "Fetch a task's captured media, chosen via kind. Omit index to list all available URLs for that kind; pass index to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.";
+const GET_TASK_MEDIA_INTRO =
+    "Fetch a task's captured media, chosen via kind. Omit index to list all available URLs for that kind; pass index to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.";
 export const GET_TASK_MEDIA_TABLE = [
     operation({
         op: 'screenshot',
         input: { taskId: GET_TASK_MEDIA_SHARED_FIELDS.taskId, index: GET_TASK_MEDIA_SHARED_FIELDS.index },
         access: 'read',
-        doc: "Read captured screenshot URLs.",
-        run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
+        doc: 'Read captured screenshot URLs.',
+        run: async (ctx, input) => asTextResult(await ctx.backend.tasks.getTaskMedia(input.operation, input.taskId, input.index)),
     }),
     operation({
         op: 'ui_state',
         input: { taskId: GET_TASK_MEDIA_SHARED_FIELDS.taskId, index: GET_TASK_MEDIA_SHARED_FIELDS.index },
         access: 'read',
-        doc: "Read captured UI state URLs.",
-        run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
+        doc: 'Read captured UI state URLs.',
+        run: async (ctx, input) => asTextResult(await ctx.backend.tasks.getTaskMedia(input.operation, input.taskId, input.index)),
     }),
 ] as const;
-
 
 // Union of the global (client.tasks.list) and device-scoped
 // (client.devices.tasks.list) `orderBy` enums (verified against the SDK's
@@ -132,25 +128,10 @@ export const GET_TASK_MEDIA_TABLE = [
 const LIST_TASKS_ORDER_BY = ['id', 'createdAt', 'finishedAt', 'status', 'updatedAt', 'assignedAt'] as const;
 const GLOBAL_ONLY_ORDER_BY = new Set(['finishedAt', 'status']);
 const DEVICE_ONLY_ORDER_BY = new Set(['updatedAt', 'assignedAt']);
-const TASK_STATUSES = [
-    'queued',
-    'created',
-    'running',
-    'cancelling',
-    'paused',
-    'completed',
-    'failed',
-    'cancelled',
-] as const;
-function listTasksValidationError(input: {
-    deviceId?: string;
-    orderBy?: string;
-    query?: string;
-    status?: string;
-}): string | null {
+const TASK_STATUSES = ['queued', 'created', 'running', 'cancelling', 'paused', 'completed', 'failed', 'cancelled'] as const;
+function listTasksValidationError(input: { deviceId?: string; orderBy?: string; query?: string; status?: string }): string | null {
     if (input.deviceId) {
-        if (input.query !== undefined)
-            return 'list_tasks: `query` is only valid without `deviceId` (device-scoped listing has no search).';
+        if (input.query !== undefined) return 'list_tasks: `query` is only valid without `deviceId` (device-scoped listing has no search).';
         if (input.status !== undefined)
             return 'list_tasks: `status` is only valid without `deviceId` (device-scoped listing has no status filter).';
         if (input.orderBy && GLOBAL_ONLY_ORDER_BY.has(input.orderBy)) {
@@ -172,15 +153,8 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
                 task: z.string().min(1).describe('Natural-language task instruction.'),
                 llmModel: z.string().optional().describe("e.g. 'gemini/gemini-2.5-flash'."),
                 maxSteps: z.number().int().positive().optional(),
-                outputSchema: z
-                    .record(z.string(), z.unknown())
-                    .nullable()
-                    .optional()
-                    .describe('JSON Schema for structured output.'),
-                pacedInput: z
-                    .boolean()
-                    .optional()
-                    .describe('Run the agent with paced device input (variable timing and gesture paths).'),
+                outputSchema: z.record(z.string(), z.unknown()).nullable().optional().describe('JSON Schema for structured output.'),
+                pacedInput: z.boolean().optional().describe('Run the agent with paced device input (variable timing and gesture paths).'),
                 vision: z.boolean().optional(),
                 apps: z.array(z.string()).optional().describe('Package names the task may use.'),
                 credentials: z
@@ -191,10 +165,13 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
             },
         },
         // The API names `pacedInput` `stealth`.
-        async ({ pacedInput, ...params }) =>
-            asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })),
+        async ({ pacedInput, ...params }) => asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })),
     );
-    registerBundle(server, ctx, 'get_task', GET_TASK_TABLE, { intro: GET_TASK_INTRO, shared: GET_TASK_SHARED_FIELDS, field: 'view' });
+    registerBundle(server, ctx, 'get_task', GET_TASK_TABLE, {
+        intro: GET_TASK_INTRO,
+        shared: GET_TASK_SHARED_FIELDS,
+        field: 'view',
+    });
     server.registerTool(
         'list_tasks',
         {
@@ -233,11 +210,9 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         },
         async ({ taskId, message }) => asTextResult(await ctx.backend.tasks.sendTaskMessage(taskId, message)),
     );
-    registerBundle(server, ctx, 'get_task_media', GET_TASK_MEDIA_TABLE, { intro: GET_TASK_MEDIA_INTRO, shared: GET_TASK_MEDIA_SHARED_FIELDS, field: 'kind' });
-}
-async function executeTaskMediaOperation(
-    ctx: ToolCtx,
-    { kind, taskId, index }: { kind: TaskMediaKind; taskId: string; index?: number },
-): Promise<CallToolResult> {
-    return asTextResult(await ctx.backend.tasks.getTaskMedia(kind, taskId, index));
+    registerBundle(server, ctx, 'get_task_media', GET_TASK_MEDIA_TABLE, {
+        intro: GET_TASK_MEDIA_INTRO,
+        shared: GET_TASK_MEDIA_SHARED_FIELDS,
+        field: 'kind',
+    });
 }

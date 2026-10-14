@@ -97,13 +97,20 @@ accepts `{ "operation": "update", "flowId": "...", "name": "..." }`;
 device bundles also keep `deviceId` at the top level.
 
 Each bundle declares its operations once in a per-tool operation table.
-An entry contains the operation's flat input fields, dispatch function,
-unchanged description fragments, and required `readonly` and `billed`
-classifications. The enum, registered schema, field allowlists and policy
-profiles derive from these tables; shared field definitions retain the
-existing constraints and JSON Schema traversal order. Add operations to
-the relevant table and register new bundles in `src/tools/bundle-tools.ts`;
-standalone tools may retain their direct registrations.
+An entry contains its Zod input fields, dispatch function, doc string and
+`access: 'read' | 'write' | 'commerce'`. Assistant writes additionally keep
+`fullOnly: true`, preserving their existing full-profile restriction.
+`sdkOp` derives parsing and text results for SDK passthroughs;
+`registerBundle` derives the enum, flat schema, description, field checks
+and dispatch. Shared overrides retain union constraints and custom field
+descriptions. Input fields have stable alphabetical traversal for JSON
+Schema reference anchors; field errors follow table order and deduplicate
+names. The flow-update entry maps activation payloads to the activate gate.
+Static metadata in `src/tools/bundle-tools.ts` declares bundle selectors
+and standalone access. It also derives the canonical tool-name tuple
+without constructing a server. Add new bundles or standalone tools there;
+profile golden tests pin allowed operations and description-free input
+shapes for all three profiles.
 
 Saved media downloads return short-lived signed URLs. Screenshot capture
 returns PNG bytes as base64, capped at 2 MB. Upload bytes are sent

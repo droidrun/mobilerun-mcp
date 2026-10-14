@@ -1,87 +1,80 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { asErrorResult, asTextResult } from '../text-result.js';
-import { disallowedFieldError, requireValue } from './op-helpers.js';
-import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
+import { asErrorResult, asTextResult } from '../text-result.js';
 /** One declaration supplies an operation's surface, dispatch and profile classification. */
-export type Operation<Input, Result = unknown> = {
+export type Operation<Input> = {
     op: string;
     input: z.ZodRawShape;
-    required?: readonly string[];
     access: 'read' | 'write' | 'commerce';
     /** Assistant writes retain their existing full-profile gate. */
     fullOnly?: boolean;
     /** A payload may require another operation's access in addition to its declared operation. */
     effectiveOp?: (input: Record<string, unknown>) => string;
     doc: string;
-    run: (ctx: ToolCtx, input: Input) => Promise<Result>;
+    run: (ctx: ToolCtx, input: Input) => Promise<CallToolResult>;
 };
-type SurfaceOperation = Pick<
-    Operation<never>,
-    'op' | 'input' | 'access' | 'fullOnly' | 'doc'
->;
-export function operationValues<T extends SurfaceOperation>(table: readonly T[]): [T['op'], ...T['op'][]] {
+type SurfaceOperation = Pick<Operation<never>, 'op' | 'input' | 'access' | 'fullOnly' | 'doc'>;
+function operationValues<T extends SurfaceOperation>(table: readonly T[]): [T['op'], ...T['op'][]] {
     if (table.length === 0) throw new Error('An operation table must not be empty');
     return table.map(({ op }) => op) as [T['op'], ...T['op'][]];
 }
 /** Contextually type each custom handler from its own Zod fields. */
-export function operation<const Op extends string, Shape extends z.ZodRawShape, Result>(
-    entry: Omit<Operation<z.infer<z.ZodObject<Shape>> & { operation: Op }, Result>, 'op' | 'input'> & {
+export function operation<const Op extends string, Shape extends z.ZodRawShape>(
+    entry: Omit<Operation<z.infer<z.ZodObject<Shape>> & { operation: Op }>, 'op' | 'input'> & {
         op: Op;
         input: Shape;
     },
 ) {
     return entry;
 }
-type Intersection<U> = (U extends unknown ? (value: U) => void : never) extends (value: infer I) => void ? I : never;
-type MergedShape<Table extends readonly SurfaceOperation[], Shared extends z.ZodRawShape> =
-    Omit<Intersection<Table[number]['input']>, keyof Shared> & Shared;
-
 /** Merge per-operation fields; shared overrides retain flat union constraints. */
-export function operationInput<Table extends readonly SurfaceOperation[], Shared extends z.ZodRawShape>(
-    table: Table,
-    shared: Shared,
-): MergedShape<Table, Shared> {
-    const merged = Object.assign({}, ...table.map(({ input }) => input), shared);
+function operationInput(table: readonly SurfaceOperation[], shared: z.ZodRawShape = {}): z.ZodRawShape {
+    const merged: z.ZodRawShape = Object.assign({}, ...table.map(({ input }) => input), shared);
     // Stable field traversal keeps JSON Schema reference anchors independent of dispatch order.
-    return Object.fromEntries(Object.entries(merged).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) as MergedShape<Table, Shared>;
+    return Object.fromEntries(Object.entries(merged).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 }
-export function operationDescription(table: readonly SurfaceOperation[]): string {
+function operationDescription(table: readonly SurfaceOperation[]): string {
     return table.map(({ op, doc }) => `${op}: ${doc}`).join(' ');
 }
 /** Per-operation fields and the deduplicated union, both in table order. */
 export function operationFields<T extends SurfaceOperation>(table: readonly T[]) {
-    const byOperation = Object.fromEntries(table.map(({ op, input }) => [op, Object.keys(input)])) as unknown as Record<T['op'], readonly string[]>;
+    const byOperation = Object.fromEntries(table.map(({ op, input }) => [op, Object.keys(input)])) as unknown as Record<
+        T['op'],
+        readonly string[]
+    >;
     return { byOperation, keys: [...new Set(Object.values<readonly string[]>(byOperation).flat())] };
 }
-export async function runOperation<Table extends readonly (SurfaceOperation & { run: (ctx: ToolCtx, input: never) => Promise<unknown> })[]>(
-    table: Table,
-    op: string,
-    ctx: ToolCtx,
-    input: object,
-): Promise<Awaited<ReturnType<Table[number]['run']>>> {
+async function runOperation(table: BundleTable, op: string, ctx: ToolCtx, input: object): Promise<CallToolResult> {
     const entry = table.find((entry) => entry.op === op);
     if (!entry) throw new Error(`Unknown operation: ${op}`);
-    return await entry.run(ctx, { ...input, operation: op } as never) as Awaited<ReturnType<Table[number]['run']>>;
+    // The selected entry validates its own fields; normalize resource/view/kind selectors for typed handlers.
+    return entry.run(ctx, { ...input, operation: op } as never);
 }
 
-type SdkMetadata = Pick<Operation<never>, 'doc' | 'required' | 'effectiveOp'>;
+type SdkMetadata = Pick<Operation<never>, 'doc' | 'effectiveOp'>;
 
 /** Pure SDK passthrough, with an optional device path argument and stripped body. */
-export function sdkOp<const Op extends string, S extends z.ZodRawShape, Device extends z.ZodType<string | undefined> | undefined = undefined>(
+export function sdkOp<
+    const Op extends string,
+    S extends z.ZodRawShape,
+    Device extends z.ZodType<string | undefined> | undefined = undefined,
+>(
     op: Op,
     schema: z.ZodObject<S>,
     call: (ctx: ToolCtx, params: z.infer<z.ZodObject<S>>, deviceId: Device extends undefined ? undefined : string) => Promise<unknown>,
     access: Operation<never>['access'],
     metadata: SdkMetadata & { deviceId?: Device },
-): Operation<Record<string, unknown>, CallToolResult> & { op: Op } {
+): Operation<Record<string, unknown>> & { op: Op } {
     const { deviceId, ...details } = metadata;
     const input: z.ZodRawShape = { ...schema.partial().shape };
     if (deviceId) input.deviceId = deviceId;
     return {
-        op, input, access, ...details,
+        op,
+        input,
+        access,
+        ...details,
         run: async (ctx, raw) => {
             // Check the path argument before parsing the body, as device adapters do.
             const id = deviceId ? requireValue(raw.deviceId as string | undefined, 'deviceId', op) : undefined;
@@ -91,7 +84,7 @@ export function sdkOp<const Op extends string, S extends z.ZodRawShape, Device e
     };
 }
 
-type BundleTable = readonly Operation<never, CallToolResult>[];
+type BundleTable = readonly Operation<never>[];
 type BundleOptions = {
     intro: string;
     shared?: z.ZodRawShape;
@@ -110,21 +103,77 @@ export function registerBundle(server: McpServer, ctx: ToolCtx, name: string, ta
     const { byOperation: allowed, keys: fieldKeys } = operationFields(table);
     const common = Object.keys(fields).filter((key) => !fields[key]!.isOptional());
     const keys = fieldKeys.filter((key) => !common.includes(key));
-    server.registerTool(name, {
-        description: opts.intro + ' ' + operationDescription(table) + allowedValuesNote(values, all),
-        // Keep the FULL enum: policy denials must reach enforcePolicy, before any backend call.
-        inputSchema: { [field]: z.enum(all), ...fields },
-    }, async (input) => {
-        const op = input[field] as string;
-        const error = opts.checkFields
-            ? disallowedFieldError(op, allowed[op]!.filter((key) => !common.includes(key)), keys, input)
-            : opts.beforeRun?.(input);
-        if (error) return asErrorResult(error);
-        try {
-            return await runOperation(table, op, ctx, input);
-        } catch (error) {
-            if (opts.onError) return opts.onError(error, input);
-            throw error;
-        }
-    });
+    server.registerTool(
+        name,
+        {
+            description: opts.intro + ' ' + operationDescription(table) + allowedValuesNote(values, all),
+            // Keep the FULL enum: policy denials must reach enforcePolicy, before any backend call.
+            inputSchema: { [field]: z.enum(all), ...fields },
+        },
+        async (input) => {
+            const op = input[field] as string;
+            const error = opts.checkFields
+                ? disallowedFieldError(
+                      op,
+                      allowed[op]!.filter((key) => !common.includes(key)),
+                      keys,
+                      input,
+                  )
+                : opts.beforeRun?.(input);
+            if (error) return asErrorResult(error);
+            try {
+                return await runOperation(table, op, ctx, input);
+            } catch (error) {
+                if (opts.onError) return opts.onError(error, input);
+                throw error;
+            }
+        },
+    );
+}
+
+/** Shared operation validation; optional tool prefixes preserve existing error text. */
+export function requireValue<T>(value: T | undefined, name: string, operation: string, tool = ''): T {
+    if (value === undefined) throw new Error((tool ? tool + ' ' : '') + `operation=${operation} requires ${name}`);
+    return value;
+}
+
+function disallowedFieldError(
+    operation: string,
+    allowed: readonly string[],
+    allKeys: readonly string[],
+    input: Record<string, unknown>,
+): string | null {
+    const extra = allKeys.filter((k) => input[k] !== undefined && !allowed.includes(k));
+    if (extra.length === 0) return null;
+    return `field ${extra.join(', ')} is not valid for operation=${operation}; allowed fields: ${allowed.join(', ') || '(none)'}`;
+}
+
+export function disallowedFilterError(
+    resource: string,
+    allowed: readonly string[],
+    allKeys: readonly string[],
+    filters: object,
+): string | null {
+    const input = filters as Record<string, unknown>;
+    const extra = allKeys.filter((k) => input[k] !== undefined && !allowed.includes(k));
+    if (extra.length > 0) {
+        return `filter ${extra.join(', ')} is not valid for resource=${resource}; allowed filters: ${allowed.join(', ') || '(none)'}`;
+    }
+    return null;
+}
+
+// Advertise the permitted subset while retaining the full enum for dispatch-time policy errors.
+function narrowedValues<T extends string>(all: readonly T[], allowed: ReadonlySet<string> | undefined): readonly T[] {
+    if (!allowed) return all;
+    const filtered = all.filter((v) => allowed.has(v));
+    // An allowlist entry that matches nothing in `all` is almost certainly a
+    // host misconfiguration (e.g. a typo'd operation name) — fail open to the
+    // full set here rather than advertising zero options; the dispatch-time
+    // check still enforces the (empty, therefore always-denying) allowlist.
+    return filtered.length > 0 ? filtered : all;
+}
+
+function allowedValuesNote(narrowed: readonly string[], all: readonly string[]): string {
+    if (narrowed.length === all.length) return '';
+    return ` Available for this credential: ${narrowed.join(', ')}.`;
 }

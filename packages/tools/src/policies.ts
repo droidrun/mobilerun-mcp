@@ -21,13 +21,12 @@ function bundleOperations(profile: 'readonly' | 'no-commerce'): ReadonlyMap<stri
     const entries: Array<[string, ReadonlySet<string>]> = [];
     for (const [name, { operations }] of Object.entries(BUNDLE_TOOLS)) {
         const allowed = operations.filter((operation) =>
-            profile === 'readonly' ? operation.access === 'read' : operation.access !== 'commerce' && !('fullOnly' in operation && operation.fullOnly),
+            profile === 'readonly'
+                ? operation.access === 'read'
+                : operation.access !== 'commerce' && !('fullOnly' in operation && operation.fullOnly),
         );
         // readonly includes a bundle only if it has reads; no-commerce needs a gate only for billed operations.
-        if (
-            (profile === 'readonly' && allowed.length > 0) ||
-            (profile === 'no-commerce' && allowed.length !== operations.length)
-        ) {
+        if ((profile === 'readonly' && allowed.length > 0) || (profile === 'no-commerce' && allowed.length !== operations.length)) {
             entries.push([name, new Set(allowed.map(({ op }) => op))]);
         }
     }
@@ -38,10 +37,15 @@ const READONLY_BUNDLE_OPERATIONS = bundleOperations('readonly');
 const NO_COMMERCE_BUNDLE_OPERATIONS = bundleOperations('no-commerce');
 
 function toolNames(profile: 'readonly' | 'no-commerce'): ReadonlySet<string> {
-    return new Set(TOOL_METADATA.filter((tool) => 'access' in tool
-        ? profile === 'readonly' ? tool.access === 'read' : tool.access !== 'commerce'
-        : profile === 'no-commerce' || READONLY_BUNDLE_OPERATIONS.has(tool.name)
-    ).map(({ name }) => name));
+    return new Set(
+        TOOL_METADATA.filter((tool) =>
+            'access' in tool
+                ? profile === 'readonly'
+                    ? tool.access === 'read'
+                    : tool.access !== 'commerce'
+                : profile === 'no-commerce' || READONLY_BUNDLE_OPERATIONS.has(tool.name),
+        ).map(({ name }) => name),
+    );
 }
 
 /**

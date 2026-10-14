@@ -1,8 +1,3 @@
-import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
-import { registerFilesTools } from './tools/files.js';
-import { registerMessagesTools } from './tools/messages.js';
-import { registerMailboxesTools } from './tools/mailboxes.js';
-import { registerNumbersTools } from './tools/numbers.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { type RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { type ServerNotification, type ServerRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -11,11 +6,16 @@ import { type AuthContext, type Policy, type ToolCtx } from './ctx.js';
 import { asErrorResult } from './text-result.js';
 import { registerAppsTools } from './tools/apps.js';
 import { registerAssistantTool } from './tools/assistant.js';
+import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
 import { registerConnectTools } from './tools/connect.js';
 import { registerCredentialTools, registerManageCredentialsTool } from './tools/credentials.js';
 import { registerDeviceControlTools } from './tools/device-control.js';
 import { registerDeviceTools } from './tools/devices.js';
+import { registerFilesTools } from './tools/files.js';
+import { registerMailboxesTools } from './tools/mailboxes.js';
 import { registerManageFlowTool } from './tools/manage-flow.js';
+import { registerMessagesTools } from './tools/messages.js';
+import { registerNumbersTools } from './tools/numbers.js';
 import { registerPlatformCatalogTools } from './tools/platform-catalog.js';
 import { registerProxiesTools } from './tools/proxies.js';
 import { registerTaskTools } from './tools/tasks.js';
@@ -54,9 +54,6 @@ export function fullAccessPolicy(): Policy {
     return { toolAllowlist: new Set(ALL_TOOL_NAMES) };
 }
 
-/**
- * Bundle metadata supplies selector fields and effective operations for dispatch-time policy gates.
- */
 export type ToolCallOutcome = 'ok' | 'error' | 'denied';
 
 /**
@@ -139,19 +136,19 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
                 const allowedOps = ctx.policy.operationAllowlist?.get(name);
                 const entry = bundle?.operations.find((entry) => entry.op === operation);
                 const effective = entry?.effectiveOp?.(input ?? {}) ?? operation;
-                if (allowedOps && operation !== undefined &&
-                    (!allowedOps.has(operation) || (effective !== undefined && !allowedOps.has(effective)))) {
+                if (
+                    allowedOps &&
+                    operation !== undefined &&
+                    (!allowedOps.has(operation) || (effective !== undefined && !allowedOps.has(effective)))
+                ) {
                     report('denied');
-                    return asErrorResult(
-                        `Operation "${operation}" of tool "${name}" is not available for this credential.`,
-                    );
+                    return asErrorResult(`Operation "${operation}" of tool "${name}" is not available for this credential.`);
                 }
             }
 
             try {
                 const result = await handler(...args);
-                const isToolResultError =
-                    !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
+                const isToolResultError = !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
                 report(isToolResultError ? 'error' : 'ok');
                 return result;
             } catch (err) {
