@@ -2,6 +2,12 @@
 
 All notable changes to `@mobilerun/mcp-tools` are documented here.
 
+## [0.4.1] - 2026-10-14
+
+### Changed
+
+- `list_credentials` returns credential metadata and field types only, matching the other credential operations.
+
 ## [0.4.0] - 2026-10-09
 
 ### Changed
