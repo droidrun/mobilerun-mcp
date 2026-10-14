@@ -29,25 +29,6 @@ export interface ListProxiesOpts {
     protocol?: ProxyProtocol;
 }
 
-export interface ProxyLookupParams {
-    host: string;
-    port: number;
-    user?: string;
-    password?: string;
-}
-interface ProxyLookupDto {
-    ip: string;
-    isMobile: boolean;
-    latitude: number;
-    longitude: number;
-    city?: string;
-    country?: string;
-    countryCode?: string;
-    region?: string;
-    timezone?: string;
-    carrier?: { mcc?: string; mnc?: string; name?: string };
-}
-
 interface ProxyEnvelopeDto {
     data: ProxyConfigDto;
     message?: string;
@@ -63,5 +44,4 @@ export interface ProxiesBackend {
     createProxy(params: CreateProxyParams): Promise<ProxyEnvelopeDto>;
     updateProxy(proxyId: string, params: UpdateProxyParams): Promise<ProxyEnvelopeDto>;
     deleteProxy(proxyId: string): Promise<ProxyEnvelopeDto>;
-    lookupProxy(params: ProxyLookupParams): Promise<ProxyLookupDto>;
 }

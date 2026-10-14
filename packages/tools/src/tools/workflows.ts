@@ -11,7 +11,6 @@ import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
 const LIST_RESOURCES = [
     'action_catalog',
-    'app_event_catalog',
     'action',
     'trigger',
     'flow',
@@ -25,7 +24,7 @@ const GET_RESOURCES = ['action_catalog', 'action', 'trigger', 'flow', 'execution
 type GetResource = (typeof GET_RESOURCES)[number];
 
 type ListFilters = {
-    service?: 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks';
+    service?: 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks' | 'integrations_api';
     search?: string;
     activation?: 'event' | 'schedule' | 'custom';
     eventType?: string;
@@ -41,7 +40,6 @@ type ListFilters = {
 // A filter key outside a resource's allowed set is rejected rather than silently ignored.
 const ALLOWED_FILTERS: Record<ListResource, readonly (keyof ListFilters)[]> = {
     action_catalog: ['service'],
-    app_event_catalog: [],
     action: ['service', 'search', 'page', 'pageSize'],
     trigger: ['activation', 'eventType', 'search', 'page', 'pageSize'],
     flow: ['enabled', 'search', 'triggerId', 'page', 'pageSize'],
@@ -85,15 +83,17 @@ function disallowedFilterError(resource: ListResource, filters: ListFilters): st
     return null;
 }
 
-
 const flowActionBindingSchema = z
     .object({
         actionId: z.string(),
         position: z.number().int().min(0),
-        key: z.string().optional().describe(
-            'Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step\'s output from later ' +
-                'steps. Derived from the action if omitted.',
-        ),
+        key: z
+            .string()
+            .optional()
+            .describe(
+                "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later " +
+                    'steps. Derived from the action if omitted.',
+            ),
     })
     .strict();
 
@@ -103,10 +103,16 @@ const flowDeviceIdsSchema = z
     .describe('Owned device ids on which device-bound steps may run. Required for a runnable device workflow.');
 
 export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
-    const serviceFilter = z.enum(['tasks_api', 'devices_api', 'agents_api', 'webhooks']);
+    const serviceFilter = z.enum(['tasks_api', 'devices_api', 'agents_api', 'webhooks', 'integrations_api']);
 
-    const listResourceValues = narrowedValues(LIST_RESOURCES, ctx.policy.operationAllowlist?.get('list_workflow_resources'));
-    const getResourceValues = narrowedValues(GET_RESOURCES, ctx.policy.operationAllowlist?.get('get_workflow_resource'));
+    const listResourceValues = narrowedValues(
+        LIST_RESOURCES,
+        ctx.policy.operationAllowlist?.get('list_workflow_resources'),
+    );
+    const getResourceValues = narrowedValues(
+        GET_RESOURCES,
+        ctx.policy.operationAllowlist?.get('get_workflow_resource'),
+    );
 
     server.registerTool(
         'list_workflow_resources',
@@ -116,15 +122,13 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
                 'own filter subset — a filter only valid for a DIFFERENT resource is rejected naming what is ' +
                 'allowed here. `resource` values:\n' +
                 '- action_catalog (filters: service): every available workflow step.\n' +
-                '- app_event_catalog (no filters): the static selectable app event catalog with event type, label, app, source event, and payload fields. Call this BEFORE create_trigger with activation ' +
-                '"event" — never guess an app.*/system.* type.\n' +
                 "- action (filters: service, search, page, pageSize): the user's saved actions (configured " +
                 'catalog instances) — slim overview; call get_workflow_resource(resource="action") for full params.\n' +
                 "- trigger (filters: activation, eventType, search, page, pageSize): the user's triggers.\n" +
                 "- flow (filters: enabled, search, triggerId, page, pageSize): the user's automation flows.\n" +
                 '- execution (filters: flowId, triggerId, status, limit): flow executions.\n' +
                 '- service (no filters): the workflow-action service identifiers (e.g. tasks_api, devices_api) ' +
-                "usable as the `service` filter elsewhere in this tool.\n" +
+                'usable as the `service` filter elsewhere in this tool.\n' +
                 '- service_methods (filter REQUIRED: service): the methods a given service supports, each with ' +
                 'its param schema — background info on what an action_catalog entry for that service can do.' +
                 allowedValuesNote(listResourceValues, LIST_RESOURCES),
@@ -156,8 +160,6 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
             switch (resource) {
                 case 'action_catalog':
                     return asTextResult(await ctx.backend.workflows.listActionCatalog({ service: filters.service }));
-                case 'app_event_catalog':
-                    return asTextResult(await ctx.backend.workflows.listAppEventCatalog());
                 case 'action':
                     return asTextResult(
                         await ctx.backend.workflows.listActions({
@@ -210,7 +212,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
         {
             description:
                 'Fetch one workflow resource by id, chosen via `resource` (action_catalog | action | trigger ' +
-                '| flow | execution — app_event_catalog has no get, only list). Returns full config/params, ' +
+                '| flow | execution). Returns full config/params, ' +
                 'unlike the slim list projections.' +
                 allowedValuesNote(getResourceValues, GET_RESOURCES),
             inputSchema: {

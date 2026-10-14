@@ -22,7 +22,14 @@ const DEVICE_STATES = [
 
 // @mobilerun/sdk's DeviceCreateParams.deviceType / DeviceListParams.type union
 // (verified against the SDK's shipped .d.ts).
-const DEVICE_TYPES = ['dedicated_physical_device', 'dedicated_premium_device', 'dedicated_ios_device'] as const;
+const DEVICE_TYPES = [
+    'android_cloud_phone',
+    'android_physical_phone',
+    'ios_stealth_phone',
+    'android_emulator',
+    'ios_simulator',
+    'device_slot',
+] as const;
 
 const DEFAULT_LIST_STATES = DEVICE_STATES.filter((state) => state !== 'terminated');
 
@@ -93,13 +100,17 @@ export function registerDeviceTools(server: McpServer, ctx: ToolCtx): void {
                 includeAll: z
                     .boolean()
                     .optional()
-                    .describe('Include layout containers too, not just actionable/labeled nodes. Still capped + redacted.'),
+                    .describe(
+                        'Include layout containers too, not just actionable/labeled nodes. Still capped + redacted.',
+                    ),
                 offset: z
                     .number()
                     .int()
                     .min(0)
                     .optional()
-                    .describe('0-based start into the kept-node list, for paging. Pass the `nextOffset` from a prior `hasMore` result.'),
+                    .describe(
+                        '0-based start into the kept-node list, for paging. Pass the `nextOffset` from a prior `hasMore` result.',
+                    ),
             },
         },
         async ({ deviceId, contains, resourceId, includeAll, offset }) => {

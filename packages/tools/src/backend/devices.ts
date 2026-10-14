@@ -19,7 +19,13 @@ export type DeviceState =
 
 // Mirrors @mobilerun/sdk's DeviceCreateParams.deviceType / DeviceListParams.type
 // union exactly (verified against the SDK's shipped .d.ts — see SdkBackend).
-export type DeviceType = 'dedicated_physical_device' | 'dedicated_premium_device' | 'dedicated_ios_device';
+export type DeviceType =
+    | 'android_cloud_phone'
+    | 'android_physical_phone'
+    | 'ios_stealth_phone'
+    | 'android_emulator'
+    | 'ios_simulator'
+    | 'device_slot';
 
 export interface ListDevicesOpts {
     state?: readonly DeviceState[];

@@ -6,7 +6,7 @@ import type { ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
-const PROXIES_OPERATIONS = ['list', 'get', 'create', 'update', 'delete', 'lookup'] as const;
+const PROXIES_OPERATIONS = ['list', 'get', 'create', 'update', 'delete'] as const;
 const proxiesOperationSchema = z.enum(PROXIES_OPERATIONS);
 const proxyProtocolSchema = z.enum(['socks5', 'wireguard']);
 
@@ -20,8 +20,6 @@ type ProxiesToolInput = {
     user?: string;
     password?: string;
     config?: string;
-    lookupUser?: string;
-    lookupPassword?: string;
 };
 
 function requireValue<T>(value: T | undefined, name: string, operation: string): T {
@@ -54,15 +52,6 @@ async function executeProxiesOperation(input: ProxiesToolInput, ctx: ToolCtx): P
 
     if (operation === 'list') return backend.listProxies({ protocol: input.protocol });
 
-    if (operation === 'lookup') {
-        return backend.lookupProxy({
-            host: requireValue(input.host, 'host', operation),
-            port: requireValue(input.port, 'port', operation),
-            user: input.lookupUser,
-            password: input.lookupPassword,
-        });
-    }
-
     if (operation === 'create') return backend.createProxy(buildProxyParams(input, operation));
 
     const proxyId = requireValue(input.proxyId, 'proxyId', operation);
@@ -81,21 +70,21 @@ export function registerProxiesTools(server: McpServer, ctx: ToolCtx): void {
             description:
                 'Manage device-bound proxy configs (socks5 or wireguard) — the outbound network path a device can be assigned. ' +
                 'Operations: list, get, create (protocol + either socks5:{host,port,user,password} or wireguard:{config}, both ' +
-                'also need name), update (same shape as create), delete, lookup (resolve IP/geo/carrier for a socks5 endpoint — ' +
-                'does not require an existing proxy record).' +
+                'also need name), update (same shape as create), delete.' +
                 allowedValuesNote(operationValues, PROXIES_OPERATIONS),
             inputSchema: {
                 operation: proxiesOperationSchema,
                 proxyId: z.string().optional(),
                 protocol: proxyProtocolSchema.optional(),
                 name: z.string().optional().describe('Required for create/update.'),
-                host: z.string().optional().describe('Required for protocol=socks5 on create/update, or for operation=lookup.'),
-                port: z.number().int().positive().optional().describe('Required for protocol=socks5 on create/update, or for operation=lookup.'),
+                host: z.string().optional().describe('Required for protocol=socks5 on create/update.'),
+                port: z.number().int().positive().optional().describe('Required for protocol=socks5 on create/update.'),
                 user: z.string().optional().describe('Required for protocol=socks5 on create/update.'),
                 password: z.string().optional().describe('Required for protocol=socks5 on create/update.'),
-                config: z.string().optional().describe('Wireguard config text. Required for protocol=wireguard on create/update.'),
-                lookupUser: z.string().optional().describe('Optional socks5 auth for operation=lookup.'),
-                lookupPassword: z.string().optional().describe('Optional socks5 auth for operation=lookup.'),
+                config: z
+                    .string()
+                    .optional()
+                    .describe('Wireguard config text. Required for protocol=wireguard on create/update.'),
             },
         },
         async (input) => asTextResult(await executeProxiesOperation(input as ProxiesToolInput, ctx)),
