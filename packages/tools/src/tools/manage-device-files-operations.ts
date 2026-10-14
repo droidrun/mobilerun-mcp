@@ -22,7 +22,6 @@ export const MANAGE_FILES_TABLE = [
     operation({
         op: 'list',
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
-        fieldOrder: 0,
         access: 'read',
         doc: "List directory entries at path.",
         run: async (ctx, input) => {
@@ -34,7 +33,6 @@ export const MANAGE_FILES_TABLE = [
     operation({
         op: 'upload',
         input: { contentBase64: z.string().max(MAX_INLINE_BASE64_CHARS).optional(), fileName: z.string().optional(), contentType: z.string().optional(), deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
-        fieldOrder: 1,
         access: 'write',
         doc: `Write contentBase64 to path; decoded payload capped at ${MAX_INLINE_FILE_BYTES / 1024}KB, larger files are rejected.`,
         run: async (ctx, input) => {
@@ -58,7 +56,6 @@ export const MANAGE_FILES_TABLE = [
     operation({
         op: 'download',
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
-        fieldOrder: 2,
         access: 'read',
         doc: "Read path; oversized results are rejected with the same inline transfer limit.",
         run: async (ctx, input) => {
@@ -76,7 +73,6 @@ export const MANAGE_FILES_TABLE = [
     operation({
         op: 'delete',
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
-        fieldOrder: 3,
         access: 'write',
         doc: "Delete path.",
         run: async (ctx, input) => {

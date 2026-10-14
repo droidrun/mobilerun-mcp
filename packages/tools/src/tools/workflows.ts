@@ -202,12 +202,11 @@ type ListFilters = {
     limit?: number;
 };
 // A filter key outside a resource's allowed set is rejected rather than silently ignored.
-const ALLOWED_FILTERS = operationFields(LIST_WORKFLOW_RESOURCES_TABLE);
+const { byOperation: ALLOWED_FILTERS, keys: FILTER_KEYS } = operationFields(LIST_WORKFLOW_RESOURCES_TABLE);
 // Unlike ALLOWED_FILTERS (which rejects an extra filter), this marks a
 // filter as REQUIRED for a resource — service_methods has no meaning
 // without a target service.
 const REQUIRED_FILTERS = Object.fromEntries(LIST_WORKFLOW_RESOURCES_TABLE.map(({ op, required }) => [op, required]));
-const FILTER_KEYS = Object.keys(operationInput(LIST_WORKFLOW_RESOURCES_TABLE, LIST_WORKFLOW_RESOURCES_SHARED_FIELDS));
 const flowActionBindingSchema = z
     .object({
         actionId: z.string(),

@@ -10,10 +10,6 @@ export type Operation<Input, Result = unknown> = {
     op: string;
     input: z.ZodRawShape;
     required?: readonly string[];
-    /** Retains the established order of fields in validation errors. */
-    fieldOrder?: number;
-    /** Preserve repeated legacy allowlist entries in validation error text. */
-    fieldRepeats?: readonly string[];
     access: 'read' | 'write' | 'commerce';
     /** Assistant writes retain their existing full-profile gate. */
     fullOnly?: boolean;
@@ -22,7 +18,7 @@ export type Operation<Input, Result = unknown> = {
 };
 type SurfaceOperation = Pick<
     Operation<never>,
-    'op' | 'input' | 'access' | 'fullOnly' | 'doc' | 'fieldOrder' | 'fieldRepeats'
+    'op' | 'input' | 'access' | 'fullOnly' | 'doc'
 >;
 export function operationValues<T extends SurfaceOperation>(table: readonly T[]): [T['op'], ...T['op'][]] {
     if (table.length === 0) throw new Error('An operation table must not be empty');
@@ -53,12 +49,10 @@ export function operationInput<Table extends readonly SurfaceOperation[], Shared
 export function operationDescription(table: readonly SurfaceOperation[]): string {
     return table.map(({ op, doc }) => `${op}: ${doc}`).join(' ');
 }
-export function operationFields<T extends SurfaceOperation>(table: readonly T[]): Record<T['op'], readonly string[]> {
-    return Object.fromEntries(
-        [...table]
-            .sort((a, b) => (a.fieldOrder ?? 0) - (b.fieldOrder ?? 0))
-            .map(({ op, input, fieldRepeats }) => [op, [...Object.keys(input), ...(fieldRepeats ?? [])]]),
-    ) as unknown as Record<T['op'], readonly string[]>;
+/** Per-operation fields and the deduplicated union, both in table order. */
+export function operationFields<T extends SurfaceOperation>(table: readonly T[]) {
+    const byOperation = Object.fromEntries(table.map(({ op, input }) => [op, Object.keys(input)])) as Record<T['op'], readonly string[]>;
+    return { byOperation, keys: [...new Set(Object.values<readonly string[]>(byOperation).flat())] };
 }
 export async function runOperation<Table extends readonly (SurfaceOperation & { run: (ctx: ToolCtx, input: never) => Promise<unknown> })[]>(
     table: Table,
@@ -71,7 +65,7 @@ export async function runOperation<Table extends readonly (SurfaceOperation & { 
     return await entry.run(ctx, { ...input, operation: op } as never) as Awaited<ReturnType<Table[number]['run']>>;
 }
 
-type SdkMetadata = Pick<Operation<never>, 'doc' | 'fieldOrder' | 'fieldRepeats' | 'required'>;
+type SdkMetadata = Pick<Operation<never>, 'doc' | 'required'>;
 
 /** Pure SDK passthrough, with an optional device path argument and stripped body. */
 export function sdkOp<const Op extends string, S extends z.ZodRawShape, Device extends z.ZodType<string | undefined> | undefined = undefined>(
@@ -111,9 +105,9 @@ export function registerBundle(server: McpServer, ctx: ToolCtx, name: string, ta
     const values = narrowedValues(all, ctx.policy.operationAllowlist?.get(name));
     const field = opts.field ?? 'operation';
     const fields = operationInput(table, opts.shared ?? {});
-    const allowed = operationFields(table);
+    const { byOperation: allowed, keys: fieldKeys } = operationFields(table);
     const common = Object.keys(fields).filter((key) => !fields[key]!.isOptional());
-    const keys = Object.keys(fields).filter((key) => !common.includes(key));
+    const keys = fieldKeys.filter((key) => !common.includes(key));
     server.registerTool(name, {
         description: opts.intro + ' ' + operationDescription(table) + allowedValuesNote(values, all),
         // Keep the FULL enum: policy denials must reach enforcePolicy, before any backend call.

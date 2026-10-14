@@ -253,7 +253,7 @@ describe('device-control bundle tools', () => {
 });
 
 
-test('device validation preserves field ordering and legacy repeated allowlist text', async () => {
+test('device validation follows table order and deduplicates allowed fields', async () => {
     const backend = stubBackend();
     const { client } = await connectedClient(ctxWith(backend));
     try {
@@ -263,7 +263,7 @@ test('device validation preserves field ordering and legacy repeated allowlist t
         });
         expect(result.isError).toBe(true);
         expect(textOf(result)).toBe(
-            'field text, x is not valid for operation=clipboard_get; allowed fields: displayId, displayId',
+            'field x, text is not valid for operation=clipboard_get; allowed fields: displayId',
         );
         expect(backend.calls).toHaveLength(0);
     } finally {

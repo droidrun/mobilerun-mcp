@@ -62,13 +62,12 @@ export const MANAGE_DEVICE_SHARED_FIELDS = {
 
 export const MANAGE_DEVICE_INTRO = "Device lifecycle, recordings, screenshots, traffic capture and camera/microphone streams.";
 export const MANAGE_DEVICE_TABLE = [
-    sdkOp('recordings_trajectory', manageDeviceRecordingsTrajectorySchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsTrajectory(deviceId, params), 'read', { fieldOrder: 0, doc: "Read a short-lived signed download URL for a recording trajectory.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('recordings_video', manageDeviceRecordingsVideoSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsVideo(deviceId, params), 'read', { fieldOrder: 1, doc: "Read a short-lived signed video download URL.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('screenshots_image', manageDeviceScreenshotsImageSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsImage(deviceId, params), 'read', { fieldOrder: 2, doc: "Read a short-lived signed image download URL.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_trajectory', manageDeviceRecordingsTrajectorySchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsTrajectory(deviceId, params), 'read', { doc: "Read a short-lived signed download URL for a recording trajectory.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_video', manageDeviceRecordingsVideoSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsVideo(deviceId, params), 'read', { doc: "Read a short-lived signed video download URL.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('screenshots_image', manageDeviceScreenshotsImageSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsImage(deviceId, params), 'read', { doc: "Read a short-lived signed image download URL.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'reboot',
         input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 24,
         access: 'write',
         doc: "Reboot a device.",
         run: async (ctx, input) => {
@@ -82,7 +81,6 @@ export const MANAGE_DEVICE_TABLE = [
     operation({
         op: 'reset',
         input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 25,
         access: 'write',
         doc: "Factory-reset a device to a fresh state (destructive).",
         run: async (ctx, input) => {
@@ -96,7 +94,6 @@ export const MANAGE_DEVICE_TABLE = [
     operation({
         op: 'rename',
         input: { name: MANAGE_DEVICE_SHARED_FIELDS.name, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 26,
         access: 'write',
         doc: "Rename a device; requires name.",
         run: async (ctx, input) => {
@@ -112,7 +109,6 @@ export const MANAGE_DEVICE_TABLE = [
     operation({
         op: 'wait_ready',
         input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 27,
         access: 'read',
         doc: "Block until state=ready.",
         run: async (ctx, input) => {
@@ -127,7 +123,6 @@ export const MANAGE_DEVICE_TABLE = [
     operation({
         op: 'get_capabilities',
         input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 28,
         access: 'read',
         doc: "Read the device profile: carrier, display, identifiers and model.",
         run: async (ctx, input) => {
@@ -137,11 +132,10 @@ export const MANAGE_DEVICE_TABLE = [
             return asTextResult(await backend.getDeviceCapabilities(deviceId));
         },
     }),
-    sdkOp('count', z.object({}), (ctx, params) => ctx.backend.deviceControl.countDevices(), 'read', { fieldOrder: 29, doc: "Read claimed-device counts by state without deviceId." }),
+    sdkOp('count', z.object({}), (ctx, params) => ctx.backend.deviceControl.countDevices(), 'read', { doc: "Read claimed-device counts by state without deviceId." }),
     operation({
         op: 'stop',
         input: { ...manageDeviceStopSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 3,
         access: 'commerce',
         doc: "Stop a device; affects device billing.",
         run: async (ctx, input) => {
@@ -155,7 +149,6 @@ export const MANAGE_DEVICE_TABLE = [
     operation({
         op: 'resume',
         input: { ...manageDeviceResumeSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 4,
         access: 'commerce',
         doc: "Resume a device; affects device billing.",
         run: async (ctx, input) => {
@@ -166,11 +159,10 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    sdkOp('summary', manageDeviceSummarySchema, (ctx, params) => ctx.backend.deviceControl.manageDeviceSummary(params), 'read', { fieldOrder: 5, doc: "Read account usage without deviceId." }),
+    sdkOp('summary', manageDeviceSummarySchema, (ctx, params) => ctx.backend.deviceControl.manageDeviceSummary(params), 'read', { doc: "Read account usage without deviceId." }),
     operation({
         op: 'retrieve_capabilities',
         input: { ...manageDeviceRetrieveCapabilitiesSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 6,
         access: 'read',
         doc: "Read supported device features.",
         run: async (ctx, input) => {
@@ -181,18 +173,17 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    sdkOp('recordings_list', manageDeviceRecordingsListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsList(deviceId, params), 'read', { fieldOrder: 7, doc: "List device recordings.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('recordings_delete', manageDeviceRecordingsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsDelete(deviceId, params), 'write', { fieldOrder: 8, doc: "Delete a recording.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('recordings_screenshots', manageDeviceRecordingsScreenshotsSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsScreenshots(deviceId, params), 'read', { fieldOrder: 9, doc: "Read recording screenshot metadata.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('recordings_start', manageDeviceRecordingsStartSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStart(deviceId, params), 'write', { fieldOrder: 10, doc: "Start a recording.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('recordings_status', manageDeviceRecordingsStatusSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStatus(deviceId, params), 'read', { fieldOrder: 11, doc: "Read recording status.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('recordings_stop', manageDeviceRecordingsStopSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStop(deviceId, params), 'write', { fieldOrder: 12, doc: "Stop a recording.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('screenshots_list', manageDeviceScreenshotsListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsList(deviceId, params), 'read', { fieldOrder: 13, doc: "List stored screenshots.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('screenshots_delete', manageDeviceScreenshotsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsDelete(deviceId, params), 'write', { fieldOrder: 14, doc: "Delete a stored screenshot.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_list', manageDeviceRecordingsListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsList(deviceId, params), 'read', { doc: "List device recordings.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_delete', manageDeviceRecordingsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsDelete(deviceId, params), 'write', { doc: "Delete a recording.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_screenshots', manageDeviceRecordingsScreenshotsSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsScreenshots(deviceId, params), 'read', { doc: "Read recording screenshot metadata.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_start', manageDeviceRecordingsStartSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStart(deviceId, params), 'write', { doc: "Start a recording.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_status', manageDeviceRecordingsStatusSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStatus(deviceId, params), 'read', { doc: "Read recording status.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('recordings_stop', manageDeviceRecordingsStopSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsStop(deviceId, params), 'write', { doc: "Stop a recording.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('screenshots_list', manageDeviceScreenshotsListSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsList(deviceId, params), 'read', { doc: "List stored screenshots.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('screenshots_delete', manageDeviceScreenshotsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsDelete(deviceId, params), 'write', { doc: "Delete a stored screenshot.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'screenshots_capture',
         input: { ...manageDeviceScreenshotsCaptureSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 15,
         access: 'write',
         doc: "Capture a PNG image up to 256 KB; save stores device media.",
         run: async (ctx, input) => {
@@ -204,11 +195,10 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    sdkOp('traffic_sessions_create', manageDeviceTrafficSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsCreate(deviceId, params), 'write', { fieldOrder: 16, doc: "Create a traffic session to capture network activity.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('traffic_sessions_create', manageDeviceTrafficSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsCreate(deviceId, params), 'write', { doc: "Create a traffic session to capture network activity.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'traffic_sessions_retrieve',
         input: { ...manageDeviceTrafficSessionsRetrieveSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 17,
         access: 'read',
         doc: "Read a traffic session.",
         run: async (ctx, input) => {
@@ -226,7 +216,6 @@ export const MANAGE_DEVICE_TABLE = [
     operation({
         op: 'traffic_sessions_list',
         input: { ...manageDeviceTrafficSessionsListSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 18,
         access: 'read',
         doc: "List traffic sessions.",
         run: async (ctx, input) => {
@@ -241,14 +230,13 @@ export const MANAGE_DEVICE_TABLE = [
             );
         },
     }),
-    sdkOp('traffic_sessions_delete', manageDeviceTrafficSessionsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(deviceId, params), 'write', { fieldOrder: 19, doc: "Delete a traffic session.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('media_sessions_create', manageDeviceMediaSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsCreate(deviceId, params), 'write', { fieldOrder: 20, doc: "Create a camera or microphone stream.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('media_sessions_delete', manageDeviceMediaSessionsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsDelete(deviceId, params), 'write', { fieldOrder: 21, doc: "Delete a media session.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
-    sdkOp('media_sessions_activate', manageDeviceMediaSessionsActivateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsActivate(deviceId, params), 'write', { fieldOrder: 22, doc: "Activate a media session.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('traffic_sessions_delete', manageDeviceTrafficSessionsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(deviceId, params), 'write', { doc: "Delete a traffic session.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('media_sessions_create', manageDeviceMediaSessionsCreateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsCreate(deviceId, params), 'write', { doc: "Create a camera or microphone stream.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('media_sessions_delete', manageDeviceMediaSessionsDeleteSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsDelete(deviceId, params), 'write', { doc: "Delete a media session.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
+    sdkOp('media_sessions_activate', manageDeviceMediaSessionsActivateSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsActivate(deviceId, params), 'write', { doc: "Activate a media session.", deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId }),
     operation({
         op: 'media_sessions_retrieve_current',
         input: { ...manageDeviceMediaSessionsRetrieveCurrentSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        fieldOrder: 23,
         access: 'read',
         doc: "Read the current media session.",
         run: async (ctx, input) => {

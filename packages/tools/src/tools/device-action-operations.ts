@@ -33,7 +33,6 @@ export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'tap',
         input: { x: z.number().optional(), y: z.number().optional(), pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 4,
         access: 'write',
         doc: "Tap x, y.",
         run: async (ctx, input) => {
@@ -54,7 +53,6 @@ export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'swipe',
         input: { startX: z.number().optional(), startY: z.number().optional(), endX: z.number().optional(), endY: z.number().optional(), duration: z.number().int().positive().optional().describe('Swipe duration in milliseconds.'), pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 5,
         access: 'write',
         doc: "Swipe startX, startY to endX, endY with duration in milliseconds.",
         run: async (ctx, input) => {
@@ -86,7 +84,6 @@ export const DEVICE_ACTION_TABLE = [
         .number()
         .optional()
         .describe('keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.'), displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 6,
         access: 'write',
         doc: "Type text with optional clear, errorRate, wpm and pacedInput.",
         run: async (ctx, input) => {
@@ -109,7 +106,6 @@ export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'keyboard_key',
         input: { key: z.number().int().optional().describe('keyboard_key: Android keycode.'), displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 7,
         access: 'write',
         doc: "Send an Android keycode.",
         run: async (ctx, input) => {
@@ -127,7 +123,6 @@ export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'keyboard_clear',
         input: { displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 8,
         access: 'write',
         doc: "Clear keyboard input.",
         run: async (ctx, input) => {
@@ -141,7 +136,6 @@ export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'global_action',
         input: { action: DEVICE_ACTION_SHARED_FIELDS.action, displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
-        fieldOrder: 9,
         access: 'write',
         doc: "Send an Android global-action code, e.g. back/home/recents.",
         run: async (ctx, input) => {
@@ -159,8 +153,8 @@ export const DEVICE_ACTION_TABLE = [
             return asTextResult({ status: 'ok', operation, deviceId });
         },
     }),
-    sdkOp('clipboard_get', deviceActionClipboardGetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardGet(deviceId, params), 'read', { fieldOrder: 0, fieldRepeats: ['displayId'], doc: "Read clipboard text.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
-    sdkOp('clipboard_set', deviceActionClipboardSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardSet(deviceId, params), 'write', { fieldOrder: 1, fieldRepeats: ['displayId'], doc: "Write clipboard text.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
-    sdkOp('deep_link', deviceActionDeepLinkSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionDeepLink(deviceId, params), 'write', { fieldOrder: 2, fieldRepeats: ['displayId'], doc: "Open a URL or app link.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
-    sdkOp('browser_script', deviceActionBrowserScriptSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionBrowserScript(deviceId, params), 'write', { fieldOrder: 3, fieldRepeats: ['displayId'], doc: "Run a script in the device browser.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('clipboard_get', deviceActionClipboardGetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardGet(deviceId, params), 'read', { doc: "Read clipboard text.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('clipboard_set', deviceActionClipboardSetSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardSet(deviceId, params), 'write', { doc: "Write clipboard text.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('deep_link', deviceActionDeepLinkSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionDeepLink(deviceId, params), 'write', { doc: "Open a URL or app link.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
+    sdkOp('browser_script', deviceActionBrowserScriptSchema, (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionBrowserScript(deviceId, params), 'write', { doc: "Run a script in the device browser.", deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId }),
 ] as const;
