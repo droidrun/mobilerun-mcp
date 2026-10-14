@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -51,24 +50,17 @@ const fieldTypeSchema = z.enum([
     'two_factor_secret',
     'backup_codes',
 ]);
-const MANAGE_CREDENTIALS_INPUT_FIELDS = {
-    ...manageCredentialsGetSchema.partial().shape,
+const MANAGE_CREDENTIALS_SHARED_FIELDS = {
     packageName: z.string().min(1).max(256).optional(),
     credentialName: z.string().min(1).max(256).optional(),
     fieldType: fieldTypeSchema.optional(),
     value: z.string().min(1).max(4096).optional(),
-    fields: z
-        .array(z.object({ fieldType: fieldTypeSchema, value: z.string().min(1).max(4096) }))
-        .min(1)
-        .optional(),
 };
-type ManageCredentialsInput = z.infer<z.ZodObject<typeof MANAGE_CREDENTIALS_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const MANAGE_CREDENTIALS_TABLE = [
-    {
+    operation({
         op: 'init_package',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName']),
+        input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName },
         access: 'write',
         describe: {
             order: 0,
@@ -81,10 +73,13 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 packageName: requireValue(input.packageName, 'packageName', operation, 'manage_credentials'),
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'create_credential',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fields']),
+        input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fields: z
+        .array(z.object({ fieldType: fieldTypeSchema, value: z.string().min(1).max(4096) }))
+        .min(1)
+        .optional() },
         access: 'write',
         describe: { order: 1, text: 'create_credential (packageName, credentialName, fields[{fieldType, value}]), ' },
         run: async (ctx, input) => {
@@ -97,10 +92,10 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 fields: requireValue(input.fields, 'fields', operation, 'manage_credentials'),
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete_credential',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName']),
+        input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName },
         access: 'write',
         describe: { order: 2, text: 'delete_credential (packageName, credentialName), ' },
         run: async (ctx, input) => {
@@ -115,10 +110,10 @@ export const MANAGE_CREDENTIALS_TABLE = [
             );
             return backend.deleteCredential({ packageName, credentialName });
         },
-    },
-    {
+    }),
+    operation({
         op: 'add_field',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fieldType', 'value']),
+        input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType, value: MANAGE_CREDENTIALS_SHARED_FIELDS.value },
         access: 'write',
         describe: { order: 3, text: 'add_field (packageName, credentialName, fieldType, value), ' },
         run: async (ctx, input) => {
@@ -139,10 +134,10 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 value: requireValue(input.value, 'value', operation, 'manage_credentials'),
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'update_field',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fieldType', 'value']),
+        input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType, value: MANAGE_CREDENTIALS_SHARED_FIELDS.value },
         access: 'write',
         describe: { order: 4, text: 'update_field (packageName, credentialName, fieldType, value), ' },
         run: async (ctx, input) => {
@@ -163,10 +158,10 @@ export const MANAGE_CREDENTIALS_TABLE = [
                 value: requireValue(input.value, 'value', operation, 'manage_credentials'),
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete_field',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, ['packageName', 'credentialName', 'fieldType']),
+        input: { packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType },
         access: 'write',
         describe: {
             order: 5,
@@ -185,17 +180,17 @@ export const MANAGE_CREDENTIALS_TABLE = [
             const fieldType = requireValue(input.fieldType, 'fieldType', operation, 'manage_credentials');
             return backend.deleteField({ packageName, credentialName, fieldType });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get',
-        input: selectInput(MANAGE_CREDENTIALS_INPUT_FIELDS, [...Object.keys(manageCredentialsGetSchema.shape)]),
+        input: { ...manageCredentialsGetSchema.partial().shape, credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName, packageName: MANAGE_CREDENTIALS_SHARED_FIELDS.packageName },
         access: 'read',
         describe: { order: 6, text: 'get: Read credential metadata; secret values stay in storage.' },
         run: async (ctx, input) => {
             return ctx.backend.credentials.manageCredentialsGet(manageCredentialsGetSchema.strip().parse(input));
         },
-    },
-] as const satisfies readonly Operation<ManageCredentialsInput>[];
+    }),
+] as const;
 const MANAGE_CREDENTIALS_OPERATIONS = operationValues(MANAGE_CREDENTIALS_TABLE);
 
 export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): void {
@@ -211,7 +206,7 @@ export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): 
                 allowedValuesNote(operationValues, MANAGE_CREDENTIALS_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_CREDENTIALS_OPERATIONS),
-                ...operationInput(MANAGE_CREDENTIALS_TABLE, MANAGE_CREDENTIALS_INPUT_FIELDS),
+                ...operationInput(MANAGE_CREDENTIALS_TABLE, MANAGE_CREDENTIALS_SHARED_FIELDS),
             },
         },
         async (input) => asTextResult(await runOperation(MANAGE_CREDENTIALS_TABLE, input.operation, ctx, input)),

@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -18,7 +17,7 @@ import {
 import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
-const MESSAGES_INPUT_FIELDS = {
+const MESSAGES_SHARED_FIELDS = {
     direction: smsDirectionSchema.optional(),
     esimId: z.string().optional(),
     numberId: z.string().optional(),
@@ -37,13 +36,11 @@ const MESSAGES_INPUT_FIELDS = {
         .optional()
         .describe('Required for mark_read; cursor timestamp paired with upToMessageId.'),
 };
-type MessagesInput = z.infer<z.ZodObject<typeof MESSAGES_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const MESSAGES_TABLE = [
-    {
+    operation({
         op: 'list',
-        input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesListSchema.shape)]),
+        input: { ...messagesListSchema.partial().shape, direction: MESSAGES_SHARED_FIELDS.direction, esimId: MESSAGES_SHARED_FIELDS.esimId, numberId: MESSAGES_SHARED_FIELDS.numberId, page: MESSAGES_SHARED_FIELDS.page, pageSize: MESSAGES_SHARED_FIELDS.pageSize, peerKey: MESSAGES_SHARED_FIELDS.peerKey, peerNumber: MESSAGES_SHARED_FIELDS.peerNumber, status: MESSAGES_SHARED_FIELDS.status },
         access: 'read',
         describe: { order: 0, text: 'list: Read the organization SMS inbox. ' },
         run: async (ctx, raw) => {
@@ -51,10 +48,10 @@ export const MESSAGES_TABLE = [
             const backend = ctx.backend.messages;
             return asTextResult(await backend.messagesList(messagesListSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'get',
-        input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesGetSchema.shape)]),
+        input: { ...messagesGetSchema.partial().shape, messageId: MESSAGES_SHARED_FIELDS.messageId },
         access: 'read',
         describe: { order: 1, text: 'get: Read one SMS. ' },
         run: async (ctx, raw) => {
@@ -62,10 +59,10 @@ export const MESSAGES_TABLE = [
             const backend = ctx.backend.messages;
             return asTextResult(await backend.messagesGet(messagesGetSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'conversations',
-        input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesConversationsSchema.shape)]),
+        input: { ...messagesConversationsSchema.partial().shape, cursorLastMessageId: MESSAGES_SHARED_FIELDS.cursorLastMessageId, cursorLastOccurredAt: MESSAGES_SHARED_FIELDS.cursorLastOccurredAt, esimId: MESSAGES_SHARED_FIELDS.esimId, limit: MESSAGES_SHARED_FIELDS.limit, numberId: MESSAGES_SHARED_FIELDS.numberId },
         access: 'read',
         describe: {
             order: 2,
@@ -76,10 +73,10 @@ export const MESSAGES_TABLE = [
             const backend = ctx.backend.messages;
             return asTextResult(await backend.messagesConversations(messagesConversationsSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'mark_read',
-        input: selectInput(MESSAGES_INPUT_FIELDS, [...Object.keys(messagesMarkReadSchema.shape)]),
+        input: { ...messagesMarkReadSchema.partial().shape, peerKey: MESSAGES_SHARED_FIELDS.peerKey, upToMessageId: MESSAGES_SHARED_FIELDS.upToMessageId, upToOccurredAt: MESSAGES_SHARED_FIELDS.upToOccurredAt },
         access: 'write',
         describe: { order: 3, text: 'mark_read: Mark received SMS as read through a cursor.' },
         run: async (ctx, raw) => {
@@ -87,8 +84,8 @@ export const MESSAGES_TABLE = [
             const backend = ctx.backend.messages;
             return asTextResult(await backend.messagesMarkRead(messagesMarkReadSchema.strip().parse(input)));
         },
-    },
-] as const satisfies readonly Operation<MessagesInput>[];
+    }),
+] as const;
 const MESSAGES_OPERATIONS = operationValues(MESSAGES_TABLE);
 export function registerMessagesTools(server: McpServer, ctx: ToolCtx): void {
     const values = narrowedValues(MESSAGES_OPERATIONS, ctx.policy.operationAllowlist?.get('messages'));
@@ -98,7 +95,7 @@ export function registerMessagesTools(server: McpServer, ctx: ToolCtx): void {
             description: operationDescription(MESSAGES_TABLE) + allowedValuesNote(values, MESSAGES_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MESSAGES_OPERATIONS),
-                ...operationInput(MESSAGES_TABLE, MESSAGES_INPUT_FIELDS),
+                ...operationInput(MESSAGES_TABLE, MESSAGES_SHARED_FIELDS),
             },
         },
         async (input) => runOperation(MESSAGES_TABLE, input.operation, ctx, input),

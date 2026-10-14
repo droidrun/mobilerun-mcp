@@ -1,12 +1,11 @@
-import { MANAGE_DEVICE_INPUT_FIELDS, MANAGE_DEVICE_TABLE } from './manage-device-operations.js';
-import { DEVICE_ACTION_INPUT_FIELDS, DEVICE_ACTION_TABLE } from './device-action-operations.js';
-import { MANAGE_APPS_INPUT_FIELDS, MANAGE_APPS_TABLE } from './manage-device-apps-operations.js';
-import { MANAGE_FILES_INPUT_FIELDS, MANAGE_FILES_TABLE } from './manage-device-files-operations.js';
-import { CONFIGURE_DEVICE_INPUT_FIELDS, CONFIGURE_DEVICE_TABLE } from './configure-device-operations.js';
-import { MANAGE_ESIM_INPUT_FIELDS, MANAGE_ESIM_TABLE } from './manage-esim-operations.js';
+import { MANAGE_DEVICE_SHARED_FIELDS, MANAGE_DEVICE_TABLE } from './manage-device-operations.js';
+import { DEVICE_ACTION_SHARED_FIELDS, DEVICE_ACTION_TABLE } from './device-action-operations.js';
+import { MANAGE_APPS_SHARED_FIELDS, MANAGE_APPS_TABLE } from './manage-device-apps-operations.js';
+import { MANAGE_FILES_SHARED_FIELDS, MANAGE_FILES_TABLE } from './manage-device-files-operations.js';
+import { CONFIGURE_DEVICE_SHARED_FIELDS, CONFIGURE_DEVICE_TABLE } from './configure-device-operations.js';
+import { MANAGE_ESIM_SHARED_FIELDS, MANAGE_ESIM_TABLE } from './manage-esim-operations.js';
 import {
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -39,7 +38,7 @@ function registerManageDevice(server: McpServer, ctx: ToolCtx): void {
                 operationDescription(MANAGE_DEVICE_TABLE) + allowedValuesNote(values, MANAGE_DEVICE_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_DEVICE_OPERATIONS),
-                ...operationInput(MANAGE_DEVICE_TABLE, MANAGE_DEVICE_INPUT_FIELDS),
+                ...operationInput(MANAGE_DEVICE_TABLE, MANAGE_DEVICE_SHARED_FIELDS),
             },
         },
         async (input: { operation: ManageDeviceOperation; deviceId?: string; name?: string }) => {
@@ -72,8 +71,7 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
                 operation: z.enum(DEVICE_ACTION_OPERATIONS),
                 ...operationInput(
                     DEVICE_ACTION_TABLE,
-                    DEVICE_ACTION_INPUT_FIELDS,
-                    selectInput(DEVICE_ACTION_INPUT_FIELDS, ['deviceId']),
+                    DEVICE_ACTION_SHARED_FIELDS,
                 ),
             },
         },
@@ -112,8 +110,7 @@ function registerManageDeviceApps(server: McpServer, ctx: ToolCtx): void {
                 operation: z.enum(MANAGE_APPS_OPERATIONS),
                 ...operationInput(
                     MANAGE_APPS_TABLE,
-                    MANAGE_APPS_INPUT_FIELDS,
-                    selectInput(MANAGE_APPS_INPUT_FIELDS, ['deviceId']),
+                    MANAGE_APPS_SHARED_FIELDS,
                 ),
             },
         },
@@ -151,8 +148,7 @@ function registerManageDeviceFiles(server: McpServer, ctx: ToolCtx): void {
                 operation: z.enum(MANAGE_FILES_OPERATIONS),
                 ...operationInput(
                     MANAGE_FILES_TABLE,
-                    MANAGE_FILES_INPUT_FIELDS,
-                    selectInput(MANAGE_FILES_INPUT_FIELDS, ['deviceId', 'path']),
+                    MANAGE_FILES_SHARED_FIELDS,
                 ),
             },
         },
@@ -193,8 +189,7 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
                 operation: z.enum(CONFIGURE_DEVICE_OPERATIONS),
                 ...operationInput(
                     CONFIGURE_DEVICE_TABLE,
-                    CONFIGURE_DEVICE_INPUT_FIELDS,
-                    selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['deviceId']),
+                    CONFIGURE_DEVICE_SHARED_FIELDS,
                 ),
             },
         },
@@ -232,8 +227,7 @@ function registerManageEsim(server: McpServer, ctx: ToolCtx): void {
                 operation: z.enum(MANAGE_ESIM_OPERATIONS),
                 ...operationInput(
                     MANAGE_ESIM_TABLE,
-                    MANAGE_ESIM_INPUT_FIELDS,
-                    selectInput(MANAGE_ESIM_INPUT_FIELDS, ['deviceId']),
+                    MANAGE_ESIM_SHARED_FIELDS,
                 ),
             },
         },

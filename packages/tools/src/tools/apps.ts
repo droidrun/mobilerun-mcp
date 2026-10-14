@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -25,46 +24,17 @@ const appFileSchema = z.object({
     contentType: z.enum(['application/vnd.android.package-archive', 'application/octet-stream', 'application/zip']),
     sha256: z.string().optional(),
 });
-const APPS_INPUT_FIELDS = {
+const APPS_SHARED_FIELDS = {
     id: z.string().uuid().optional(),
-    query: z.string().optional().describe('Search filter for operation=list.'),
-    platform: z.enum(['all', 'android', 'ios']).optional().describe('Filter for operation=list.'),
-    status: z
+};
+
+export const APPS_TABLE = [
+    operation({
+        op: 'list',
+        input: { query: z.string().optional().describe('Search filter for operation=list.'), platform: z.enum(['all', 'android', 'ios']).optional().describe('Filter for operation=list.'), status: z
         .enum(['all', 'queued', 'available', 'failed', 'pruned'])
         .optional()
-        .describe('Filter for operation=list.'),
-    sortBy: z.enum(['createdAt', 'name']).optional(),
-    order: z.enum(['asc', 'desc']).optional(),
-    page: z.number().int().positive().optional(),
-    pageSize: z.number().int().positive().max(100).optional(),
-    bundleId: z.string().optional().describe('Required for operation=create_upload_url.'),
-    displayName: z.string().optional().describe('Required for operation=create_upload_url.'),
-    versionCode: z.number().int().optional().describe('Required for operation=create_upload_url.'),
-    versionName: z.string().optional().describe('Required for operation=create_upload_url.'),
-    sizeBytes: z
-        .number()
-        .int()
-        .positive()
-        .optional()
-        .describe('Total upload size in bytes. Required for operation=create_upload_url.'),
-    files: z.array(appFileSchema).min(1).optional().describe('Required for operation=create_upload_url.'),
-    uploadPlatform: z.enum(['android', 'ios']).optional().describe('App platform for operation=create_upload_url.'),
-    country: z
-        .string()
-        .optional()
-        .describe('Country code for search results. Optional for operation=create_upload_url.'),
-    description: z.string().optional(),
-    developerName: z.string().optional(),
-    iconURL: z.string().url().optional(),
-    targetSdk: z.number().int().optional(),
-};
-type AppsInput = z.infer<z.ZodObject<typeof APPS_INPUT_FIELDS>> & {
-    operation: string;
-};
-export const APPS_TABLE = [
-    {
-        op: 'list',
-        input: selectInput(APPS_INPUT_FIELDS, ['query', 'platform', 'status', 'sortBy', 'order', 'page', 'pageSize']),
+        .describe('Filter for operation=list.'), sortBy: z.enum(['createdAt', 'name']).optional(), order: z.enum(['asc', 'desc']).optional(), page: z.number().int().positive().optional(), pageSize: z.number().int().positive().max(100).optional() },
         access: 'read',
         describe: { order: 1, text: 'list, ' },
         run: async (ctx, input) => {
@@ -79,10 +49,10 @@ export const APPS_TABLE = [
                 pageSize: input.pageSize,
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get',
-        input: selectInput(APPS_INPUT_FIELDS, ['id']),
+        input: { id: APPS_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 2, text: 'get, versions (all versions visible to the user), ' },
         run: async (ctx, input) => {
@@ -91,10 +61,10 @@ export const APPS_TABLE = [
             const id = requireValue(input.id, 'id', operation, 'apps');
             return backend.getApp(id);
         },
-    },
-    {
+    }),
+    operation({
         op: 'versions',
-        input: selectInput(APPS_INPUT_FIELDS, ['id']),
+        input: { id: APPS_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 0, text: 'Manage uploaded apps (APKs) and inspect versions. Operations: ' },
         run: async (ctx, input) => {
@@ -103,23 +73,18 @@ export const APPS_TABLE = [
             const id = requireValue(input.id, 'id', operation, 'apps');
             return backend.listAppVersions(id);
         },
-    },
-    {
+    }),
+    operation({
         op: 'create_upload_url',
-        input: selectInput(APPS_INPUT_FIELDS, [
-            'bundleId',
-            'displayName',
-            'versionCode',
-            'versionName',
-            'sizeBytes',
-            'files',
-            'uploadPlatform',
-            'country',
-            'description',
-            'developerName',
-            'iconURL',
-            'targetSdk',
-        ]),
+        input: { bundleId: z.string().optional().describe('Required for operation=create_upload_url.'), displayName: z.string().optional().describe('Required for operation=create_upload_url.'), versionCode: z.number().int().optional().describe('Required for operation=create_upload_url.'), versionName: z.string().optional().describe('Required for operation=create_upload_url.'), sizeBytes: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Total upload size in bytes. Required for operation=create_upload_url.'), files: z.array(appFileSchema).min(1).optional().describe('Required for operation=create_upload_url.'), uploadPlatform: z.enum(['android', 'ios']).optional().describe('App platform for operation=create_upload_url.'), country: z
+        .string()
+        .optional()
+        .describe('Country code for search results. Optional for operation=create_upload_url.'), description: z.string().optional(), developerName: z.string().optional(), iconURL: z.string().url().optional(), targetSdk: z.number().int().optional() },
         access: 'write',
         describe: {
             order: 3,
@@ -143,10 +108,10 @@ export const APPS_TABLE = [
                 targetSdk: input.targetSdk,
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'confirm_upload',
-        input: selectInput(APPS_INPUT_FIELDS, ['id']),
+        input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
         describe: { order: 4, text: 'confirm_upload; call ' },
         run: async (ctx, input) => {
@@ -155,10 +120,10 @@ export const APPS_TABLE = [
             const id = requireValue(input.id, 'id', operation, 'apps');
             return backend.confirmAppUpload(id);
         },
-    },
-    {
+    }),
+    operation({
         op: 'mark_failed',
-        input: selectInput(APPS_INPUT_FIELDS, ['id']),
+        input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
         describe: {
             order: 5,
@@ -170,10 +135,10 @@ export const APPS_TABLE = [
             const id = requireValue(input.id, 'id', operation, 'apps');
             return backend.markAppUploadFailed(id);
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete',
-        input: selectInput(APPS_INPUT_FIELDS, ['id']),
+        input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
         describe: { order: 6, text: 'delete. Additional operations: ' },
         run: async (ctx, input) => {
@@ -182,17 +147,17 @@ export const APPS_TABLE = [
             const id = requireValue(input.id, 'id', operation, 'apps');
             return backend.deleteApp(id);
         },
-    },
-    {
+    }),
+    operation({
         op: 'storage_usage',
-        input: selectInput(APPS_INPUT_FIELDS, []),
+        input: {  },
         access: 'read',
         describe: { order: 7, text: 'storage_usage: Read app storage usage.' },
         run: async (ctx, input) => {
             return ctx.backend.apps.appsStorageUsage();
         },
-    },
-] as const satisfies readonly Operation<AppsInput>[];
+    }),
+] as const;
 const APPS_OPERATIONS = operationValues(APPS_TABLE);
 
 export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
@@ -201,7 +166,7 @@ export function registerAppsTools(server: McpServer, ctx: ToolCtx): void {
         'apps',
         {
             description: operationDescription(APPS_TABLE) + allowedValuesNote(operationValues, APPS_OPERATIONS),
-            inputSchema: { operation: z.enum(APPS_OPERATIONS), ...operationInput(APPS_TABLE, APPS_INPUT_FIELDS) },
+            inputSchema: { operation: z.enum(APPS_OPERATIONS), ...operationInput(APPS_TABLE, APPS_SHARED_FIELDS) },
         },
         async (input) => asTextResult(await runOperation(APPS_TABLE, input.operation, ctx, input)),
     );

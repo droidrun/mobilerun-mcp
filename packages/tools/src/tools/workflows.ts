@@ -1,8 +1,7 @@
 import {
-    type Operation,
+    operation,
     operationValues,
     operationInput,
-    selectInput,
     operationDescription,
     runOperation,
     operationFields,
@@ -20,26 +19,18 @@ import type { ToolCtx } from '../ctx.js';
 import { asErrorResult, asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 const serviceFilter = z.enum(['tasks_api', 'devices_api', 'agents_api', 'webhooks', 'integrations_api']);
-const LIST_WORKFLOW_RESOURCES_INPUT_FIELDS = {
+const LIST_WORKFLOW_RESOURCES_SHARED_FIELDS = {
     service: serviceFilter.optional(),
     search: z.string().optional().describe('Substring match on name.'),
-    activation: z.enum(['event', 'schedule', 'custom']).optional(),
-    eventType: z.string().optional(),
-    enabled: z.boolean().optional(),
     triggerId: z.string().optional(),
-    flowId: z.string().optional(),
-    status: z.enum(['pending', 'running', 'success', 'failed']).optional(),
     page: z.number().int().positive().optional(),
     pageSize: z.number().int().positive().max(100).optional(),
-    limit: z.number().int().positive().max(100).optional(),
 };
-type ListWorkflowResourcesInput = z.infer<z.ZodObject<typeof LIST_WORKFLOW_RESOURCES_INPUT_FIELDS>> & {
-    resource: string;
-};
+
 export const LIST_WORKFLOW_RESOURCES_TABLE = [
-    {
+    operation({
         op: 'action_catalog',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['service']),
+        input: { service: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.service },
         access: 'read',
         describe: {
             order: 0,
@@ -47,13 +38,13 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         },
         required: [],
         run: async (ctx, input) => {
-            const { resource, ...filters } = input;
+            const filters = input;
             return asTextResult(await ctx.backend.workflows.listActionCatalog({ service: filters.service }));
         },
-    },
-    {
+    }),
+    operation({
         op: 'action',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['service', 'search', 'page', 'pageSize']),
+        input: { service: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.service, search: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.search, page: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.page, pageSize: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: {
             order: 2,
@@ -61,7 +52,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         },
         required: [],
         run: async (ctx, input) => {
-            const { resource, ...filters } = input;
+            const filters = input;
             return asTextResult(
                 await ctx.backend.workflows.listActions({
                     service: filters.service,
@@ -71,16 +62,10 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
                 }),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'trigger',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, [
-            'activation',
-            'eventType',
-            'search',
-            'page',
-            'pageSize',
-        ]),
+        input: { activation: z.enum(['event', 'schedule', 'custom']).optional(), eventType: z.string().optional(), search: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.search, page: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.page, pageSize: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: {
             order: 3,
@@ -88,7 +73,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         },
         required: [],
         run: async (ctx, input) => {
-            const { resource, ...filters } = input;
+            const filters = input;
             return asTextResult(
                 await ctx.backend.workflows.listTriggers({
                     activation: filters.activation,
@@ -99,16 +84,10 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
                 }),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'flow',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, [
-            'enabled',
-            'search',
-            'triggerId',
-            'page',
-            'pageSize',
-        ]),
+        input: { enabled: z.boolean().optional(), search: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.search, triggerId: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.triggerId, page: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.page, pageSize: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: {
             order: 4,
@@ -116,7 +95,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         },
         required: [],
         run: async (ctx, input) => {
-            const { resource, ...filters } = input;
+            const filters = input;
             return asTextResult(
                 await ctx.backend.workflows.listFlows({
                     enabled: filters.enabled,
@@ -127,10 +106,10 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
                 }),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'execution',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['flowId', 'triggerId', 'status', 'limit']),
+        input: { flowId: z.string().optional(), triggerId: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.triggerId, status: z.enum(['pending', 'running', 'success', 'failed']).optional(), limit: z.number().int().positive().max(100).optional() },
         access: 'read',
         describe: {
             order: 5,
@@ -138,7 +117,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         },
         required: [],
         run: async (ctx, input) => {
-            const { resource, ...filters } = input;
+            const filters = input;
             return asTextResult(
                 await ctx.backend.workflows.listExecutions({
                     flowId: filters.flowId,
@@ -148,20 +127,20 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
                 }),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'service',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, []),
+        input: {  },
         access: 'read',
         describe: { order: 1, text: 'service): every available workflow step.\n- ' },
         required: [],
         run: async (ctx, input) => {
             return asTextResult(await ctx.backend.workflows.listServices());
         },
-    },
-    {
+    }),
+    operation({
         op: 'service_methods',
-        input: selectInput(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS, ['service']),
+        input: { service: LIST_WORKFLOW_RESOURCES_SHARED_FIELDS.service },
         access: 'read',
         describe: {
             order: 6,
@@ -169,67 +148,67 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         },
         required: ['service'],
         run: async (ctx, input) => {
-            const { resource, ...filters } = input;
+            const filters = input;
             return asTextResult(await ctx.backend.workflows.listServiceMethods(filters.service as string));
         },
-    },
-] as const satisfies readonly Operation<ListWorkflowResourcesInput, CallToolResult>[];
-const GET_WORKFLOW_RESOURCE_INPUT_FIELDS = { id: z.string() };
-type GetWorkflowResourceInput = z.infer<z.ZodObject<typeof GET_WORKFLOW_RESOURCE_INPUT_FIELDS>> & {
-    resource: string;
+    }),
+] as const;
+const GET_WORKFLOW_RESOURCE_SHARED_FIELDS = {
+    id: z.string(),
 };
+
 export const GET_WORKFLOW_RESOURCE_TABLE = [
-    {
+    operation({
         op: 'action_catalog',
-        input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
+        input: { id: GET_WORKFLOW_RESOURCE_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 0, text: 'Fetch one workflow resource by id, chosen via `resource` (action_catalog | ' },
         run: async (ctx, input) => {
             const { id } = input;
             return asTextResult(await ctx.backend.workflows.getActionCatalogEntry(id));
         },
-    },
-    {
+    }),
+    operation({
         op: 'action',
-        input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
+        input: { id: GET_WORKFLOW_RESOURCE_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 1, text: 'action | ' },
         run: async (ctx, input) => {
             const { id } = input;
             return asTextResult(await ctx.backend.workflows.getAction(id));
         },
-    },
-    {
+    }),
+    operation({
         op: 'trigger',
-        input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
+        input: { id: GET_WORKFLOW_RESOURCE_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 2, text: 'trigger | ' },
         run: async (ctx, input) => {
             const { id } = input;
             return asTextResult(await ctx.backend.workflows.getTrigger(id));
         },
-    },
-    {
+    }),
+    operation({
         op: 'flow',
-        input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
+        input: { id: GET_WORKFLOW_RESOURCE_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 3, text: 'flow | ' },
         run: async (ctx, input) => {
             const { id } = input;
             return asTextResult(await ctx.backend.workflows.getFlow(id));
         },
-    },
-    {
+    }),
+    operation({
         op: 'execution',
-        input: selectInput(GET_WORKFLOW_RESOURCE_INPUT_FIELDS, ['id']),
+        input: { id: GET_WORKFLOW_RESOURCE_SHARED_FIELDS.id },
         access: 'read',
         describe: { order: 4, text: 'execution). Returns full config/params, unlike the slim list projections.' },
         run: async (ctx, input) => {
             const { id } = input;
             return asTextResult(await ctx.backend.workflows.getExecution(id));
         },
-    },
-] as const satisfies readonly Operation<GetWorkflowResourceInput, CallToolResult>[];
+    }),
+] as const;
 const LIST_RESOURCES = operationValues(LIST_WORKFLOW_RESOURCES_TABLE);
 type ListResource = (typeof LIST_RESOURCES)[number];
 const GET_RESOURCES = operationValues(GET_WORKFLOW_RESOURCE_TABLE);
@@ -253,7 +232,7 @@ const ALLOWED_FILTERS = operationFields(LIST_WORKFLOW_RESOURCES_TABLE);
 // filter as REQUIRED for a resource — service_methods has no meaning
 // without a target service.
 const REQUIRED_FILTERS = Object.fromEntries(LIST_WORKFLOW_RESOURCES_TABLE.map(({ op, required }) => [op, required]));
-const FILTER_KEYS = Object.keys(LIST_WORKFLOW_RESOURCES_INPUT_FIELDS);
+const FILTER_KEYS = Object.keys(operationInput(LIST_WORKFLOW_RESOURCES_TABLE, LIST_WORKFLOW_RESOURCES_SHARED_FIELDS));
 const flowActionBindingSchema = z
     .object({
         actionId: z.string(),
@@ -288,7 +267,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
                 allowedValuesNote(listResourceValues, LIST_RESOURCES),
             inputSchema: {
                 resource: z.enum(LIST_RESOURCES),
-                ...operationInput(LIST_WORKFLOW_RESOURCES_TABLE, LIST_WORKFLOW_RESOURCES_INPUT_FIELDS),
+                ...operationInput(LIST_WORKFLOW_RESOURCES_TABLE, LIST_WORKFLOW_RESOURCES_SHARED_FIELDS),
             },
         },
         async ({
@@ -315,7 +294,7 @@ export function registerWorkflowTools(server: McpServer, ctx: ToolCtx): void {
                 operationDescription(GET_WORKFLOW_RESOURCE_TABLE) + allowedValuesNote(getResourceValues, GET_RESOURCES),
             inputSchema: {
                 resource: z.enum(GET_RESOURCES),
-                ...operationInput(GET_WORKFLOW_RESOURCE_TABLE, GET_WORKFLOW_RESOURCE_INPUT_FIELDS),
+                ...operationInput(GET_WORKFLOW_RESOURCE_TABLE, GET_WORKFLOW_RESOURCE_SHARED_FIELDS),
             },
         },
         async ({ resource, id }: { resource: GetResource; id: string }) => {

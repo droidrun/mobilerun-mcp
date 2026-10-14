@@ -1,4 +1,4 @@
-import { type Operation, selectInput } from './operation-table.js';
+import { operation } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -11,26 +11,17 @@ import { z } from 'zod';
 
 import { asTextResult, ifDefined } from '../text-result.js';
 
-export const MANAGE_APPS_INPUT_FIELDS = {
-    ...manageDeviceAppsGrantPermissionSchema.partial().shape,
-    ...manageDeviceAppsRevokePermissionSchema.partial().shape,
-    ...manageDeviceAppsListInstallsSchema.partial().shape,
+export const MANAGE_APPS_SHARED_FIELDS = {
     deviceId: z.string(),
     packageName: z.string().optional(),
-    bundleId: z.string().optional().describe('iOS bundle identifier (install only).'),
-    activity: z.string().optional().describe('start only: specific activity to launch.'),
-    includeSystemPackages: z.boolean().optional(),
-    includeProtectedPackages: z.boolean().optional(),
 };
 
-type ManageAppsInput = z.infer<z.ZodObject<typeof MANAGE_APPS_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 
 export const MANAGE_APPS_TABLE = [
-    {
+    operation({
         op: 'install',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName', 'bundleId']),
+        input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, bundleId: z.string().optional().describe('iOS bundle identifier (install only).'), deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 3,
         access: 'write',
         describe: {
@@ -46,10 +37,10 @@ export const MANAGE_APPS_TABLE = [
             await backend.installApp(deviceId, { packageName, bundleId });
             return asTextResult({ status: 'install_requested', deviceId, packageName, bundleId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName']),
+        input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 4,
         access: 'write',
         describe: { order: 1, text: 'delete (packageName), ' },
@@ -61,10 +52,10 @@ export const MANAGE_APPS_TABLE = [
             await backend.deleteApp(deviceId, pkg);
             return asTextResult({ status: 'ok', operation, deviceId, packageName: pkg });
         },
-    },
-    {
+    }),
+    operation({
         op: 'start',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName', 'activity']),
+        input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, activity: z.string().optional().describe('start only: specific activity to launch.'), deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 5,
         access: 'write',
         describe: { order: 2, text: 'start (packageName, activity?), ' },
@@ -76,10 +67,10 @@ export const MANAGE_APPS_TABLE = [
             await backend.startApp(deviceId, pkg, { activity: input.activity as string | undefined });
             return asTextResult({ status: 'ok', operation, deviceId, packageName: pkg });
         },
-    },
-    {
+    }),
+    operation({
         op: 'stop',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['packageName']),
+        input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'write',
         describe: { order: 3, text: 'stop (packageName), ' },
@@ -91,10 +82,10 @@ export const MANAGE_APPS_TABLE = [
             await backend.stopApp(deviceId, pkg);
             return asTextResult({ status: 'ok', operation, deviceId, packageName: pkg });
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_packages',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, ['includeSystemPackages', 'includeProtectedPackages']),
+        input: { includeSystemPackages: z.boolean().optional(), includeProtectedPackages: z.boolean().optional(), deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'read',
         describe: {
@@ -111,10 +102,10 @@ export const MANAGE_APPS_TABLE = [
                 }),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'grant_permission',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, Object.keys(manageDeviceAppsGrantPermissionSchema.shape)),
+        input: { ...manageDeviceAppsGrantPermissionSchema.partial().shape, packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 0,
         access: 'write',
         describe: { order: 5, text: 'grant_permission: Grant an app notification permission. ' },
@@ -126,10 +117,10 @@ export const MANAGE_APPS_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'revoke_permission',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, Object.keys(manageDeviceAppsRevokePermissionSchema.shape)),
+        input: { ...manageDeviceAppsRevokePermissionSchema.partial().shape, packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 1,
         access: 'write',
         describe: { order: 6, text: 'revoke_permission: Revoke an app notification permission. ' },
@@ -141,10 +132,10 @@ export const MANAGE_APPS_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_installs',
-        input: selectInput(MANAGE_APPS_INPUT_FIELDS, Object.keys(manageDeviceAppsListInstallsSchema.shape)),
+        input: { ...manageDeviceAppsListInstallsSchema.partial().shape, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         fieldOrder: 2,
         access: 'read',
         describe: { order: 7, text: 'list_installs: Read app installation jobs.' },
@@ -156,5 +147,5 @@ export const MANAGE_APPS_TABLE = [
                 ),
             );
         },
-    },
-] as const satisfies readonly Operation<ManageAppsInput, CallToolResult>[];
+    }),
+] as const;

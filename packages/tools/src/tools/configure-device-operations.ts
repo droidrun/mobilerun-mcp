@@ -1,4 +1,4 @@
-import { type Operation, selectInput } from './operation-table.js';
+import { operation } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -12,34 +12,16 @@ import { z } from 'zod';
 
 import { asTextResult } from '../text-result.js';
 
-export const CONFIGURE_DEVICE_INPUT_FIELDS = {
-    ...configureDeviceResetLocationSchema.partial().shape,
-    ...configureDeviceKioskEnableSchema.partial().shape,
-    ...configureDeviceKioskDisableSchema.partial().shape,
-    ...configureDeviceUpdateProfileSchema.partial().shape,
+export const CONFIGURE_DEVICE_SHARED_FIELDS = {
     deviceId: z.string(),
-    locale: z.string().optional(),
-    restart: z.boolean().optional(),
-    timezone: z.string().optional(),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
-    visible: z.boolean().optional(),
-    proxyName: z.string().optional(),
-    smartIp: z.boolean().optional(),
-    socks5Host: z.string().optional(),
-    socks5Port: z.number().int().optional(),
-    socks5User: z.string().optional(),
-    socks5Password: z.string().optional(),
 };
 
-type ConfigureDeviceInput = z.infer<z.ZodObject<typeof CONFIGURE_DEVICE_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 
 export const CONFIGURE_DEVICE_TABLE = [
-    {
+    operation({
         op: 'get_language',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 4,
         access: 'read',
         describe: { order: 0, text: 'Read/write device settings. Operations: get_language/' },
@@ -48,10 +30,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.getLanguage(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'set_language',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['locale', 'restart']),
+        input: { locale: z.string().optional(), restart: z.boolean().optional(), deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 5,
         access: 'write',
         describe: {
@@ -67,10 +49,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             });
             return asTextResult({ status: 'ok', operation, deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_timezone',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'read',
         describe: { order: 2, text: 'get_timezone/' },
@@ -79,10 +61,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.getTimezone(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'set_timezone',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['timezone']),
+        input: { timezone: z.string().optional(), deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'write',
         describe: { order: 3, text: 'set_timezone (IANA tz), ' },
@@ -95,10 +77,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             );
             return asTextResult({ status: 'ok', operation, deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_location',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 8,
         access: 'read',
         describe: { order: 4, text: 'get_location/' },
@@ -107,10 +89,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.getLocation(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'set_location',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['latitude', 'longitude']),
+        input: { latitude: z.number().optional(), longitude: z.number().optional(), deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 9,
         access: 'write',
         describe: { order: 5, text: 'set_location (latitude, longitude), ' },
@@ -123,10 +105,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             });
             return asTextResult({ status: 'ok', operation, deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_time',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 10,
         access: 'read',
         describe: { order: 6, text: 'get_time (read-only device clock), ' },
@@ -135,10 +117,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.getTime(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_overlay',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 11,
         access: 'read',
         describe: { order: 7, text: 'get_overlay/' },
@@ -147,10 +129,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.getOverlay(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'set_overlay',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, ['visible']),
+        input: { visible: z.boolean().optional(), deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 12,
         access: 'write',
         describe: { order: 8, text: 'set_overlay (visible: the on-device debug/annotation overlay), ' },
@@ -163,17 +145,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             );
             return asTextResult({ status: 'ok', operation, deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'proxy_connect',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, [
-            'proxyName',
-            'smartIp',
-            'socks5Host',
-            'socks5Port',
-            'socks5User',
-            'socks5Password',
-        ]),
+        input: { proxyName: z.string().optional(), smartIp: z.boolean().optional(), socks5Host: z.string().optional(), socks5Port: z.number().int().optional(), socks5User: z.string().optional(), socks5Password: z.string().optional(), deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 13,
         access: 'write',
         describe: {
@@ -201,10 +176,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             });
             return asTextResult({ status: 'ok', operation, deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'proxy_disconnect',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 14,
         access: 'write',
         describe: { order: 10, text: 'proxy_disconnect, ' },
@@ -214,10 +189,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             await backend.disconnectProxy(deviceId);
             return asTextResult({ status: 'ok', operation, deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_proxy_status',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, []),
+        input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 15,
         access: 'read',
         describe: { order: 11, text: 'get_proxy_status. Additional operations: ' },
@@ -226,10 +201,10 @@ export const CONFIGURE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.getProxyStatus(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'reset_location',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceResetLocationSchema.shape)),
+        input: { ...configureDeviceResetLocationSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 0,
         access: 'write',
         describe: { order: 12, text: 'reset_location: Reset the device location. ' },
@@ -241,10 +216,10 @@ export const CONFIGURE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'kiosk_enable',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceKioskEnableSchema.shape)),
+        input: { ...configureDeviceKioskEnableSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 1,
         access: 'write',
         describe: { order: 13, text: 'kiosk_enable: Enable kiosk mode for an app. ' },
@@ -256,10 +231,10 @@ export const CONFIGURE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'kiosk_disable',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceKioskDisableSchema.shape)),
+        input: { ...configureDeviceKioskDisableSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 2,
         access: 'write',
         describe: { order: 14, text: 'kiosk_disable: Disable kiosk mode. ' },
@@ -271,10 +246,10 @@ export const CONFIGURE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'update_profile',
-        input: selectInput(CONFIGURE_DEVICE_INPUT_FIELDS, Object.keys(configureDeviceUpdateProfileSchema.shape)),
+        input: { ...configureDeviceUpdateProfileSchema.partial().shape, deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 3,
         access: 'write',
         describe: { order: 15, text: 'update_profile: Update device profile settings.' },
@@ -286,5 +261,5 @@ export const CONFIGURE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-] as const satisfies readonly Operation<ConfigureDeviceInput, CallToolResult>[];
+    }),
+] as const;

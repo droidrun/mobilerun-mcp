@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -18,29 +17,17 @@ const answerSchema = z.union([
     z.object({ label: z.string().min(1) }),
     z.object({ custom: z.string().min(1) }),
 ]);
-const ASSISTANT_INPUT_FIELDS = {
-    mine: z.boolean().optional(),
+const ASSISTANT_SHARED_FIELDS = {
     title: z.string().min(1).optional(),
     description: z.string().optional(),
     sessionId: z.string().min(1).optional(),
-    pinned: z.boolean().optional(),
-    status: z.enum(['active', 'archived']).optional(),
-    message: z.string().min(1).optional(),
-    waitSeconds: z.number().int().min(1).max(50).optional(),
-    limit: z.number().int().min(1).max(100).optional(),
-    expectedTurnId: z.string().min(1).optional(),
-    permissionId: z.string().min(1).optional(),
-    response: z.enum(['once', 'reject']).optional(),
     questionId: z.string().min(1).optional(),
-    answers: z.array(z.array(answerSchema)).optional(),
 };
-type AssistantInput = z.infer<z.ZodObject<typeof ASSISTANT_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const ASSISTANT_TABLE = [
-    {
+    operation({
         op: 'list_sessions',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['mine']),
+        input: { mine: z.boolean().optional() },
         access: 'read',
         describe: {
             order: 0,
@@ -50,10 +37,10 @@ export const ASSISTANT_TABLE = [
             const backend = ctx.backend.assistant;
             return backend.listSessions(input.mine);
         },
-    },
-    {
+    }),
+    operation({
         op: 'create_session',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['title', 'description']),
+        input: { title: ASSISTANT_SHARED_FIELDS.title, description: ASSISTANT_SHARED_FIELDS.description },
         access: 'write',
         fullOnly: true,
         describe: { order: 1, text: 'create_session, ' },
@@ -62,10 +49,10 @@ export const ASSISTANT_TABLE = [
             const backend = ctx.backend.assistant;
             return backend.createSession(requireValue(input.title, 'title', operation, 'assistant'), input.description);
         },
-    },
-    {
+    }),
+    operation({
         op: 'update_session',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['sessionId', 'title', 'description', 'pinned', 'status']),
+        input: { sessionId: ASSISTANT_SHARED_FIELDS.sessionId, title: ASSISTANT_SHARED_FIELDS.title, description: ASSISTANT_SHARED_FIELDS.description, pinned: z.boolean().optional(), status: z.enum(['active', 'archived']).optional() },
         access: 'write',
         fullOnly: true,
         describe: { order: 2, text: 'update_session). ' },
@@ -84,10 +71,10 @@ export const ASSISTANT_TABLE = [
             }
             return backend.updateSession(sessionId, params);
         },
-    },
-    {
+    }),
+    operation({
         op: 'send_message',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['sessionId', 'message', 'waitSeconds']),
+        input: { sessionId: ASSISTANT_SHARED_FIELDS.sessionId, message: z.string().min(1).optional(), waitSeconds: z.number().int().min(1).max(50).optional() },
         access: 'write',
         fullOnly: true,
         describe: { order: 3, text: 'send_message may return running; poll ' },
@@ -101,10 +88,10 @@ export const ASSISTANT_TABLE = [
                 input.waitSeconds ?? 45,
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_messages',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['sessionId', 'limit']),
+        input: { sessionId: ASSISTANT_SHARED_FIELDS.sessionId, limit: z.number().int().min(1).max(100).optional() },
         access: 'read',
         describe: {
             order: 4,
@@ -116,10 +103,10 @@ export const ASSISTANT_TABLE = [
             const sessionId = requireValue(input.sessionId, 'sessionId', operation, 'assistant');
             return curateAssistantHistory(await backend.getMessages(sessionId, input.limit ?? 20));
         },
-    },
-    {
+    }),
+    operation({
         op: 'abort',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['sessionId', 'expectedTurnId']),
+        input: { sessionId: ASSISTANT_SHARED_FIELDS.sessionId, expectedTurnId: z.string().min(1).optional() },
         access: 'write',
         fullOnly: true,
         describe: { order: 8, text: 'abort stops a turn.' },
@@ -129,10 +116,10 @@ export const ASSISTANT_TABLE = [
             const sessionId = requireValue(input.sessionId, 'sessionId', operation, 'assistant');
             return backend.abort(sessionId, input.expectedTurnId);
         },
-    },
-    {
+    }),
+    operation({
         op: 'answer_permission',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['permissionId', 'response']),
+        input: { permissionId: z.string().min(1).optional(), response: z.enum(['once', 'reject']).optional() },
         access: 'write',
         fullOnly: true,
         describe: {
@@ -147,10 +134,10 @@ export const ASSISTANT_TABLE = [
                 requireValue(input.response, 'response', operation, 'assistant'),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'answer_question',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['questionId', 'answers']),
+        input: { questionId: ASSISTANT_SHARED_FIELDS.questionId, answers: z.array(z.array(answerSchema)).optional() },
         access: 'write',
         fullOnly: true,
         describe: { order: 5, text: 'answer_question or ' },
@@ -162,10 +149,10 @@ export const ASSISTANT_TABLE = [
                 requireValue(input.answers, 'answers', operation, 'assistant'),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'reject_question',
-        input: selectInput(ASSISTANT_INPUT_FIELDS, ['questionId']),
+        input: { questionId: ASSISTANT_SHARED_FIELDS.questionId },
         access: 'write',
         fullOnly: true,
         describe: { order: 6, text: 'reject_question. ' },
@@ -174,8 +161,8 @@ export const ASSISTANT_TABLE = [
             const backend = ctx.backend.assistant;
             return backend.rejectQuestion(requireValue(input.questionId, 'questionId', operation, 'assistant'));
         },
-    },
-] as const satisfies readonly Operation<AssistantInput>[];
+    }),
+] as const;
 const ASSISTANT_OPERATIONS = operationValues(ASSISTANT_TABLE);
 
 function objectValue(value: unknown): Record<string, unknown> {
@@ -240,7 +227,7 @@ export function registerAssistantTool(server: McpServer, ctx: ToolCtx): void {
                 operationDescription(ASSISTANT_TABLE) + allowedValuesNote(operationValues, ASSISTANT_OPERATIONS),
             inputSchema: {
                 operation: z.enum(ASSISTANT_OPERATIONS),
-                ...operationInput(ASSISTANT_TABLE, ASSISTANT_INPUT_FIELDS),
+                ...operationInput(ASSISTANT_TABLE, ASSISTANT_SHARED_FIELDS),
             },
         },
         async (input) => asTextResult(await runOperation(ASSISTANT_TABLE, input.operation, ctx, input)),

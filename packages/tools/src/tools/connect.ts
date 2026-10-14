@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -36,9 +35,7 @@ const connectionFilterShape = {
     order: z.enum(['asc', 'desc']).optional(),
     orderBy: z.enum(['startedAt', 'endedAt', 'bytesIn', 'bytesOut', 'totalBytes', 'durationMs']).optional(),
 } as const;
-const CONNECT_INPUT_FIELDS = {
-    ...connectUpdateProxySchema.partial().shape,
-    ...connectEnsureHealthySchema.partial().shape,
+const CONNECT_SHARED_FIELDS = {
     proxyId: z.string().optional(),
     userId: z.string().optional(),
     country: z
@@ -48,15 +45,24 @@ const CONNECT_INPUT_FIELDS = {
     type: z.enum(['residential']).optional(),
     page: z.number().int().positive().optional(),
     pageSize: z.number().int().positive().max(100).optional(),
-    ...connectionFilterShape,
+    status: connectionFilterShape.status,
+    protocol: connectionFilterShape.protocol,
+    provider: connectionFilterShape.provider,
+    dstHost: connectionFilterShape.dstHost,
+    dstPort: connectionFilterShape.dstPort,
+    sessionId: connectionFilterShape.sessionId,
+    startedAfter: connectionFilterShape.startedAfter,
+    startedBefore: connectionFilterShape.startedBefore,
+    endedAfter: connectionFilterShape.endedAfter,
+    endedBefore: connectionFilterShape.endedBefore,
+    order: connectionFilterShape.order,
+    orderBy: connectionFilterShape.orderBy,
 };
-type ConnectInput = z.infer<z.ZodObject<typeof CONNECT_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const CONNECT_TABLE = [
-    {
+    operation({
         op: 'list_countries',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['type', 'page', 'pageSize']),
+        input: { type: CONNECT_SHARED_FIELDS.type, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: {
             order: 0,
@@ -66,20 +72,20 @@ export const CONNECT_TABLE = [
             const backend = ctx.backend.connect;
             return backend.listCountries({ type: input.type, page: input.page, pageSize: input.pageSize });
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_proxies',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['country', 'page', 'pageSize']),
+        input: { country: CONNECT_SHARED_FIELDS.country, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: { order: 1, text: 'list_proxies, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
             return backend.listConnectProxies({ country: input.country, page: input.page, pageSize: input.pageSize });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_proxy',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId']),
+        input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'read',
         describe: { order: 2, text: 'get_proxy, ' },
         run: async (ctx, input) => {
@@ -87,10 +93,10 @@ export const CONNECT_TABLE = [
             const backend = ctx.backend.connect;
             return backend.getConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
         },
-    },
-    {
+    }),
+    operation({
         op: 'buy_proxy',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['country', 'type']),
+        input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type },
         access: 'commerce',
         describe: { order: 3, text: 'buy_proxy (billed — provisions and bills a residential proxy), ' },
         run: async (ctx, input) => {
@@ -101,10 +107,10 @@ export const CONNECT_TABLE = [
                 type: input.type,
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'cancel_proxy',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId']),
+        input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'commerce',
         describe: { order: 4, text: 'cancel_proxy (ends a billed proxy), ' },
         run: async (ctx, input) => {
@@ -113,10 +119,10 @@ export const CONNECT_TABLE = [
             await backend.cancelConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
             return { success: true };
         },
-    },
-    {
+    }),
+    operation({
         op: 'ping_proxy',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId']),
+        input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'read',
         describe: { order: 5, text: 'ping_proxy (cached latency), ' },
         run: async (ctx, input) => {
@@ -124,16 +130,10 @@ export const CONNECT_TABLE = [
             const backend = ctx.backend.connect;
             return backend.pingConnectProxy(requireValue(input.proxyId, 'proxyId', operation, 'connect'));
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_connections',
-        input: selectInput(CONNECT_INPUT_FIELDS, [
-            'proxyId',
-            'country',
-            'page',
-            'pageSize',
-            ...Object.keys(connectionFilterShape),
-        ]),
+        input: { proxyId: CONNECT_SHARED_FIELDS.proxyId, country: CONNECT_SHARED_FIELDS.country, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize, status: CONNECT_SHARED_FIELDS.status, protocol: CONNECT_SHARED_FIELDS.protocol, provider: CONNECT_SHARED_FIELDS.provider, dstHost: CONNECT_SHARED_FIELDS.dstHost, dstPort: CONNECT_SHARED_FIELDS.dstPort, sessionId: CONNECT_SHARED_FIELDS.sessionId, startedAfter: CONNECT_SHARED_FIELDS.startedAfter, startedBefore: CONNECT_SHARED_FIELDS.startedBefore, endedAfter: CONNECT_SHARED_FIELDS.endedAfter, endedBefore: CONNECT_SHARED_FIELDS.endedBefore, order: CONNECT_SHARED_FIELDS.order, orderBy: CONNECT_SHARED_FIELDS.orderBy },
         access: 'read',
         describe: { order: 6, text: "list_connections (a proxy's connection history), " },
         run: async (ctx, input) => {
@@ -144,20 +144,20 @@ export const CONNECT_TABLE = [
                 connectionOpts(input),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_users',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['proxyId', 'page', 'pageSize']),
+        input: { proxyId: CONNECT_SHARED_FIELDS.proxyId, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: { order: 7, text: 'list_users, ' },
         run: async (ctx, input) => {
             const backend = ctx.backend.connect;
             return backend.listConnectUsers({ proxyId: input.proxyId, page: input.page, pageSize: input.pageSize });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_user',
-        input: selectInput(CONNECT_INPUT_FIELDS, ['userId']),
+        input: { userId: CONNECT_SHARED_FIELDS.userId },
         access: 'read',
         describe: { order: 8, text: 'get_user, ' },
         run: async (ctx, input) => {
@@ -165,16 +165,10 @@ export const CONNECT_TABLE = [
             const backend = ctx.backend.connect;
             return backend.getConnectUser(requireValue(input.userId, 'userId', operation, 'connect'));
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_user_connections',
-        input: selectInput(CONNECT_INPUT_FIELDS, [
-            'userId',
-            'country',
-            'page',
-            'pageSize',
-            ...Object.keys(connectionFilterShape),
-        ]),
+        input: { userId: CONNECT_SHARED_FIELDS.userId, country: CONNECT_SHARED_FIELDS.country, page: CONNECT_SHARED_FIELDS.page, pageSize: CONNECT_SHARED_FIELDS.pageSize, status: CONNECT_SHARED_FIELDS.status, protocol: CONNECT_SHARED_FIELDS.protocol, provider: CONNECT_SHARED_FIELDS.provider, dstHost: CONNECT_SHARED_FIELDS.dstHost, dstPort: CONNECT_SHARED_FIELDS.dstPort, sessionId: CONNECT_SHARED_FIELDS.sessionId, startedAfter: CONNECT_SHARED_FIELDS.startedAfter, startedBefore: CONNECT_SHARED_FIELDS.startedBefore, endedAfter: CONNECT_SHARED_FIELDS.endedAfter, endedBefore: CONNECT_SHARED_FIELDS.endedBefore, order: CONNECT_SHARED_FIELDS.order, orderBy: CONNECT_SHARED_FIELDS.orderBy },
         access: 'read',
         describe: { order: 9, text: "list_user_connections (a user's connection history). Additional operations: " },
         run: async (ctx, input) => {
@@ -185,26 +179,27 @@ export const CONNECT_TABLE = [
                 connectionOpts(input),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'update_proxy',
-        input: selectInput(CONNECT_INPUT_FIELDS, [...Object.keys(connectUpdateProxySchema.shape)]),
+        input: { ...connectUpdateProxySchema.partial().shape, proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'write',
         describe: { order: 10, text: 'update_proxy: Update a residential proxy label. ' },
         run: async (ctx, input) => {
             return ctx.backend.connect.connectUpdateProxy(connectUpdateProxySchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'ensure_healthy',
-        input: selectInput(CONNECT_INPUT_FIELDS, [...Object.keys(connectEnsureHealthySchema.shape)]),
+        input: { ...connectEnsureHealthySchema.partial().shape, proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'write',
         describe: { order: 11, text: 'ensure_healthy: Repair an unhealthy residential proxy.' },
         run: async (ctx, input) => {
             return ctx.backend.connect.connectEnsureHealthy(connectEnsureHealthySchema.strip().parse(input));
         },
-    },
-] as const satisfies readonly Operation<ConnectInput>[];
+    }),
+] as const;
+type ConnectInput = z.infer<z.ZodObject<typeof CONNECT_SHARED_FIELDS>>;
 const CONNECT_OPERATIONS = operationValues(CONNECT_TABLE);
 
 function connectionOpts(input: ConnectInput) {
@@ -235,7 +230,7 @@ export function registerConnectTools(server: McpServer, ctx: ToolCtx): void {
             description: operationDescription(CONNECT_TABLE) + allowedValuesNote(operationValues, CONNECT_OPERATIONS),
             inputSchema: {
                 operation: z.enum(CONNECT_OPERATIONS),
-                ...operationInput(CONNECT_TABLE, CONNECT_INPUT_FIELDS),
+                ...operationInput(CONNECT_TABLE, CONNECT_SHARED_FIELDS),
             },
         },
         async (input) => asTextResult(await runOperation(CONNECT_TABLE, input.operation, ctx, input)),

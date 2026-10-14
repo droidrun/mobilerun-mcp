@@ -1,4 +1,4 @@
-import { type Operation, selectInput } from './operation-table.js';
+import { operation } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 
@@ -10,22 +10,17 @@ import { MAX_INLINE_FILE_BYTES, MAX_INLINE_BASE64_CHARS } from '../inline-limits
 
 // Device file transfers use a 256 KB decoded inline limit because the SDK
 // offers no signed-URL transfer alternative for these device files.
-export const MANAGE_FILES_INPUT_FIELDS = {
+export const MANAGE_FILES_SHARED_FIELDS = {
     deviceId: z.string(),
     path: z.string().min(1),
-    contentBase64: z.string().max(MAX_INLINE_BASE64_CHARS).optional(),
-    fileName: z.string().optional(),
-    contentType: z.string().optional(),
 };
 
-type ManageFilesInput = z.infer<z.ZodObject<typeof MANAGE_FILES_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 
 export const MANAGE_FILES_TABLE = [
-    {
+    operation({
         op: 'list',
-        input: selectInput(MANAGE_FILES_INPUT_FIELDS, []),
+        input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 0,
         access: 'read',
         describe: { order: 0, text: 'Device filesystem access. Operations: list (directory entries at `path`), ' },
@@ -34,10 +29,10 @@ export const MANAGE_FILES_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.listFiles(deviceId, { path }));
         },
-    },
-    {
+    }),
+    operation({
         op: 'upload',
-        input: selectInput(MANAGE_FILES_INPUT_FIELDS, ['contentBase64', 'fileName', 'contentType']),
+        input: { contentBase64: z.string().max(MAX_INLINE_BASE64_CHARS).optional(), fileName: z.string().optional(), contentType: z.string().optional(), deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 1,
         access: 'write',
         describe: {
@@ -61,10 +56,10 @@ export const MANAGE_FILES_TABLE = [
             });
             return asTextResult({ status: 'uploaded', deviceId, path });
         },
-    },
-    {
+    }),
+    operation({
         op: 'download',
-        input: selectInput(MANAGE_FILES_INPUT_FIELDS, []),
+        input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 2,
         access: 'read',
         describe: { order: 2, text: 'download (read `path`; oversized results are rejected the same way), ' },
@@ -79,10 +74,10 @@ export const MANAGE_FILES_TABLE = [
             }
             return asTextResult(result);
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete',
-        input: selectInput(MANAGE_FILES_INPUT_FIELDS, []),
+        input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         fieldOrder: 3,
         access: 'write',
         describe: { order: 3, text: 'delete (`path`). `path` is required for every operation.' },
@@ -92,5 +87,5 @@ export const MANAGE_FILES_TABLE = [
             await backend.deleteFile(deviceId, path);
             return asTextResult({ status: 'deleted', deviceId, path });
         },
-    },
-] as const satisfies readonly Operation<ManageFilesInput, CallToolResult>[];
+    }),
+] as const;

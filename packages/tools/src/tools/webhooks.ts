@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -21,16 +20,10 @@ import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 const webhookStatusSchema = z.enum(['active', 'failing', 'blocked', 'disabled']);
-const WEBHOOK_INPUT_FIELDS = {
-    ...webhooksDeleteSchema.partial().shape,
-    ...webhooksDeliveriesSchema.partial().shape,
-    ...webhooksIntegrationTargetsSchema.partial().shape,
+const WEBHOOK_SHARED_FIELDS = {
     endpointId: z.string().uuid().optional(),
-    deliveryId: z.string().uuid().optional(),
-    url: z.string().url().max(2048).optional(),
     eventTypes: z.array(z.string().min(1).max(256)).max(100).optional(),
     description: z.string().max(500).nullable().optional(),
-    state: z.enum(['ACTIVE', 'DISABLED']).optional(),
     status: z
         .union([webhookStatusSchema, webhooksDeliveriesSchema.shape.status.unwrap()])
         .optional()
@@ -39,13 +32,11 @@ const WEBHOOK_INPUT_FIELDS = {
     pageSize: z.number().int().positive().max(100).optional(),
     since: z.string().optional().describe('ISO 8601 timestamp filter for operation=delivery_stats.'),
 };
-type WebhookInput = z.infer<z.ZodObject<typeof WEBHOOK_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const WEBHOOK_TABLE = [
-    {
+    operation({
         op: 'create',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['url', 'eventTypes', 'description']),
+        input: { url: z.string().url().max(2048).optional(), eventTypes: WEBHOOK_SHARED_FIELDS.eventTypes, description: WEBHOOK_SHARED_FIELDS.description },
         access: 'write',
         describe: { order: 1, text: 'create (url; returns one-time secret + endpoint id), ' },
         run: async (ctx, input) => {
@@ -61,10 +52,10 @@ export const WEBHOOK_TABLE = [
                 'Show the returned plaintext data.secret to the user now, exactly once, and tell them to store it securely. Never place it in workflow action data.',
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'list',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['status', 'page', 'pageSize']),
+        input: { status: WEBHOOK_SHARED_FIELDS.status, page: WEBHOOK_SHARED_FIELDS.page, pageSize: WEBHOOK_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: { order: 2, text: 'list, ' },
         run: async (ctx, input) => {
@@ -75,10 +66,10 @@ export const WEBHOOK_TABLE = [
                 pageSize: input.pageSize,
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId']),
+        input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'read',
         describe: { order: 3, text: 'get, ' },
         run: async (ctx, input) => {
@@ -87,10 +78,10 @@ export const WEBHOOK_TABLE = [
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
             return backend.getWebhook(endpointId);
         },
-    },
-    {
+    }),
+    operation({
         op: 'update',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId', 'eventTypes', 'state', 'description']),
+        input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId, eventTypes: WEBHOOK_SHARED_FIELDS.eventTypes, state: z.enum(['ACTIVE', 'DISABLED']).optional(), description: WEBHOOK_SHARED_FIELDS.description },
         access: 'write',
         describe: { order: 4, text: 'update, ' },
         run: async (ctx, input) => {
@@ -107,10 +98,10 @@ export const WEBHOOK_TABLE = [
             }
             return backend.updateWebhook(endpointId, body);
         },
-    },
-    {
+    }),
+    operation({
         op: 'rotate_secret',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId']),
+        input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'write',
         describe: { order: 5, text: 'rotate_secret (explicit consent; returns one-time secret), ' },
         run: async (ctx, input) => {
@@ -123,10 +114,10 @@ export const WEBHOOK_TABLE = [
                 'Show the returned plaintext data.secret to the user now, exactly once, and tell them to store it securely. The previous secret is already invalid.',
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'test',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId']),
+        input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'write',
         describe: { order: 6, text: 'test, ' },
         run: async (ctx, input) => {
@@ -135,10 +126,10 @@ export const WEBHOOK_TABLE = [
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
             return backend.testWebhook(endpointId);
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_deliveries',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId', 'page', 'pageSize']),
+        input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId, page: WEBHOOK_SHARED_FIELDS.page, pageSize: WEBHOOK_SHARED_FIELDS.pageSize },
         access: 'read',
         describe: { order: 7, text: 'list_deliveries, ' },
         run: async (ctx, input) => {
@@ -147,10 +138,10 @@ export const WEBHOOK_TABLE = [
             const endpointId = requireValue(input.endpointId, 'endpointId', operation, 'webhooks');
             return backend.listWebhookDeliveries(endpointId, { page: input.page, pageSize: input.pageSize });
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_delivery',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['endpointId', 'deliveryId']),
+        input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId, deliveryId: z.string().uuid().optional() },
         access: 'read',
         describe: { order: 8, text: 'get_delivery, ' },
         run: async (ctx, input) => {
@@ -160,10 +151,10 @@ export const WEBHOOK_TABLE = [
             const deliveryId = requireValue(input.deliveryId, 'deliveryId', operation, 'webhooks');
             return backend.getWebhookDelivery(endpointId, deliveryId);
         },
-    },
-    {
+    }),
+    operation({
         op: 'delivery_stats',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, ['since']),
+        input: { since: WEBHOOK_SHARED_FIELDS.since },
         access: 'read',
         describe: {
             order: 9,
@@ -173,10 +164,10 @@ export const WEBHOOK_TABLE = [
             const backend = ctx.backend.webhooks;
             return backend.getWebhookDeliveryStats({ since: input.since });
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, [...Object.keys(webhooksDeleteSchema.shape)]),
+        input: { ...webhooksDeleteSchema.partial().shape, endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'write',
         describe: {
             order: 10,
@@ -185,28 +176,28 @@ export const WEBHOOK_TABLE = [
         run: async (ctx, input) => {
             return ctx.backend.webhooks.webhooksDelete(webhooksDeleteSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'deliveries',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, [...Object.keys(webhooksDeliveriesSchema.shape)]),
+        input: { ...webhooksDeliveriesSchema.partial().shape, page: WEBHOOK_SHARED_FIELDS.page, pageSize: WEBHOOK_SHARED_FIELDS.pageSize, since: WEBHOOK_SHARED_FIELDS.since, status: WEBHOOK_SHARED_FIELDS.status },
         access: 'read',
         describe: { order: 0, text: 'Manage outbound customer webhooks and inspect deliveries. Operations: ' },
         run: async (ctx, input) => {
             return ctx.backend.webhooks.webhooksDeliveries(webhooksDeliveriesSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'integrations',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, []),
+        input: {  },
         access: 'read',
         describe: { order: 11, text: 'integrations: Read connected delivery integrations. ' },
         run: async (ctx, input) => {
             return ctx.backend.webhooks.webhooksIntegrations();
         },
-    },
-    {
+    }),
+    operation({
         op: 'integration_targets',
-        input: selectInput(WEBHOOK_INPUT_FIELDS, [...Object.keys(webhooksIntegrationTargetsSchema.shape)]),
+        input: { ...webhooksIntegrationTargetsSchema.partial().shape },
         access: 'read',
         describe: { order: 12, text: 'integration_targets: Read delivery targets for an integration.' },
         run: async (ctx, input) => {
@@ -214,8 +205,8 @@ export const WEBHOOK_TABLE = [
                 webhooksIntegrationTargetsSchema.strip().parse(input),
             );
         },
-    },
-] as const satisfies readonly Operation<WebhookInput>[];
+    }),
+] as const;
 const WEBHOOK_OPERATIONS = operationValues(WEBHOOK_TABLE);
 // Full-set schema — used to type WebhookToolInput regardless of any
 // per-credential operation narrowing applied to the registered tool's
@@ -236,7 +227,7 @@ export function registerWebhookTools(server: McpServer, ctx: ToolCtx): void {
             description: operationDescription(WEBHOOK_TABLE) + allowedValuesNote(operationValues, WEBHOOK_OPERATIONS),
             inputSchema: {
                 operation: z.enum(WEBHOOK_OPERATIONS),
-                ...operationInput(WEBHOOK_TABLE, WEBHOOK_INPUT_FIELDS),
+                ...operationInput(WEBHOOK_TABLE, WEBHOOK_SHARED_FIELDS),
             },
         },
         async (input) => asTextResult(await runOperation(WEBHOOK_TABLE, input.operation, ctx, input)),

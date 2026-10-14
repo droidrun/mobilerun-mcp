@@ -1,4 +1,4 @@
-import { type Operation, selectInput } from './operation-table.js';
+import { operation } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -53,42 +53,17 @@ function redactTrafficStream(value: unknown, ctx: ToolCtx): unknown {
     return redact(value);
 }
 
-export const MANAGE_DEVICE_INPUT_FIELDS = {
-    ...manageDeviceRecordingsTrajectorySchema.partial().shape,
-    ...manageDeviceRecordingsVideoSchema.partial().shape,
-    ...manageDeviceScreenshotsImageSchema.partial().shape,
-    ...manageDeviceSummarySchema.partial().shape,
-    ...manageDeviceRecordingsListSchema.partial().shape,
-    ...manageDeviceRecordingsDeleteSchema.partial().shape,
-    ...manageDeviceRecordingsScreenshotsSchema.partial().shape,
-    ...manageDeviceRecordingsStartSchema.partial().shape,
-    ...manageDeviceRecordingsStatusSchema.partial().shape,
-    ...manageDeviceRecordingsStopSchema.partial().shape,
-    ...manageDeviceScreenshotsListSchema.partial().shape,
-    ...manageDeviceScreenshotsDeleteSchema.partial().shape,
-    ...manageDeviceScreenshotsCaptureSchema.partial().shape,
-    ...manageDeviceTrafficSessionsCreateSchema.partial().shape,
-    ...manageDeviceTrafficSessionsRetrieveSchema.partial().shape,
-    ...manageDeviceTrafficSessionsListSchema.partial().shape,
-    ...manageDeviceTrafficSessionsDeleteSchema.partial().shape,
-    ...manageDeviceMediaSessionsCreateSchema.partial().shape,
-    ...manageDeviceMediaSessionsDeleteSchema.partial().shape,
-    ...manageDeviceMediaSessionsActivateSchema.partial().shape,
+export const MANAGE_DEVICE_SHARED_FIELDS = {
     deviceId: z.string().optional().describe('Required for every operation except count and summary.'),
     name: z.string().max(64).optional(),
 };
 
-type ManageDeviceInput = z.infer<z.ZodObject<typeof MANAGE_DEVICE_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 
 export const MANAGE_DEVICE_TABLE = [
-    {
+    operation({
         op: 'recordings_trajectory',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsTrajectorySchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsTrajectorySchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 0,
         access: 'read',
         describe: { order: 11, text: 'recordings_trajectory return short-lived signed download URLs.' },
@@ -100,13 +75,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_video',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsVideoSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsVideoSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 1,
         access: 'read',
         describe: { order: 10, text: 'recordings_video and ' },
@@ -118,13 +90,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'screenshots_image',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceScreenshotsImageSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceScreenshotsImageSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 2,
         access: 'read',
         describe: { order: 9, text: 'screenshots_image, ' },
@@ -136,10 +105,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'reboot',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
+        input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 24,
         access: 'write',
         describe: { order: 0, text: 'Device lifecycle operations. Operations: reboot, ' },
@@ -150,10 +119,10 @@ export const MANAGE_DEVICE_TABLE = [
             await backend.rebootDevice(deviceId);
             return asTextResult({ status: 'reboot_requested', deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'reset',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
+        input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 25,
         access: 'write',
         describe: { order: 1, text: 'reset (factory-reset to a fresh state — destructive), ' },
@@ -164,10 +133,10 @@ export const MANAGE_DEVICE_TABLE = [
             await backend.resetDevice(deviceId);
             return asTextResult({ status: 'reset_requested', deviceId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'rename',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [...['name'], 'deviceId']),
+        input: { name: MANAGE_DEVICE_SHARED_FIELDS.name, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 26,
         access: 'write',
         describe: { order: 2, text: 'rename (needs name), ' },
@@ -180,10 +149,10 @@ export const MANAGE_DEVICE_TABLE = [
             await backend.renameDevice(deviceId, name);
             return asTextResult(await devices.getDevice(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'wait_ready',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
+        input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 27,
         access: 'read',
         describe: { order: 3, text: 'wait_ready (blocks until state=ready), ' },
@@ -195,10 +164,10 @@ export const MANAGE_DEVICE_TABLE = [
             await backend.waitDeviceReady(deviceId);
             return asTextResult(await devices.getDevice(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'get_capabilities',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, ['deviceId']),
+        input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 28,
         access: 'read',
         describe: { order: 4, text: 'get_capabilities (device profile: carrier, display, identifiers, model), ' },
@@ -208,10 +177,10 @@ export const MANAGE_DEVICE_TABLE = [
             const deviceId = requireValue(input.deviceId, 'deviceId', operation);
             return asTextResult(await backend.getDeviceCapabilities(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'count',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, []),
+        input: {  },
         fieldOrder: 29,
         access: 'read',
         describe: { order: 5, text: 'count (claimed-device counts by state — no deviceId). ' },
@@ -219,10 +188,10 @@ export const MANAGE_DEVICE_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.countDevices());
         },
-    },
-    {
+    }),
+    operation({
         op: 'stop',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [...Object.keys(manageDeviceStopSchema.shape), 'deviceId']),
+        input: { ...manageDeviceStopSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 3,
         access: 'commerce',
         describe: { order: 6, text: 'stop/' },
@@ -233,10 +202,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'resume',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [...Object.keys(manageDeviceResumeSchema.shape), 'deviceId']),
+        input: { ...manageDeviceResumeSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 4,
         access: 'commerce',
         describe: { order: 7, text: 'resume affect device billing. ' },
@@ -247,10 +216,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'summary',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, Object.keys(manageDeviceSummarySchema.shape)),
+        input: { ...manageDeviceSummarySchema.partial().shape },
         fieldOrder: 5,
         access: 'read',
         describe: {
@@ -262,13 +231,10 @@ export const MANAGE_DEVICE_TABLE = [
                 await ctx.backend.deviceControl.manageDeviceSummary(manageDeviceSummarySchema.strip().parse(input)),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'retrieve_capabilities',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRetrieveCapabilitiesSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRetrieveCapabilitiesSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'read',
         describe: { order: 24, text: '' },
@@ -279,13 +245,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_list',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsListSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsListSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'read',
         describe: { order: 25, text: '' },
@@ -297,13 +260,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_delete',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsDeleteSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 8,
         access: 'write',
         describe: { order: 26, text: '' },
@@ -315,13 +275,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_screenshots',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsScreenshotsSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsScreenshotsSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 9,
         access: 'read',
         describe: { order: 27, text: '' },
@@ -333,13 +290,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_start',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsStartSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsStartSchema.partial().shape, name: MANAGE_DEVICE_SHARED_FIELDS.name, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 10,
         access: 'write',
         describe: { order: 28, text: '' },
@@ -351,13 +305,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_status',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsStatusSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsStatusSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 11,
         access: 'read',
         describe: { order: 29, text: '' },
@@ -369,13 +320,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'recordings_stop',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceRecordingsStopSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceRecordingsStopSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 12,
         access: 'write',
         describe: { order: 30, text: '' },
@@ -387,13 +335,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'screenshots_list',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceScreenshotsListSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceScreenshotsListSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 13,
         access: 'read',
         describe: { order: 31, text: '' },
@@ -405,13 +350,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'screenshots_delete',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceScreenshotsDeleteSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceScreenshotsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 14,
         access: 'write',
         describe: { order: 32, text: '' },
@@ -423,13 +365,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'screenshots_capture',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceScreenshotsCaptureSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceScreenshotsCaptureSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 15,
         access: 'write',
         describe: { order: 33, text: '' },
@@ -441,13 +380,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'traffic_sessions_create',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceTrafficSessionsCreateSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceTrafficSessionsCreateSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 16,
         access: 'write',
         describe: { order: 34, text: '' },
@@ -459,13 +395,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'traffic_sessions_retrieve',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceTrafficSessionsRetrieveSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceTrafficSessionsRetrieveSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 17,
         access: 'read',
         describe: { order: 35, text: '' },
@@ -480,13 +413,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'traffic_sessions_list',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceTrafficSessionsListSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceTrafficSessionsListSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 18,
         access: 'read',
         describe: { order: 36, text: '' },
@@ -501,13 +431,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'traffic_sessions_delete',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceTrafficSessionsDeleteSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceTrafficSessionsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 19,
         access: 'write',
         describe: { order: 37, text: '' },
@@ -519,13 +446,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'media_sessions_create',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceMediaSessionsCreateSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceMediaSessionsCreateSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 20,
         access: 'write',
         describe: { order: 38, text: '' },
@@ -537,13 +461,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'media_sessions_delete',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceMediaSessionsDeleteSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceMediaSessionsDeleteSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 21,
         access: 'write',
         describe: { order: 39, text: '' },
@@ -555,13 +476,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'media_sessions_activate',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceMediaSessionsActivateSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceMediaSessionsActivateSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 22,
         access: 'write',
         describe: { order: 40, text: '' },
@@ -573,13 +491,10 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'media_sessions_retrieve_current',
-        input: selectInput(MANAGE_DEVICE_INPUT_FIELDS, [
-            ...Object.keys(manageDeviceMediaSessionsRetrieveCurrentSchema.shape),
-            'deviceId',
-        ]),
+        input: { ...manageDeviceMediaSessionsRetrieveCurrentSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         fieldOrder: 23,
         access: 'read',
         describe: { order: 41, text: '' },
@@ -590,5 +505,5 @@ export const MANAGE_DEVICE_TABLE = [
                 ),
             );
         },
-    },
-] as const satisfies readonly Operation<ManageDeviceInput, CallToolResult>[];
+    }),
+] as const;

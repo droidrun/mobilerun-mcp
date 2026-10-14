@@ -27,28 +27,25 @@ export function operationValues<T extends SurfaceOperation>(table: readonly T[])
     if (table.length === 0) throw new Error('An operation table must not be empty');
     return table.map(({ op }) => op) as [T['op'], ...T['op'][]];
 }
-/** Select flat fields without changing their optionality, constraints or descriptions. */
-export function selectInput<Shape extends z.ZodRawShape>(fields: Shape, keys: readonly string[]): z.ZodRawShape {
-    return Object.fromEntries(
-        keys.map((key) => {
-            if (!fields[key]) throw new Error(`Missing surface field: ${key}`);
-            return [key, fields[key]];
-        }),
-    );
+/** Contextually type each custom handler from its own Zod fields. */
+export function operation<const Op extends string, Shape extends z.ZodRawShape, Result>(
+    entry: Omit<Operation<z.infer<z.ZodObject<Shape>> & { operation: Op }, Result>, 'op' | 'input'> & {
+        op: Op;
+        input: Shape;
+    },
+) {
+    return entry;
 }
-export function operationInput<Shape extends z.ZodRawShape>(
-    table: readonly SurfaceOperation[],
-    fields: Shape,
-    common: z.ZodRawShape = {},
-): Shape {
-    const merged = Object.assign({}, ...table.map(({ input }) => input), common);
-    // Zod's JSON Schema references depend on traversal order, so retain the original field order.
-    return Object.fromEntries(
-        Object.keys(fields).map((key) => {
-            if (!merged[key]) throw new Error(`Unassigned surface field: ${key}`);
-            return [key, merged[key]];
-        }),
-    ) as Shape;
+type Intersection<U> = (U extends unknown ? (value: U) => void : never) extends (value: infer I) => void ? I : never;
+type MergedShape<Table extends readonly SurfaceOperation[], Shared extends z.ZodRawShape> =
+    Omit<Intersection<Table[number]['input']>, keyof Shared> & Shared;
+
+/** Merge per-operation fields; shared overrides retain flat union constraints. */
+export function operationInput<Table extends readonly SurfaceOperation[], Shared extends z.ZodRawShape>(
+    table: Table,
+    shared: Shared,
+): MergedShape<Table, Shared> {
+    return Object.assign({}, ...table.map(({ input }) => input), shared);
 }
 export function operationDescription(table: readonly SurfaceOperation[]): string {
     return [...table]
@@ -63,13 +60,13 @@ export function operationFields<T extends SurfaceOperation>(table: readonly T[])
             .map(({ op, input, fieldRepeats }) => [op, [...Object.keys(input), ...(fieldRepeats ?? [])]]),
     ) as unknown as Record<T['op'], readonly string[]>;
 }
-export async function runOperation<Input, Table extends readonly Operation<Input>[]>(
+export async function runOperation<Table extends readonly (SurfaceOperation & { run: (ctx: ToolCtx, input: never) => Promise<unknown> })[]>(
     table: Table,
     op: string,
     ctx: ToolCtx,
-    input: Input,
+    input: object,
 ): Promise<Awaited<ReturnType<Table[number]['run']>>> {
-    const operation = table.find((entry) => entry.op === op);
-    if (!operation) throw new Error(`Unknown operation: ${op}`);
-    return (await operation.run(ctx, input)) as Awaited<ReturnType<Table[number]['run']>>;
+    const entry = table.find((entry) => entry.op === op);
+    if (!entry) throw new Error(`Unknown operation: ${op}`);
+    return await entry.run(ctx, { ...input, operation: op } as never) as Awaited<ReturnType<Table[number]['run']>>;
 }

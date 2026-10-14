@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -12,17 +11,15 @@ import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
-const WORKFLOW_EVENTS_INPUT_FIELDS = {
+const WORKFLOW_EVENTS_SHARED_FIELDS = {
     eventType: z.string().optional(),
     payload: z.record(z.string(), z.unknown()).optional(),
 };
-type WorkflowEventsInput = z.infer<z.ZodObject<typeof WORKFLOW_EVENTS_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const WORKFLOW_EVENTS_TABLE = [
-    {
+    operation({
         op: 'ingest',
-        input: selectInput(WORKFLOW_EVENTS_INPUT_FIELDS, ['eventType', 'payload']),
+        input: { eventType: WORKFLOW_EVENTS_SHARED_FIELDS.eventType, payload: WORKFLOW_EVENTS_SHARED_FIELDS.payload },
         access: 'commerce',
         describe: {
             order: 0,
@@ -34,10 +31,10 @@ export const WORKFLOW_EVENTS_TABLE = [
             const eventType = requireValue(input.eventType, 'eventType', operation, 'workflow_events');
             return backend.ingestEvent({ eventType, payload: input.payload });
         },
-    },
-    {
+    }),
+    operation({
         op: 'dry_run',
-        input: selectInput(WORKFLOW_EVENTS_INPUT_FIELDS, ['eventType', 'payload']),
+        input: { eventType: WORKFLOW_EVENTS_SHARED_FIELDS.eventType, payload: WORKFLOW_EVENTS_SHARED_FIELDS.payload },
         access: 'read',
         describe: {
             order: 1,
@@ -50,8 +47,8 @@ export const WORKFLOW_EVENTS_TABLE = [
             // operation === 'dry_run'
             return backend.dryRunEvent({ eventType, payload: input.payload });
         },
-    },
-] as const satisfies readonly Operation<WorkflowEventsInput>[];
+    }),
+] as const;
 const WORKFLOW_EVENTS_OPERATIONS = operationValues(WORKFLOW_EVENTS_TABLE);
 
 export function registerWorkflowEventsTool(server: McpServer, ctx: ToolCtx): void {
@@ -67,7 +64,7 @@ export function registerWorkflowEventsTool(server: McpServer, ctx: ToolCtx): voi
                 allowedValuesNote(operationValues, WORKFLOW_EVENTS_OPERATIONS),
             inputSchema: {
                 operation: z.enum(WORKFLOW_EVENTS_OPERATIONS),
-                ...operationInput(WORKFLOW_EVENTS_TABLE, WORKFLOW_EVENTS_INPUT_FIELDS),
+                ...operationInput(WORKFLOW_EVENTS_TABLE, WORKFLOW_EVENTS_SHARED_FIELDS),
             },
         },
         async (input) => asTextResult(await runOperation(WORKFLOW_EVENTS_TABLE, input.operation, ctx, input)),

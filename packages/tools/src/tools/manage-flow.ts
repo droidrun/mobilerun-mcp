@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -66,24 +65,7 @@ const flowChildActionInputSchema = z.object({
 const flowActionBindingSchema = flowChildActionInputSchema.extend({
     children: z.array(flowChildActionInputSchema).optional(),
 });
-const MANAGE_FLOW_INPUT_FIELDS = {
-    ...manageFlowExecutionScreenshotSchema.partial().shape,
-    ...manageFlowUpdateSchema.partial().shape,
-    ...manageFlowDeleteSchema.partial().shape,
-    ...manageFlowActivateSchema.partial().shape,
-    ...manageFlowRunSchema.partial().shape,
-    ...manageFlowValidateSchema.partial().shape,
-    ...manageFlowVerifySchema.partial().shape,
-    ...manageFlowDryRunSchema.partial().shape,
-    ...manageFlowDeliveryOptionsSchema.partial().shape,
-    ...manageFlowTemplateContextSchema.partial().shape,
-    ...manageFlowListRepairsSchema.partial().shape,
-    ...manageFlowUpdateActionSchema.partial().shape,
-    ...manageFlowDeleteActionSchema.partial().shape,
-    ...manageFlowUpdateTriggerSchema.partial().shape,
-    ...manageFlowDeleteTriggerSchema.partial().shape,
-    ...manageFlowFireTriggerSchema.partial().shape,
-    ...manageFlowAbortExecutionSchema.partial().shape,
+const MANAGE_FLOW_SHARED_FIELDS = {
     delivery: manageFlowUpdateSchema.shape.delivery,
     flowId: z.string().optional(),
     name: z
@@ -95,45 +77,17 @@ const MANAGE_FLOW_INPUT_FIELDS = {
         .optional()
         .describe("Target devices for operation=clone; defaults to the source flow's devices."),
     actionId: z.string().optional(),
-    position: z.number().int().min(0).optional(),
-    key: z
-        .string()
-        .optional()
-        .describe(
-            'operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this ' +
-                "step's output from later steps. Derived from the action if omitted.",
-        ),
-    continueOnError: z.boolean().optional(),
-    nameOverride: z.string().optional(),
-    overrides: flowActionOverridesSchema,
-    parentFlowActionId: z
-        .string()
-        .nullable()
-        .optional()
-        .describe('Nest under this flow-action id (loop/branch parent) for operation=add_action.'),
-    children: z
-        .array(flowChildActionInputSchema)
-        .optional()
-        .describe('Nested loop/branch child actions for operation=add_action.'),
-    flowActionId: z
-        .string()
-        .optional()
-        .describe('The flow-action binding id (not the actionId) for operation=remove_action.'),
     actions: z
         .union([z.array(flowActionBindingSchema), manageFlowValidateSchema.shape.actions])
         .optional()
         .describe('Full replacement action list for operation=replace_actions.'),
     triggerId: z.string().optional().describe('Filter for operation=execution_metrics.'),
-    from: z.string().nullable().optional().describe('ISO 8601 range start for operation=execution_metrics.'),
-    to: z.string().nullable().optional().describe('ISO 8601 range end for operation=execution_metrics.'),
 };
-type ManageFlowInput = z.infer<z.ZodObject<typeof MANAGE_FLOW_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const MANAGE_FLOW_TABLE = [
-    {
+    operation({
         op: 'execution_screenshot',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowExecutionScreenshotSchema.shape)]),
+        input: { ...manageFlowExecutionScreenshotSchema.partial().shape },
         access: 'read',
         describe: { order: 23, text: 'execution_screenshot: Read a short-lived signed download URL.' },
         run: async (ctx, input) => {
@@ -141,10 +95,10 @@ export const MANAGE_FLOW_TABLE = [
                 manageFlowExecutionScreenshotSchema.strip().parse(input),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'clone',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId', 'name', 'deviceIds']),
+        input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, name: MANAGE_FLOW_SHARED_FIELDS.name, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds },
         access: 'write',
         describe: {
             order: 0,
@@ -156,10 +110,10 @@ export const MANAGE_FLOW_TABLE = [
             const flowId = requireValue(input.flowId, 'flowId', operation, 'manage_flow');
             return backend.cloneFlow({ flowId, name: input.name, deviceIds: input.deviceIds });
         },
-    },
-    {
+    }),
+    operation({
         op: 'unblock',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId']),
+        input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'write',
         describe: {
             order: 1,
@@ -170,20 +124,23 @@ export const MANAGE_FLOW_TABLE = [
             const backend = ctx.backend.workflows;
             return backend.unblockFlow(requireValue(input.flowId, 'flowId', operation, 'manage_flow'));
         },
-    },
-    {
+    }),
+    operation({
         op: 'add_action',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [
-            'flowId',
-            'actionId',
-            'position',
-            'key',
-            'continueOnError',
-            'nameOverride',
-            'overrides',
-            'parentFlowActionId',
-            'children',
-        ]),
+        input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, actionId: MANAGE_FLOW_SHARED_FIELDS.actionId, position: z.number().int().min(0).optional(), key: z
+        .string()
+        .optional()
+        .describe(
+            'operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this ' +
+                "step's output from later steps. Derived from the action if omitted.",
+        ), continueOnError: z.boolean().optional(), nameOverride: z.string().optional(), overrides: flowActionOverridesSchema, parentFlowActionId: z
+        .string()
+        .nullable()
+        .optional()
+        .describe('Nest under this flow-action id (loop/branch parent) for operation=add_action.'), children: z
+        .array(flowChildActionInputSchema)
+        .optional()
+        .describe('Nested loop/branch child actions for operation=add_action.') },
         access: 'write',
         describe: {
             order: 2,
@@ -205,10 +162,13 @@ export const MANAGE_FLOW_TABLE = [
                 children: input.children,
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'remove_action',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowActionId', 'flowId']),
+        input: { flowActionId: z
+        .string()
+        .optional()
+        .describe('The flow-action binding id (not the actionId) for operation=remove_action.'), flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'write',
         describe: { order: 3, text: 'remove_action (flowActionId, flowId), ' },
         run: async (ctx, input) => {
@@ -219,10 +179,10 @@ export const MANAGE_FLOW_TABLE = [
                 flowId: requireValue(input.flowId, 'flowId', operation, 'manage_flow'),
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'replace_actions',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId', 'actions']),
+        input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, actions: MANAGE_FLOW_SHARED_FIELDS.actions },
         access: 'write',
         describe: {
             order: 4,
@@ -247,10 +207,10 @@ export const MANAGE_FLOW_TABLE = [
                 : actions;
             return backend.replaceFlowActions({ flowId, actions: resolvedActions });
         },
-    },
-    {
+    }),
+    operation({
         op: 'execution_metrics',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, ['flowId', 'triggerId', 'from', 'to']),
+        input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId, from: z.string().nullable().optional().describe('ISO 8601 range start for operation=execution_metrics.'), to: z.string().nullable().optional().describe('ISO 8601 range end for operation=execution_metrics.') },
         access: 'read',
         describe: {
             order: 5,
@@ -265,55 +225,55 @@ export const MANAGE_FLOW_TABLE = [
                 to: input.to,
             });
         },
-    },
-    {
+    }),
+    operation({
         op: 'update',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowUpdateSchema.shape)]),
+        input: { ...manageFlowUpdateSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, delivery: MANAGE_FLOW_SHARED_FIELDS.delivery, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds, name: MANAGE_FLOW_SHARED_FIELDS.name, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
         access: 'write',
         describe: { order: 7, text: 'update: Update flow configuration. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowUpdate(manageFlowUpdateSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeleteSchema.shape)]),
+        input: { ...manageFlowDeleteSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'write',
         describe: { order: 8, text: 'delete: Delete a flow. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDelete(manageFlowDeleteSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'activate',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowActivateSchema.shape)]),
+        input: { ...manageFlowActivateSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'commerce',
         describe: { order: 9, text: 'activate: Activate a flow; may start paid automation. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowActivate(manageFlowActivateSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'run',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowRunSchema.shape)]),
+        input: { ...manageFlowRunSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'commerce',
         describe: { order: 10, text: 'run: Start a flow execution; usage may be billed. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowRun(manageFlowRunSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'validate',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowValidateSchema.shape)]),
+        input: { ...manageFlowValidateSchema.partial().shape, actions: MANAGE_FLOW_SHARED_FIELDS.actions, name: MANAGE_FLOW_SHARED_FIELDS.name, delivery: MANAGE_FLOW_SHARED_FIELDS.delivery, deviceIds: MANAGE_FLOW_SHARED_FIELDS.deviceIds, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
         access: 'read',
         describe: { order: 11, text: 'validate: Validate a draft flow without saving it. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowValidate(manageFlowValidateSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'verify',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowVerifySchema.shape)]),
+        input: { ...manageFlowVerifySchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'commerce',
         describe: {
             order: 12,
@@ -322,10 +282,10 @@ export const MANAGE_FLOW_TABLE = [
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowVerify(manageFlowVerifySchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'dry_run',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDryRunSchema.shape)]),
+        input: { ...manageFlowDryRunSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'read',
         describe: {
             order: 6,
@@ -334,19 +294,19 @@ export const MANAGE_FLOW_TABLE = [
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDryRun(manageFlowDryRunSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'capacity',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, []),
+        input: {  },
         access: 'read',
         describe: { order: 13, text: 'capacity: Read included flow capacity. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowCapacity();
         },
-    },
-    {
+    }),
+    operation({
         op: 'delivery_options',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeliveryOptionsSchema.shape)]),
+        input: { ...manageFlowDeliveryOptionsSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'read',
         describe: { order: 14, text: 'delivery_options: Read available delivery options. ' },
         run: async (ctx, input) => {
@@ -354,10 +314,10 @@ export const MANAGE_FLOW_TABLE = [
                 manageFlowDeliveryOptionsSchema.strip().parse(input),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'template_context',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowTemplateContextSchema.shape)]),
+        input: { ...manageFlowTemplateContextSchema.partial().shape },
         access: 'read',
         describe: { order: 15, text: 'template_context: Read template variables. ' },
         run: async (ctx, input) => {
@@ -365,71 +325,71 @@ export const MANAGE_FLOW_TABLE = [
                 manageFlowTemplateContextSchema.strip().parse(input),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'list_repairs',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowListRepairsSchema.shape)]),
+        input: { ...manageFlowListRepairsSchema.partial().shape, flowId: MANAGE_FLOW_SHARED_FIELDS.flowId },
         access: 'read',
         describe: { order: 16, text: 'list_repairs: Read suggested flow repairs. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowListRepairs(manageFlowListRepairsSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'update_action',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowUpdateActionSchema.shape)]),
+        input: { ...manageFlowUpdateActionSchema.partial().shape, actionId: MANAGE_FLOW_SHARED_FIELDS.actionId, name: MANAGE_FLOW_SHARED_FIELDS.name },
         access: 'write',
         describe: { order: 17, text: 'update_action: Update a workflow action. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowUpdateAction(manageFlowUpdateActionSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete_action',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeleteActionSchema.shape)]),
+        input: { ...manageFlowDeleteActionSchema.partial().shape, actionId: MANAGE_FLOW_SHARED_FIELDS.actionId },
         access: 'write',
         describe: { order: 18, text: 'delete_action: Delete a workflow action. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDeleteAction(manageFlowDeleteActionSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'update_trigger',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowUpdateTriggerSchema.shape)]),
+        input: { ...manageFlowUpdateTriggerSchema.partial().shape, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId, name: MANAGE_FLOW_SHARED_FIELDS.name },
         access: 'write',
         describe: { order: 19, text: 'update_trigger: Update a workflow trigger. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowUpdateTrigger(manageFlowUpdateTriggerSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete_trigger',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowDeleteTriggerSchema.shape)]),
+        input: { ...manageFlowDeleteTriggerSchema.partial().shape, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
         access: 'write',
         describe: { order: 20, text: 'delete_trigger: Delete a workflow trigger. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowDeleteTrigger(manageFlowDeleteTriggerSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'fire_trigger',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowFireTriggerSchema.shape)]),
+        input: { ...manageFlowFireTriggerSchema.partial().shape, triggerId: MANAGE_FLOW_SHARED_FIELDS.triggerId },
         access: 'commerce',
         describe: { order: 21, text: 'fire_trigger: Fire a workflow trigger. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowFireTrigger(manageFlowFireTriggerSchema.strip().parse(input));
         },
-    },
-    {
+    }),
+    operation({
         op: 'abort_execution',
-        input: selectInput(MANAGE_FLOW_INPUT_FIELDS, [...Object.keys(manageFlowAbortExecutionSchema.shape)]),
+        input: { ...manageFlowAbortExecutionSchema.partial().shape },
         access: 'write',
         describe: { order: 22, text: 'abort_execution: Abort a running execution. ' },
         run: async (ctx, input) => {
             return ctx.backend.workflows.manageFlowAbortExecution(manageFlowAbortExecutionSchema.strip().parse(input));
         },
-    },
-] as const satisfies readonly Operation<ManageFlowInput>[];
+    }),
+] as const;
 const MANAGE_FLOW_OPERATIONS = operationValues(MANAGE_FLOW_TABLE);
 
 export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
@@ -441,7 +401,7 @@ export function registerManageFlowTool(server: McpServer, ctx: ToolCtx): void {
                 operationDescription(MANAGE_FLOW_TABLE) + allowedValuesNote(operationValues, MANAGE_FLOW_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_FLOW_OPERATIONS),
-                ...operationInput(MANAGE_FLOW_TABLE, MANAGE_FLOW_INPUT_FIELDS),
+                ...operationInput(MANAGE_FLOW_TABLE, MANAGE_FLOW_SHARED_FIELDS),
             },
         },
         async (input) => asTextResult(await runOperation(MANAGE_FLOW_TABLE, input.operation, ctx, input)),

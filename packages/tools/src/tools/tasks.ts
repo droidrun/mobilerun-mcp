@@ -1,8 +1,7 @@
 import {
-    type Operation,
+    operation,
     operationValues,
     operationInput,
-    selectInput,
     operationDescription,
     runOperation,
 } from './operation-table.js';
@@ -54,7 +53,7 @@ export function compactTrajectory(
         events,
     };
 }
-const GET_TASK_INPUT_FIELDS = {
+const GET_TASK_SHARED_FIELDS = {
     taskId: z.string(),
     offset: z.number().int().min(0).optional().describe('view=trajectory only. 0-based event index to start from.'),
     limit: z
@@ -65,23 +64,21 @@ const GET_TASK_INPUT_FIELDS = {
         .optional()
         .describe(`view=trajectory only. Max ${MAX_TRAJECTORY_EVENTS} events per call.`),
 };
-type GetTaskInput = z.infer<z.ZodObject<typeof GET_TASK_INPUT_FIELDS>> & {
-    view: string;
-};
+
 export const GET_TASK_TABLE = [
-    {
+    operation({
         op: 'summary',
-        input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
+        input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
         access: 'read',
         describe: { order: 0, text: 'Fetch one task by id, chosen via `view`: summary (full record, minus ' },
         run: async (ctx, input) => {
             const { taskId, offset, limit } = input;
             return asTextResult(await ctx.backend.tasks.getTaskSummary(taskId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'status',
-        input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
+        input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
         access: 'read',
         describe: {
             order: 2,
@@ -91,10 +88,10 @@ export const GET_TASK_TABLE = [
             const { taskId, offset, limit } = input;
             return asTextResult(await ctx.backend.tasks.getTaskStatus(taskId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'trajectory',
-        input: selectInput(GET_TASK_INPUT_FIELDS, ['taskId', 'offset', 'limit']),
+        input: { taskId: GET_TASK_SHARED_FIELDS.taskId, offset: GET_TASK_SHARED_FIELDS.offset, limit: GET_TASK_SHARED_FIELDS.limit },
         access: 'read',
         describe: { order: 1, text: 'trajectory), ' },
         run: async (ctx, input) => {
@@ -102,31 +99,32 @@ export const GET_TASK_TABLE = [
             const raw = await ctx.backend.tasks.getTaskTrajectory(taskId);
             return asTextResult(compactTrajectory(raw, offset, limit));
         },
-    },
-] as const satisfies readonly Operation<GetTaskInput, CallToolResult>[];
-const GET_TASK_MEDIA_INPUT_FIELDS = { taskId: z.string(), index: z.number().int().nonnegative().optional() };
-type GetTaskMediaInput = z.infer<z.ZodObject<typeof GET_TASK_MEDIA_INPUT_FIELDS>> & {
-    kind: TaskMediaKind;
+    }),
+] as const;
+const GET_TASK_MEDIA_SHARED_FIELDS = {
+    taskId: z.string(),
+    index: z.number().int().nonnegative().optional(),
 };
+
 export const GET_TASK_MEDIA_TABLE = [
-    {
+    operation({
         op: 'screenshot',
-        input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']),
+        input: { taskId: GET_TASK_MEDIA_SHARED_FIELDS.taskId, index: GET_TASK_MEDIA_SHARED_FIELDS.index },
         access: 'read',
         describe: { order: 0, text: "Fetch a task's captured media, chosen via `kind` (screenshot | " },
-        run: executeTaskMediaOperation,
-    },
-    {
+        run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
+    }),
+    operation({
         op: 'ui_state',
-        input: selectInput(GET_TASK_MEDIA_INPUT_FIELDS, ['taskId', 'index']),
+        input: { taskId: GET_TASK_MEDIA_SHARED_FIELDS.taskId, index: GET_TASK_MEDIA_SHARED_FIELDS.index },
         access: 'read',
         describe: {
             order: 1,
             text: "ui_state). Omit `index` to list all available URLs for that kind; pass `index` to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs.",
         },
-        run: executeTaskMediaOperation,
-    },
-] as const satisfies readonly Operation<GetTaskMediaInput, CallToolResult>[];
+        run: async (ctx, input) => executeTaskMediaOperation(ctx, { ...input, kind: input.operation }),
+    }),
+] as const;
 const TASK_VIEWS = operationValues(GET_TASK_TABLE);
 const TASK_MEDIA_KINDS = operationValues(GET_TASK_MEDIA_TABLE);
 // Union of the global (client.tasks.list) and device-scoped
@@ -205,7 +203,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
         'get_task',
         {
             description: operationDescription(GET_TASK_TABLE),
-            inputSchema: { view: z.enum(TASK_VIEWS), ...operationInput(GET_TASK_TABLE, GET_TASK_INPUT_FIELDS) },
+            inputSchema: { view: z.enum(TASK_VIEWS), ...operationInput(GET_TASK_TABLE, GET_TASK_SHARED_FIELDS) },
         },
         async ({
             view,
@@ -265,7 +263,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
             description: operationDescription(GET_TASK_MEDIA_TABLE),
             inputSchema: {
                 kind: z.enum(TASK_MEDIA_KINDS),
-                ...operationInput(GET_TASK_MEDIA_TABLE, GET_TASK_MEDIA_INPUT_FIELDS),
+                ...operationInput(GET_TASK_MEDIA_TABLE, GET_TASK_MEDIA_SHARED_FIELDS),
             },
         },
         async (input) => runOperation(GET_TASK_MEDIA_TABLE, input.kind, ctx, input),
@@ -273,7 +271,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
 }
 async function executeTaskMediaOperation(
     ctx: ToolCtx,
-    { kind, taskId, index }: GetTaskMediaInput,
+    { kind, taskId, index }: { kind: TaskMediaKind; taskId: string; index?: number },
 ): Promise<CallToolResult> {
     return asTextResult(await ctx.backend.tasks.getTaskMedia(kind, taskId, index));
 }

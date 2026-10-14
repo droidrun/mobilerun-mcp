@@ -1,7 +1,6 @@
 import {
-    type Operation,
+    operation,
     operationValues,
-    selectInput,
     operationInput,
     operationDescription,
     runOperation,
@@ -20,7 +19,7 @@ import { z } from 'zod';
 import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
-const FILES_INPUT_FIELDS = {
+const FILES_SHARED_FIELDS = {
     zone: filesListSchema.shape.zone,
     fileId: z.string().optional().describe('Required for update/delete/cancel_pending/confirm/download.'),
     displayName: z.union([z.string(), z.null()]).optional(),
@@ -29,13 +28,11 @@ const FILES_INPUT_FIELDS = {
     mimeType: z.string().optional().describe('Required for upload_url.'),
     sizeBytes: z.number().optional().describe('Required for upload_url.'),
 };
-type FilesInput = z.infer<z.ZodObject<typeof FILES_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 export const FILES_TABLE = [
-    {
+    operation({
         op: 'download',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesDownloadSchema.shape)]),
+        input: { ...filesDownloadSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
         access: 'read',
         describe: { order: 6, text: 'download: Read a short-lived signed download URL.' },
         run: async (ctx, raw) => {
@@ -43,10 +40,10 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesDownload(filesDownloadSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'list',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesListSchema.shape)]),
+        input: { ...filesListSchema.partial().shape, zone: FILES_SHARED_FIELDS.zone },
         access: 'read',
         describe: { order: 0, text: 'list: List organization files. ' },
         run: async (ctx, raw) => {
@@ -54,10 +51,10 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesList(filesListSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'update',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesUpdateSchema.shape)]),
+        input: { ...filesUpdateSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId, displayName: FILES_SHARED_FIELDS.displayName, enabled: FILES_SHARED_FIELDS.enabled },
         access: 'write',
         describe: { order: 1, text: 'update: Update file metadata. ' },
         run: async (ctx, raw) => {
@@ -65,10 +62,10 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesUpdate(filesUpdateSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'delete',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesDeleteSchema.shape)]),
+        input: { ...filesDeleteSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
         access: 'write',
         describe: { order: 2, text: 'delete: Delete a file. ' },
         run: async (ctx, raw) => {
@@ -76,10 +73,10 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesDelete(filesDeleteSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'cancel_pending',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesCancelPendingSchema.shape)]),
+        input: { ...filesCancelPendingSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
         access: 'write',
         describe: { order: 3, text: 'cancel_pending: Cancel a pending file upload. ' },
         run: async (ctx, raw) => {
@@ -87,10 +84,10 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesCancelPending(filesCancelPendingSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'confirm',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesConfirmSchema.shape)]),
+        input: { ...filesConfirmSchema.partial().shape, fileId: FILES_SHARED_FIELDS.fileId },
         access: 'write',
         describe: { order: 4, text: 'confirm: Confirm an uploaded file. ' },
         run: async (ctx, raw) => {
@@ -98,10 +95,10 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesConfirm(filesConfirmSchema.strip().parse(input)));
         },
-    },
-    {
+    }),
+    operation({
         op: 'upload_url',
-        input: selectInput(FILES_INPUT_FIELDS, [...Object.keys(filesUploadUrlSchema.shape)]),
+        input: { ...filesUploadUrlSchema.partial().shape, filename: FILES_SHARED_FIELDS.filename, mimeType: FILES_SHARED_FIELDS.mimeType, sizeBytes: FILES_SHARED_FIELDS.sizeBytes, zone: FILES_SHARED_FIELDS.zone },
         access: 'write',
         describe: {
             order: 5,
@@ -112,8 +109,8 @@ export const FILES_TABLE = [
             const backend = ctx.backend.files;
             return asTextResult(await backend.filesUploadUrl(filesUploadUrlSchema.strip().parse(input)));
         },
-    },
-] as const satisfies readonly Operation<FilesInput>[];
+    }),
+] as const;
 const FILES_OPERATIONS = operationValues(FILES_TABLE);
 export function registerFilesTools(server: McpServer, ctx: ToolCtx): void {
     const values = narrowedValues(FILES_OPERATIONS, ctx.policy.operationAllowlist?.get('files'));
@@ -121,7 +118,7 @@ export function registerFilesTools(server: McpServer, ctx: ToolCtx): void {
         'files',
         {
             description: operationDescription(FILES_TABLE) + allowedValuesNote(values, FILES_OPERATIONS),
-            inputSchema: { operation: z.enum(FILES_OPERATIONS), ...operationInput(FILES_TABLE, FILES_INPUT_FIELDS) },
+            inputSchema: { operation: z.enum(FILES_OPERATIONS), ...operationInput(FILES_TABLE, FILES_SHARED_FIELDS) },
         },
         async (input) => runOperation(FILES_TABLE, input.operation, ctx, input),
     );

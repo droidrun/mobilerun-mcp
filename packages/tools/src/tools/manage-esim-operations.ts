@@ -1,4 +1,4 @@
-import { type Operation, selectInput } from './operation-table.js';
+import { operation } from './operation-table.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { requireValue } from './op-helpers.js';
 import {
@@ -13,28 +13,17 @@ import { z } from 'zod';
 
 import { asTextResult } from '../text-result.js';
 
-export const MANAGE_ESIM_INPUT_FIELDS = {
-    ...manageEsimSetRoamingSchema.partial().shape,
-    ...manageEsimStatusSchema.partial().shape,
-    ...manageEsimApnListSchema.partial().shape,
-    ...manageEsimApnSelectSchema.partial().shape,
-    ...manageEsimApnSetSchema.partial().shape,
+export const MANAGE_ESIM_SHARED_FIELDS = {
     deviceId: z.string(),
-    enable: z.boolean().optional(),
-    smDpAddr: z.string().optional(),
-    confirmationCode: z.string().optional(),
-    matchingId: z.string().optional(),
     subId: z.number().int().optional(),
 };
 
-type ManageEsimInput = z.infer<z.ZodObject<typeof MANAGE_ESIM_INPUT_FIELDS>> & {
-    operation: string;
-};
+
 
 export const MANAGE_ESIM_TABLE = [
-    {
+    operation({
         op: 'list',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, []),
+        input: { deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 5,
         access: 'read',
         describe: { order: 0, text: 'eSIM subscription management. Operations: list, ' },
@@ -43,10 +32,10 @@ export const MANAGE_ESIM_TABLE = [
             const backend = ctx.backend.deviceControl;
             return asTextResult(await backend.listEsims(deviceId));
         },
-    },
-    {
+    }),
+    operation({
         op: 'activate',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, ['enable', 'smDpAddr', 'confirmationCode', 'matchingId']),
+        input: { enable: z.boolean().optional(), smDpAddr: z.string().optional(), confirmationCode: z.string().optional(), matchingId: z.string().optional(), deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 6,
         access: 'commerce',
         describe: { order: 1, text: 'activate (smDpAddr required, ' },
@@ -62,10 +51,10 @@ export const MANAGE_ESIM_TABLE = [
                 }),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'enable',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, ['subId']),
+        input: { subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 7,
         access: 'write',
         describe: {
@@ -79,10 +68,10 @@ export const MANAGE_ESIM_TABLE = [
             await backend.enableEsim(deviceId, subId);
             return asTextResult({ status: 'ok', operation, deviceId, subId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'remove',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, ['subId']),
+        input: { subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 8,
         access: 'write',
         describe: { order: 3, text: 'remove (subId). Additional operations: ' },
@@ -93,10 +82,10 @@ export const MANAGE_ESIM_TABLE = [
             await backend.removeEsim(deviceId, subId);
             return asTextResult({ status: 'ok', operation, deviceId, subId });
         },
-    },
-    {
+    }),
+    operation({
         op: 'set_roaming',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimSetRoamingSchema.shape)),
+        input: { ...manageEsimSetRoamingSchema.partial().shape, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 0,
         access: 'write',
         describe: { order: 4, text: 'set_roaming: Enable or disable eSIM roaming. ' },
@@ -108,10 +97,10 @@ export const MANAGE_ESIM_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'status',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimStatusSchema.shape)),
+        input: { ...manageEsimStatusSchema.partial().shape, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 1,
         access: 'read',
         describe: { order: 5, text: 'status: Read eSIM connectivity status. ' },
@@ -123,10 +112,10 @@ export const MANAGE_ESIM_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'apn_list',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimApnListSchema.shape)),
+        input: { ...manageEsimApnListSchema.partial().shape, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 2,
         access: 'read',
         describe: { order: 6, text: 'apn_list: List available access point settings. ' },
@@ -138,10 +127,10 @@ export const MANAGE_ESIM_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'apn_select',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimApnSelectSchema.shape)),
+        input: { ...manageEsimApnSelectSchema.partial().shape, subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 3,
         access: 'write',
         describe: { order: 7, text: 'apn_select: Select an access point. ' },
@@ -153,10 +142,10 @@ export const MANAGE_ESIM_TABLE = [
                 ),
             );
         },
-    },
-    {
+    }),
+    operation({
         op: 'apn_set',
-        input: selectInput(MANAGE_ESIM_INPUT_FIELDS, Object.keys(manageEsimApnSetSchema.shape)),
+        input: { ...manageEsimApnSetSchema.partial().shape, subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         fieldOrder: 4,
         access: 'write',
         describe: { order: 8, text: 'apn_set: Set access point settings.' },
@@ -168,5 +157,5 @@ export const MANAGE_ESIM_TABLE = [
                 ),
             );
         },
-    },
-] as const satisfies readonly Operation<ManageEsimInput, CallToolResult>[];
+    }),
+] as const;
