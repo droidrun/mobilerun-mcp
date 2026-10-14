@@ -1,59 +1,54 @@
-// Device-control bundle tools: manage_device, device_action,
-// manage_device_apps, manage_device_files, configure_device, manage_esim.
-//
-// Every operation below was verified directly against @mobilerun/sdk 5.1.0's
-// shipped .d.ts — several operations that were originally sketched for this
-// bundle don't exist on the public client and are deliberately dropped:
-//
-//   - manage_device: `get_capabilities` dispatches to
-//     `client.devices.fingerprint` — the SDK has no separate "capabilities"
-//     endpoint; "fingerprint" (carrier/display/identifiers/model snapshot)
-//     is the closest and only match for a capabilities read.
-//   - device_action: "open deeplink" and "browser/execute-script" were
-//     originally sketched among its values — neither exists anywhere in the
-//     SDK (no deeplink-open or script-execution method on any devices
-//     sub-resource). Dropped. The 6 operations that DO exist across
-//     `client.devices.actions` (tap, swipe, global) and
-//     `client.devices.keyboard` (write, key, clear) are built instead.
-//     Overlay show/hide (`client.devices.actions.overlayVisible` /
-//     `setOverlayVisible`) is NOT here — it's built under configure_device
-//     instead (see below), even though the SDK physically groups the
-//     overlay methods on the `Actions` resource.
-//   - manage_device_apps: "grant/revoke permission" and "list
-//     installs" were originally sketched — neither exists on
-//     `client.devices.apps` or anywhere else in the SDK. Dropped.
-//     install/delete/start/stop (`client.devices.apps.*`) and list_packages
-//     (`client.devices.packages.list`) are built.
-//   - manage_device_files: list, upload, download,
-//     delete over `client.devices.files.*`.
-//   - configure_device: a wider sketch (~20 ops, including "location reset",
-//     "kiosk enable/disable", "fingerprint") doesn't hold up against the
-//     shipped SDK:
-//       - `location.reset` doesn't exist (only get/set).
-//       - kiosk mode doesn't exist anywhere in the SDK.
-//       - "fingerprint" is dropped here — it's the same
-//         `client.devices.fingerprint` call already exposed as
-//         manage_device's get_capabilities; this build surfaces it exactly
-//         once rather than duplicating it.
-//     What DOES exist and is built: language get/set, timezone get/set,
-//     location get/set, time (get-only — `client.devices.state.time` has no
-//     setter), overlay get/set (see device_action note above for why it's
-//     here), and proxy connect/disconnect/status
-//     (`client.devices.proxy.*`) — folded in here since it's config-shaped,
-//     not an on-screen action. The "setting + get/set" cross-product
-//     doesn't fit proxy (connect/disconnect/status, not get/set), so this
-//     tool uses one flat `operation` enum instead, consistent with
-//     webhooks/manage_device's established bundle-tool shape.
-//   - manage_esim: a wider sketch of 9 operations including "APN
-//     list/create/select", "roaming", "connectivity-status" — none of
-//     those exist anywhere in the SDK (confirmed: no "apn"/"roaming"
-//     string appears in the shipped client at all). Only
-//     `client.devices.esim.{list,activate,enable,remove}` exist (4 ops).
-//
-// `device_recordings` (list/start/get/stop/delete/trajectory/video) is NOT
-// built at all and NOT registered — there is no `recordings` resource,
-// method, or route anywhere in the SDK. See
-// ../backend/device-control.ts's header for the same note.
+import { manageDeviceRecordingsTrajectorySchema } from '../backend/device-control.js';
+import { manageDeviceRecordingsVideoSchema } from '../backend/device-control.js';
+import { manageDeviceScreenshotsImageSchema } from '../backend/device-control.js';
+import {
+    manageEsimSetRoamingSchema,
+    manageEsimStatusSchema,
+    manageEsimApnListSchema,
+    manageEsimApnSelectSchema,
+    manageEsimApnSetSchema,
+} from '../backend/device-control.js';
+import {
+    configureDeviceResetLocationSchema,
+    configureDeviceKioskEnableSchema,
+    configureDeviceKioskDisableSchema,
+    configureDeviceUpdateProfileSchema,
+} from '../backend/device-control.js';
+import {
+    manageDeviceAppsGrantPermissionSchema,
+    manageDeviceAppsRevokePermissionSchema,
+    manageDeviceAppsListInstallsSchema,
+} from '../backend/device-control.js';
+import {
+    deviceActionClipboardGetSchema,
+    deviceActionClipboardSetSchema,
+    deviceActionDeepLinkSchema,
+    deviceActionBrowserScriptSchema,
+} from '../backend/device-control.js';
+import {
+    manageDeviceStopSchema,
+    manageDeviceResumeSchema,
+    manageDeviceSummarySchema,
+    manageDeviceRetrieveCapabilitiesSchema,
+    manageDeviceRecordingsListSchema,
+    manageDeviceRecordingsDeleteSchema,
+    manageDeviceRecordingsScreenshotsSchema,
+    manageDeviceRecordingsStartSchema,
+    manageDeviceRecordingsStatusSchema,
+    manageDeviceRecordingsStopSchema,
+    manageDeviceScreenshotsListSchema,
+    manageDeviceScreenshotsDeleteSchema,
+    manageDeviceScreenshotsCaptureSchema,
+    manageDeviceTrafficSessionsCreateSchema,
+    manageDeviceTrafficSessionsRetrieveSchema,
+    manageDeviceTrafficSessionsListSchema,
+    manageDeviceTrafficSessionsDeleteSchema,
+    manageDeviceMediaSessionsCreateSchema,
+    manageDeviceMediaSessionsDeleteSchema,
+    manageDeviceMediaSessionsActivateSchema,
+    manageDeviceMediaSessionsRetrieveCurrentSchema,
+} from '../backend/device-control.js';
+// Device-control bundle tools, including device media and connectivity operations.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -66,7 +61,12 @@ function requireValue<T>(value: T | undefined, name: string, operation: string):
 }
 
 /** Rejects any input key not on `allowed` for the chosen operation — fail-closed field allowlist, mirrors tools/workflows.ts's ALLOWED_FILTERS pattern. */
-function disallowedFieldError(operation: string, allowed: readonly string[], allKeys: readonly string[], input: Record<string, unknown>): string | null {
+function disallowedFieldError(
+    operation: string,
+    allowed: readonly string[],
+    allKeys: readonly string[],
+    input: Record<string, unknown>,
+): string | null {
     const extra = allKeys.filter((k) => input[k] !== undefined && !allowed.includes(k));
     if (extra.length === 0) return null;
     return `field ${extra.join(', ')} is not valid for operation=${operation}; allowed fields: ${allowed.join(', ') || '(none)'}`;
@@ -85,9 +85,65 @@ const MAX_INLINE_BASE64_CHARS = Math.ceil((MAX_INLINE_FILE_BYTES * 4) / 3);
 // manage_device
 // ---------------------------------------------------------------------------
 
-const MANAGE_DEVICE_OPERATIONS = ['reboot', 'reset', 'rename', 'wait_ready', 'get_capabilities', 'count'] as const;
+const MANAGE_DEVICE_OPERATIONS = [
+    'recordings_trajectory',
+    'recordings_video',
+    'screenshots_image',
+    'reboot',
+    'reset',
+    'rename',
+    'wait_ready',
+    'get_capabilities',
+    'count',
+    'stop',
+    'resume',
+    'summary',
+    'retrieve_capabilities',
+    'recordings_list',
+    'recordings_delete',
+    'recordings_screenshots',
+    'recordings_start',
+    'recordings_status',
+    'recordings_stop',
+    'screenshots_list',
+    'screenshots_delete',
+    'screenshots_capture',
+    'traffic_sessions_create',
+    'traffic_sessions_retrieve',
+    'traffic_sessions_list',
+    'traffic_sessions_delete',
+    'media_sessions_create',
+    'media_sessions_delete',
+    'media_sessions_activate',
+    'media_sessions_retrieve_current',
+] as const;
 type ManageDeviceOperation = (typeof MANAGE_DEVICE_OPERATIONS)[number];
 const MANAGE_DEVICE_FIELDS: Record<ManageDeviceOperation, readonly string[]> = {
+    recordings_trajectory: ['params'],
+    recordings_video: ['params'],
+    screenshots_image: ['params'],
+    stop: ['params'],
+    resume: ['params'],
+    summary: ['params'],
+    retrieve_capabilities: ['params'],
+    recordings_list: ['params'],
+    recordings_delete: ['params'],
+    recordings_screenshots: ['params'],
+    recordings_start: ['params'],
+    recordings_status: ['params'],
+    recordings_stop: ['params'],
+    screenshots_list: ['params'],
+    screenshots_delete: ['params'],
+    screenshots_capture: ['params'],
+    traffic_sessions_create: ['params'],
+    traffic_sessions_retrieve: ['params'],
+    traffic_sessions_list: ['params'],
+    traffic_sessions_delete: ['params'],
+    media_sessions_create: ['params'],
+    media_sessions_delete: ['params'],
+    media_sessions_activate: ['params'],
+    media_sessions_retrieve_current: ['params'],
+
     reboot: [],
     reset: [],
     rename: ['name'],
@@ -104,16 +160,223 @@ function registerManageDevice(server: McpServer, ctx: ToolCtx): void {
         {
             description:
                 'Device lifecycle operations. Operations: reboot, reset (factory-reset to a fresh state — destructive), rename (needs name), wait_ready (blocks until state=ready), get_capabilities (device profile: carrier, display, identifiers, model), count (claimed-device counts by state — no deviceId).' +
+                ' Additional operations (use params): stop: Stop a device. resume: Resume a stopped device; billing may resume. summary: Read device counts and usage summary. retrieve_capabilities: Read supported device features. recordings_list: Manage device recordings: list. recordings_delete: Manage device recordings: delete. recordings_screenshots: Manage device recordings: screenshots. recordings_start: Manage device recordings: start. recordings_status: Manage device recordings: status. recordings_stop: Manage device recordings: stop. screenshots_list: Manage device screenshots: list. screenshots_delete: Manage device screenshots: delete. screenshots_capture: Capture a PNG as inline base64 (up to 2 MB); save optionally stores device media. traffic_sessions_create: Manage device traffic sessions: create. traffic_sessions_retrieve: Manage device traffic sessions: retrieve. traffic_sessions_list: Manage device traffic sessions: list. traffic_sessions_delete: Manage device traffic sessions: delete. media_sessions_create: Manage device media sessions: create. media_sessions_delete: Manage device media sessions: delete. media_sessions_activate: Manage device media sessions: activate. media_sessions_retrieve_current: Manage device media sessions: retrieve current.' +
+                ' screenshots_image: Read a short-lived signed download URL.' +
+                ' recordings_video: Read a short-lived signed download URL.' +
+                ' recordings_trajectory: Read a short-lived signed download URL.' +
                 allowedValuesNote(values, MANAGE_DEVICE_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_DEVICE_OPERATIONS),
-                deviceId: z.string().optional().describe('Required for every operation except count.'),
+                params: z
+                    .union([
+                        manageDeviceRecordingsTrajectorySchema,
+                        manageDeviceRecordingsVideoSchema,
+                        manageDeviceScreenshotsImageSchema,
+                        manageDeviceStopSchema,
+                        manageDeviceResumeSchema,
+                        manageDeviceSummarySchema,
+                        manageDeviceRetrieveCapabilitiesSchema,
+                        manageDeviceRecordingsListSchema,
+                        manageDeviceRecordingsDeleteSchema,
+                        manageDeviceRecordingsScreenshotsSchema,
+                        manageDeviceRecordingsStartSchema,
+                        manageDeviceRecordingsStatusSchema,
+                        manageDeviceRecordingsStopSchema,
+                        manageDeviceScreenshotsListSchema,
+                        manageDeviceScreenshotsDeleteSchema,
+                        manageDeviceScreenshotsCaptureSchema,
+                        manageDeviceTrafficSessionsCreateSchema,
+                        manageDeviceTrafficSessionsRetrieveSchema,
+                        manageDeviceTrafficSessionsListSchema,
+                        manageDeviceTrafficSessionsDeleteSchema,
+                        manageDeviceMediaSessionsCreateSchema,
+                        manageDeviceMediaSessionsDeleteSchema,
+                        manageDeviceMediaSessionsActivateSchema,
+                        manageDeviceMediaSessionsRetrieveCurrentSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
+                deviceId: z.string().optional().describe('Required for every operation except count and summary.'),
                 name: z.string().max(64).optional(),
             },
         },
-        async (input: { operation: ManageDeviceOperation; deviceId?: string; name?: string }) => {
+        async (input: { operation: ManageDeviceOperation; deviceId?: string; name?: string; params?: unknown }) => {
+            if (input.operation === 'recordings_trajectory')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsTrajectory(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsTrajectorySchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_video')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsVideo(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsVideoSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'screenshots_image')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceScreenshotsImage(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceScreenshotsImageSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'stop')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceStop(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceStopSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'resume')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceResume(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceResumeSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'summary')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceSummary(
+                        input.deviceId ?? '',
+                        manageDeviceSummarySchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'retrieve_capabilities')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRetrieveCapabilities(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRetrieveCapabilitiesSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_list')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsList(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsListSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_delete')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsDelete(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsDeleteSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_screenshots')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsScreenshots(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsScreenshotsSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_start')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsStart(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsStartSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_status')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsStatus(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsStatusSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'recordings_stop')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceRecordingsStop(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceRecordingsStopSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'screenshots_list')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceScreenshotsList(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceScreenshotsListSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'screenshots_delete')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceScreenshotsDelete(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceScreenshotsDeleteSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'screenshots_capture')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceScreenshotsCapture(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceScreenshotsCaptureSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'traffic_sessions_create')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceTrafficSessionsCreate(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceTrafficSessionsCreateSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'traffic_sessions_retrieve')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceTrafficSessionsRetrieve(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceTrafficSessionsRetrieveSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'traffic_sessions_list')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceTrafficSessionsList(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceTrafficSessionsListSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'traffic_sessions_delete')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceTrafficSessionsDeleteSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'media_sessions_create')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceMediaSessionsCreate(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceMediaSessionsCreateSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'media_sessions_delete')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceMediaSessionsDelete(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceMediaSessionsDeleteSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'media_sessions_activate')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceMediaSessionsActivate(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceMediaSessionsActivateSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'media_sessions_retrieve_current')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceMediaSessionsRetrieveCurrent(
+                        requireValue(input.deviceId, 'deviceId', input.operation),
+                        manageDeviceMediaSessionsRetrieveCurrentSchema.parse(input.params ?? {}),
+                    ),
+                );
+
             const { operation } = input;
-            const fieldError = disallowedFieldError(operation, MANAGE_DEVICE_FIELDS[operation], MANAGE_DEVICE_FIELD_KEYS, input);
+            const fieldError = disallowedFieldError(
+                operation,
+                MANAGE_DEVICE_FIELDS[operation],
+                MANAGE_DEVICE_FIELD_KEYS,
+                input,
+            );
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
@@ -148,9 +411,25 @@ function registerManageDevice(server: McpServer, ctx: ToolCtx): void {
 // device_action
 // ---------------------------------------------------------------------------
 
-const DEVICE_ACTION_OPERATIONS = ['tap', 'swipe', 'keyboard_write', 'keyboard_key', 'keyboard_clear', 'global_action'] as const;
+const DEVICE_ACTION_OPERATIONS = [
+    'tap',
+    'swipe',
+    'keyboard_write',
+    'keyboard_key',
+    'keyboard_clear',
+    'global_action',
+    'clipboard_get',
+    'clipboard_set',
+    'deep_link',
+    'browser_script',
+] as const;
 type DeviceActionOperation = (typeof DEVICE_ACTION_OPERATIONS)[number];
 const DEVICE_ACTION_FIELDS: Record<DeviceActionOperation, readonly string[]> = {
+    clipboard_get: ['params'],
+    clipboard_set: ['params'],
+    deep_link: ['params'],
+    browser_script: ['params'],
+
     tap: ['x', 'y', 'pacedInput'],
     swipe: ['startX', 'startY', 'endX', 'endY', 'duration', 'pacedInput'],
     keyboard_write: ['text', 'clear', 'errorRate', 'pacedInput', 'wpm'],
@@ -158,7 +437,22 @@ const DEVICE_ACTION_FIELDS: Record<DeviceActionOperation, readonly string[]> = {
     keyboard_clear: [],
     global_action: ['action'],
 };
-const DEVICE_ACTION_FIELD_KEYS = ['x', 'y', 'startX', 'startY', 'endX', 'endY', 'duration', 'pacedInput', 'text', 'clear', 'errorRate', 'wpm', 'key', 'action'] as const;
+const DEVICE_ACTION_FIELD_KEYS = [
+    'x',
+    'y',
+    'startX',
+    'startY',
+    'endX',
+    'endY',
+    'duration',
+    'pacedInput',
+    'text',
+    'clear',
+    'errorRate',
+    'wpm',
+    'key',
+    'action',
+] as const;
 
 function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
     const values = narrowedValues(DEVICE_ACTION_OPERATIONS, ctx.policy.operationAllowlist?.get('device_action'));
@@ -167,9 +461,19 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
         {
             description:
                 'Low-level device input. Operations: tap (x, y), swipe (startX, startY, endX, endY, duration ms), keyboard_write (text, clear?, errorRate?, wpm?, pacedInput?), keyboard_key (key: Android keycode), keyboard_clear, global_action (action: Android global-action code, e.g. back/home/recents). `pacedInput` (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call `displayId` targets a specific display on multi-display devices.' +
+                ' Additional operations (use params): clipboard_get: Read clipboard text. clipboard_set: Write clipboard text. deep_link: Open a URL or app link. browser_script: Run a script in the device browser.' +
                 allowedValuesNote(values, DEVICE_ACTION_OPERATIONS),
             inputSchema: {
                 operation: z.enum(DEVICE_ACTION_OPERATIONS),
+                params: z
+                    .union([
+                        deviceActionClipboardGetSchema,
+                        deviceActionClipboardSetSchema,
+                        deviceActionDeepLinkSchema,
+                        deviceActionBrowserScriptSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
                 deviceId: z.string(),
                 displayId: z.number().int().optional(),
                 x: z.number().optional(),
@@ -179,18 +483,65 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
                 endX: z.number().optional(),
                 endY: z.number().optional(),
                 duration: z.number().int().positive().optional().describe('Swipe duration in milliseconds.'),
-                pacedInput: z.boolean().optional().describe('tap/swipe/keyboard_write: send input with variable timing and gesture paths.'),
+                pacedInput: z
+                    .boolean()
+                    .optional()
+                    .describe('tap/swipe/keyboard_write: send input with variable timing and gesture paths.'),
                 text: z.string().optional(),
                 clear: z.boolean().optional().describe('keyboard_write: clear existing input before typing.'),
-                errorRate: z.number().optional().describe('keyboard_write with pacedInput: correction rate per character (backspace and retype). -1 uses the default.'),
-                wpm: z.number().optional().describe('keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.'),
+                errorRate: z
+                    .number()
+                    .optional()
+                    .describe(
+                        'keyboard_write with pacedInput: correction rate per character (backspace and retype). -1 uses the default.',
+                    ),
+                wpm: z
+                    .number()
+                    .optional()
+                    .describe('keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.'),
                 key: z.number().int().optional().describe('keyboard_key: Android keycode.'),
                 action: z.number().int().optional().describe('global_action: Android global-action code.'),
             },
         },
-        async (input: { operation: DeviceActionOperation; deviceId: string; displayId?: number } & Record<string, unknown>) => {
+        async (
+            input: { operation: DeviceActionOperation; deviceId: string; displayId?: number } & Record<string, unknown>,
+        ) => {
+            if (input.operation === 'clipboard_get')
+                return asTextResult(
+                    await ctx.backend.deviceControl.deviceActionClipboardGet(
+                        input.deviceId,
+                        deviceActionClipboardGetSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'clipboard_set')
+                return asTextResult(
+                    await ctx.backend.deviceControl.deviceActionClipboardSet(
+                        input.deviceId,
+                        deviceActionClipboardSetSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'deep_link')
+                return asTextResult(
+                    await ctx.backend.deviceControl.deviceActionDeepLink(
+                        input.deviceId,
+                        deviceActionDeepLinkSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'browser_script')
+                return asTextResult(
+                    await ctx.backend.deviceControl.deviceActionBrowserScript(
+                        input.deviceId,
+                        deviceActionBrowserScriptSchema.parse(input.params ?? {}),
+                    ),
+                );
+
             const { operation, deviceId, displayId } = input;
-            const fieldError = disallowedFieldError(operation, DEVICE_ACTION_FIELDS[operation], DEVICE_ACTION_FIELD_KEYS, input);
+            const fieldError = disallowedFieldError(
+                operation,
+                DEVICE_ACTION_FIELDS[operation],
+                DEVICE_ACTION_FIELD_KEYS,
+                input,
+            );
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
@@ -227,11 +578,19 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
                     wpm: input.wpm as number | undefined,
                 });
             } else if (operation === 'keyboard_key') {
-                await backend.keyboardKey({ deviceId, displayId, key: requireValue(input.key as number | undefined, 'key', operation) });
+                await backend.keyboardKey({
+                    deviceId,
+                    displayId,
+                    key: requireValue(input.key as number | undefined, 'key', operation),
+                });
             } else if (operation === 'keyboard_clear') {
                 await backend.keyboardClear(deviceId, displayId);
             } else {
-                await backend.globalAction({ deviceId, displayId, action: requireValue(input.action as number | undefined, 'action', operation) });
+                await backend.globalAction({
+                    deviceId,
+                    displayId,
+                    action: requireValue(input.action as number | undefined, 'action', operation),
+                });
             }
             return asTextResult({ status: 'ok', operation, deviceId });
         },
@@ -242,16 +601,35 @@ function registerDeviceAction(server: McpServer, ctx: ToolCtx): void {
 // manage_device_apps
 // ---------------------------------------------------------------------------
 
-const MANAGE_APPS_OPERATIONS = ['install', 'delete', 'start', 'stop', 'list_packages'] as const;
+const MANAGE_APPS_OPERATIONS = [
+    'install',
+    'delete',
+    'start',
+    'stop',
+    'list_packages',
+    'grant_permission',
+    'revoke_permission',
+    'list_installs',
+] as const;
 type ManageAppsOperation = (typeof MANAGE_APPS_OPERATIONS)[number];
 const MANAGE_APPS_FIELDS: Record<ManageAppsOperation, readonly string[]> = {
+    grant_permission: ['params'],
+    revoke_permission: ['params'],
+    list_installs: ['params'],
+
     install: ['packageName', 'bundleId'],
     delete: ['packageName'],
     start: ['packageName', 'activity'],
     stop: ['packageName'],
     list_packages: ['includeSystemPackages', 'includeProtectedPackages'],
 };
-const MANAGE_APPS_FIELD_KEYS = ['packageName', 'bundleId', 'activity', 'includeSystemPackages', 'includeProtectedPackages'] as const;
+const MANAGE_APPS_FIELD_KEYS = [
+    'packageName',
+    'bundleId',
+    'activity',
+    'includeSystemPackages',
+    'includeProtectedPackages',
+] as const;
 
 function registerManageDeviceApps(server: McpServer, ctx: ToolCtx): void {
     const values = narrowedValues(MANAGE_APPS_OPERATIONS, ctx.policy.operationAllowlist?.get('manage_device_apps'));
@@ -260,9 +638,18 @@ function registerManageDeviceApps(server: McpServer, ctx: ToolCtx): void {
         {
             description:
                 'Mutate apps on a device. Operations: install (packageName and/or bundleId — at least one), delete (packageName), start (packageName, activity?), stop (packageName), list_packages (raw installed package names, includeSystemPackages?, includeProtectedPackages?). Read app metadata (label, versions) via list_apps_on_device instead.' +
+                ' Additional operations (use params): grant_permission: Grant an app notification permission. revoke_permission: Revoke an app notification permission. list_installs: Read app installation jobs.' +
                 allowedValuesNote(values, MANAGE_APPS_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_APPS_OPERATIONS),
+                params: z
+                    .union([
+                        manageDeviceAppsGrantPermissionSchema,
+                        manageDeviceAppsRevokePermissionSchema,
+                        manageDeviceAppsListInstallsSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
                 deviceId: z.string(),
                 packageName: z.string().optional(),
                 bundleId: z.string().optional().describe('iOS bundle identifier (install only).'),
@@ -272,8 +659,35 @@ function registerManageDeviceApps(server: McpServer, ctx: ToolCtx): void {
             },
         },
         async (input: { operation: ManageAppsOperation; deviceId: string } & Record<string, unknown>) => {
+            if (input.operation === 'grant_permission')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceAppsGrantPermission(
+                        input.deviceId,
+                        manageDeviceAppsGrantPermissionSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'revoke_permission')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceAppsRevokePermission(
+                        input.deviceId,
+                        manageDeviceAppsRevokePermissionSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'list_installs')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageDeviceAppsListInstalls(
+                        input.deviceId,
+                        manageDeviceAppsListInstallsSchema.parse(input.params ?? {}),
+                    ),
+                );
+
             const { operation, deviceId } = input;
-            const fieldError = disallowedFieldError(operation, MANAGE_APPS_FIELDS[operation], MANAGE_APPS_FIELD_KEYS, input);
+            const fieldError = disallowedFieldError(
+                operation,
+                MANAGE_APPS_FIELDS[operation],
+                MANAGE_APPS_FIELD_KEYS,
+                input,
+            );
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
@@ -281,7 +695,8 @@ function registerManageDeviceApps(server: McpServer, ctx: ToolCtx): void {
             const bundleId = input.bundleId as string | undefined;
 
             if (operation === 'install') {
-                if (!packageName && !bundleId) throw new Error('operation=install requires packageName and/or bundleId');
+                if (!packageName && !bundleId)
+                    throw new Error('operation=install requires packageName and/or bundleId');
                 await backend.installApp(deviceId, { packageName, bundleId });
                 return asTextResult({ status: 'install_requested', deviceId, packageName, bundleId });
             }
@@ -337,17 +752,30 @@ function registerManageDeviceFiles(server: McpServer, ctx: ToolCtx): void {
                 contentType: z.string().optional(),
             },
         },
-        async (input: { operation: ManageFilesOperation; deviceId: string; path: string } & Record<string, unknown>) => {
+        async (
+            input: { operation: ManageFilesOperation; deviceId: string; path: string } & Record<string, unknown>,
+        ) => {
             const { operation, deviceId, path } = input;
-            const fieldError = disallowedFieldError(operation, MANAGE_FILES_FIELDS[operation], MANAGE_FILES_FIELD_KEYS, input);
+            const fieldError = disallowedFieldError(
+                operation,
+                MANAGE_FILES_FIELDS[operation],
+                MANAGE_FILES_FIELD_KEYS,
+                input,
+            );
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
             if (operation === 'list') return asTextResult(await backend.listFiles(deviceId, { path }));
             if (operation === 'upload') {
-                const contentBase64 = requireValue(input.contentBase64 as string | undefined, 'contentBase64', operation);
+                const contentBase64 = requireValue(
+                    input.contentBase64 as string | undefined,
+                    'contentBase64',
+                    operation,
+                );
                 if (contentBase64.length > MAX_INLINE_BASE64_CHARS) {
-                    return asErrorResult(`upload payload exceeds the ${MAX_INLINE_FILE_BYTES / 1024}KB inline limit — use a smaller file.`);
+                    return asErrorResult(
+                        `upload payload exceeds the ${MAX_INLINE_FILE_BYTES / 1024}KB inline limit — use a smaller file.`,
+                    );
                 }
                 await backend.uploadFile(deviceId, {
                     path,
@@ -360,7 +788,9 @@ function registerManageDeviceFiles(server: McpServer, ctx: ToolCtx): void {
             if (operation === 'download') {
                 const result = await backend.downloadFile(deviceId, path);
                 if (result.content.length > MAX_INLINE_BASE64_CHARS) {
-                    return asErrorResult(`device file at "${path}" exceeds the ${MAX_INLINE_FILE_BYTES / 1024}KB inline transfer limit.`);
+                    return asErrorResult(
+                        `device file at "${path}" exceeds the ${MAX_INLINE_FILE_BYTES / 1024}KB inline transfer limit.`,
+                    );
                 }
                 return asTextResult(result);
             }
@@ -387,9 +817,18 @@ const CONFIGURE_DEVICE_OPERATIONS = [
     'proxy_connect',
     'proxy_disconnect',
     'get_proxy_status',
+    'reset_location',
+    'kiosk_enable',
+    'kiosk_disable',
+    'update_profile',
 ] as const;
 type ConfigureDeviceOperation = (typeof CONFIGURE_DEVICE_OPERATIONS)[number];
 const CONFIGURE_DEVICE_FIELDS: Record<ConfigureDeviceOperation, readonly string[]> = {
+    reset_location: ['params'],
+    kiosk_enable: ['params'],
+    kiosk_disable: ['params'],
+    update_profile: ['params'],
+
     get_language: [],
     set_language: ['locale', 'restart'],
     get_timezone: [],
@@ -424,10 +863,20 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
         'configure_device',
         {
             description:
-                'Read/write device settings. Operations: get_language/set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), get_timezone/set_timezone (IANA tz), get_location/set_location (latitude, longitude — no reset; use set_location again to change), get_time (read-only device clock), get_overlay/set_overlay (visible: the on-device debug/annotation overlay), proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy; smartIp defaults to true — aligns the device location, time zone, locale, and carrier settings with the proxy region; pass false to connect without changing device settings), proxy_disconnect, get_proxy_status.' +
+                'Read/write device settings. Operations: get_language/set_language (locale: BCP-47 e.g. en-US; restart? forces the change to apply immediately instead of on next reboot), get_timezone/set_timezone (IANA tz), get_location/set_location (latitude, longitude), get_time (read-only device clock), get_overlay/set_overlay (visible: the on-device debug/annotation overlay), proxy_connect (proxyName? and/or smartIp?, or socks5Host+socks5Port+socks5User?+socks5Password? for a SOCKS5 proxy; smartIp defaults to true — aligns the device location, time zone, locale, and carrier settings with the proxy region; pass false to connect without changing device settings), proxy_disconnect, get_proxy_status.' +
+                ' Additional operations (use params): reset_location: Reset the device location. kiosk_enable: Enable kiosk mode for an app. kiosk_disable: Disable kiosk mode. update_profile: Update device profile settings.' +
                 allowedValuesNote(values, CONFIGURE_DEVICE_OPERATIONS),
             inputSchema: {
                 operation: z.enum(CONFIGURE_DEVICE_OPERATIONS),
+                params: z
+                    .union([
+                        configureDeviceResetLocationSchema,
+                        configureDeviceKioskEnableSchema,
+                        configureDeviceKioskDisableSchema,
+                        configureDeviceUpdateProfileSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
                 deviceId: z.string(),
                 locale: z.string().optional(),
                 restart: z.boolean().optional(),
@@ -444,8 +893,42 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
             },
         },
         async (input: { operation: ConfigureDeviceOperation; deviceId: string } & Record<string, unknown>) => {
+            if (input.operation === 'reset_location')
+                return asTextResult(
+                    await ctx.backend.deviceControl.configureDeviceResetLocation(
+                        input.deviceId,
+                        configureDeviceResetLocationSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'kiosk_enable')
+                return asTextResult(
+                    await ctx.backend.deviceControl.configureDeviceKioskEnable(
+                        input.deviceId,
+                        configureDeviceKioskEnableSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'kiosk_disable')
+                return asTextResult(
+                    await ctx.backend.deviceControl.configureDeviceKioskDisable(
+                        input.deviceId,
+                        configureDeviceKioskDisableSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'update_profile')
+                return asTextResult(
+                    await ctx.backend.deviceControl.configureDeviceUpdateProfile(
+                        input.deviceId,
+                        configureDeviceUpdateProfileSchema.parse(input.params ?? {}),
+                    ),
+                );
+
             const { operation, deviceId } = input;
-            const fieldError = disallowedFieldError(operation, CONFIGURE_DEVICE_FIELDS[operation], CONFIGURE_DEVICE_FIELD_KEYS, input);
+            const fieldError = disallowedFieldError(
+                operation,
+                CONFIGURE_DEVICE_FIELDS[operation],
+                CONFIGURE_DEVICE_FIELD_KEYS,
+                input,
+            );
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
@@ -461,7 +944,10 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
                 case 'get_timezone':
                     return asTextResult(await backend.getTimezone(deviceId));
                 case 'set_timezone':
-                    await backend.setTimezone(deviceId, requireValue(input.timezone as string | undefined, 'timezone', operation));
+                    await backend.setTimezone(
+                        deviceId,
+                        requireValue(input.timezone as string | undefined, 'timezone', operation),
+                    );
                     return asTextResult({ status: 'ok', operation, deviceId });
                 case 'get_location':
                     return asTextResult(await backend.getLocation(deviceId));
@@ -476,7 +962,10 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
                 case 'get_overlay':
                     return asTextResult(await backend.getOverlay(deviceId));
                 case 'set_overlay':
-                    await backend.setOverlay(deviceId, requireValue(input.visible as boolean | undefined, 'visible', operation));
+                    await backend.setOverlay(
+                        deviceId,
+                        requireValue(input.visible as boolean | undefined, 'visible', operation),
+                    );
                     return asTextResult({ status: 'ok', operation, deviceId });
                 case 'proxy_connect': {
                     const socks5Host = input.socks5Host as string | undefined;
@@ -487,7 +976,12 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
                         smartIp: (input.smartIp as boolean | undefined) ?? true,
                         socks5:
                             socks5Host && socks5Port !== undefined
-                                ? { host: socks5Host, port: socks5Port, user: input.socks5User as string | undefined, password: input.socks5Password as string | undefined }
+                                ? {
+                                      host: socks5Host,
+                                      port: socks5Port,
+                                      user: input.socks5User as string | undefined,
+                                      password: input.socks5Password as string | undefined,
+                                  }
                                 : undefined,
                     });
                     return asTextResult({ status: 'ok', operation, deviceId });
@@ -506,9 +1000,25 @@ function registerConfigureDevice(server: McpServer, ctx: ToolCtx): void {
 // manage_esim
 // ---------------------------------------------------------------------------
 
-const MANAGE_ESIM_OPERATIONS = ['list', 'activate', 'enable', 'remove'] as const;
+const MANAGE_ESIM_OPERATIONS = [
+    'list',
+    'activate',
+    'enable',
+    'remove',
+    'set_roaming',
+    'status',
+    'apn_list',
+    'apn_select',
+    'apn_set',
+] as const;
 type ManageEsimOperation = (typeof MANAGE_ESIM_OPERATIONS)[number];
 const MANAGE_ESIM_FIELDS: Record<ManageEsimOperation, readonly string[]> = {
+    set_roaming: ['params'],
+    status: ['params'],
+    apn_list: ['params'],
+    apn_select: ['params'],
+    apn_set: ['params'],
+
     list: [],
     activate: ['enable', 'smDpAddr', 'confirmationCode', 'matchingId'],
     enable: ['subId'],
@@ -523,9 +1033,20 @@ function registerManageEsim(server: McpServer, ctx: ToolCtx): void {
         {
             description:
                 'eSIM subscription management. Operations: list, activate (smDpAddr required, enable: whether to also enable the downloaded profile, confirmationCode?/matchingId? — confirmationCode requires matchingId, only needed when the SM-DP+ challenges for it), enable (subId), remove (subId).' +
+                ' Additional operations (use params): set_roaming: Enable or disable eSIM roaming. status: Read eSIM connectivity status. apn_list: List available access point settings. apn_select: Select an access point. apn_set: Set access point settings.' +
                 allowedValuesNote(values, MANAGE_ESIM_OPERATIONS),
             inputSchema: {
                 operation: z.enum(MANAGE_ESIM_OPERATIONS),
+                params: z
+                    .union([
+                        manageEsimSetRoamingSchema,
+                        manageEsimStatusSchema,
+                        manageEsimApnListSchema,
+                        manageEsimApnSelectSchema,
+                        manageEsimApnSetSchema,
+                    ])
+                    .optional()
+                    .describe('Parameters for additional operations; the matching object shape is required.'),
                 deviceId: z.string(),
                 enable: z.boolean().optional(),
                 smDpAddr: z.string().optional(),
@@ -535,8 +1056,49 @@ function registerManageEsim(server: McpServer, ctx: ToolCtx): void {
             },
         },
         async (input: { operation: ManageEsimOperation; deviceId: string } & Record<string, unknown>) => {
+            if (input.operation === 'set_roaming')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageEsimSetRoaming(
+                        input.deviceId,
+                        manageEsimSetRoamingSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'status')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageEsimStatus(
+                        input.deviceId,
+                        manageEsimStatusSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'apn_list')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageEsimApnList(
+                        input.deviceId,
+                        manageEsimApnListSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'apn_select')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageEsimApnSelect(
+                        input.deviceId,
+                        manageEsimApnSelectSchema.parse(input.params ?? {}),
+                    ),
+                );
+            if (input.operation === 'apn_set')
+                return asTextResult(
+                    await ctx.backend.deviceControl.manageEsimApnSet(
+                        input.deviceId,
+                        manageEsimApnSetSchema.parse(input.params ?? {}),
+                    ),
+                );
+
             const { operation, deviceId } = input;
-            const fieldError = disallowedFieldError(operation, MANAGE_ESIM_FIELDS[operation], MANAGE_ESIM_FIELD_KEYS, input);
+            const fieldError = disallowedFieldError(
+                operation,
+                MANAGE_ESIM_FIELDS[operation],
+                MANAGE_ESIM_FIELD_KEYS,
+                input,
+            );
             if (fieldError) return asErrorResult(fieldError);
 
             const backend = ctx.backend.deviceControl;
