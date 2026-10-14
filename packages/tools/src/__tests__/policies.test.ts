@@ -1,3 +1,4 @@
+import { BUNDLE_TOOLS } from '../tools/bundle-tools.js';
 import { stubBackend } from './backend-stub.js';
 // The three server-start policy profiles. `no-commerce` is the REQUIRED safe default
 // (a public server that forgets to set a profile must never fail open to
@@ -11,8 +12,6 @@ import { type Backend } from '../backend/index.js';
 import { createAuthContext } from '../ctx.js';
 import { ALL_TOOL_NAMES, buildMcpServer } from '../register.js';
 import { policyForProfile } from '../policies.js';
-
-
 
 const testAuth = createAuthContext({ kind: 'api_key', subject: 'test-key' });
 
@@ -59,6 +58,7 @@ describe('policyForProfile', () => {
         const client = await connectedClient(backend, 'readonly');
         const { tools } = await client.listTools();
         const names = tools.map((t) => t.name).sort();
+        expect(tools).toHaveLength(31);
 
         for (const denied of [
             'create_device',
@@ -339,6 +339,41 @@ test('no-commerce permits event simulation and denies ingest before dispatch', a
         });
         expect(dryRun.isError).not.toBe(true);
         expect(backend.calls).toEqual(['workflows.dryRunEvent']);
+    } finally {
+        await client.close();
+    }
+});
+
+test('every enumerated tool operation has one complete table classification', async () => {
+    const client = await connectedClient(stubBackend(), 'full');
+    try {
+        const { tools } = await client.listTools();
+        const selectorFields = new Set(Object.values(BUNDLE_TOOLS).map(({ field }) => field));
+        const enumeratedTools = tools.filter((tool) =>
+            Object.entries(tool.inputSchema.properties ?? {}).some(
+                ([field, schema]) =>
+                    selectorFields.has(field as (typeof BUNDLE_TOOLS)[keyof typeof BUNDLE_TOOLS]['field']) &&
+                    Array.isArray((schema as { enum?: unknown }).enum),
+            ),
+        );
+        expect(enumeratedTools.map(({ name }) => name).sort()).toEqual(Object.keys(BUNDLE_TOOLS).sort());
+        for (const [name, { field, operations }] of Object.entries(BUNDLE_TOOLS)) {
+            const tool = tools.find((tool) => tool.name === name)!;
+            const schema = tool.inputSchema.properties![field] as { enum: string[] };
+            expect(schema.enum).toEqual(operations.map(({ op }) => op));
+            expect(new Set(operations.map(({ op }) => op)).size).toBe(operations.length);
+            for (const operation of operations) {
+                expect(typeof operation.readonly).toBe('boolean');
+                expect(typeof operation.billed).toBe('boolean');
+            }
+        }
+        for (const [profile, count] of [
+            ['readonly', 31],
+            ['no-commerce', 37],
+            ['full', 39],
+        ] as const) {
+            expect(policyForProfile(profile).toolAllowlist.size).toBe(count);
+        }
     } finally {
         await client.close();
     }

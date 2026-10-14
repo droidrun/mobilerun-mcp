@@ -7,29 +7,17 @@
 // both the HTTP and stdio hosts call this instead of hand-building a Policy,
 // so the three profiles stay identical across transports.
 //
-// Every operation name below is verified directly against the merged
-// `tools/*.ts` operation enums. Removed upstream operations are not allowlisted.
+// Operation classifications come from the same tables as schemas and dispatch.
 
 import { type Policy } from './ctx.js';
 import { ALL_TOOL_NAMES, fullAccessPolicy } from './register.js';
-import { ASSISTANT_OPERATIONS } from './tools/assistant.js';
-import { CONNECT_OPERATIONS } from './tools/connect.js';
-import { MANAGE_DEVICE_OPERATIONS, MANAGE_ESIM_OPERATIONS } from './tools/device-control.js';
-import { MANAGE_FLOW_OPERATIONS } from './tools/manage-flow.js';
-import { NUMBERS_OPERATIONS } from './tools/numbers.js';
-import { MAILBOXES_OPERATIONS } from './tools/mailboxes.js';
-
-function allExcept<T extends string>(operations: readonly T[], excluded: readonly T[]): ReadonlySet<string> {
-    return new Set(operations.filter((operation) => !excluded.includes(operation)));
-}
+import { BUNDLE_TOOLS } from './tools/bundle-tools.js';
 
 export const POLICY_PROFILES = ['readonly', 'no-commerce', 'full'] as const;
 export type PolicyProfile = (typeof POLICY_PROFILES)[number];
 
 /** Tools that only ever read: list_/get_ prefixed standalone tools, plus
- * `platform_catalog` (read-only reference data, no create/update/delete
- * surface at all). Bundle tools with a mix of read and mutating operations
- * are NOT here — they're tool-allowlisted below with a per-tool
+ * reference data. Bundle tools are NOT here — they're tool-allowlisted below with a per-tool
  * `operationAllowlist` entry instead. */
 const READONLY_TOOL_NAMES = new Set<string>([
     'list_devices',
@@ -37,144 +25,34 @@ const READONLY_TOOL_NAMES = new Set<string>([
     'get_device_screenshot',
     'get_device_ui_state',
     'list_apps_on_device',
-    'list_workflow_resources',
-    'get_workflow_resource',
     'list_credentials',
     'list_credential_packages',
-    'get_task',
     'list_tasks',
-    'get_task_media',
-    'platform_catalog',
 ]);
 
-const ASSISTANT_READ_OPERATIONS = new Set(['list_sessions', 'get_messages']);
+/** Classifications deliberately preserve each existing profile's operation surface. */
+function bundleOperations(profile: 'readonly' | 'no-commerce'): ReadonlyMap<string, ReadonlySet<string>> {
+    const entries: Array<[string, ReadonlySet<string>]> = [];
+    for (const [name, { operations }] of Object.entries(BUNDLE_TOOLS)) {
+        const allowed = operations.filter((operation) =>
+            profile === 'readonly' ? operation.readonly : !operation.billed,
+        );
+        // readonly includes a bundle only if it has reads; no-commerce needs a gate only for billed operations.
+        if (
+            (profile === 'readonly' && allowed.length > 0) ||
+            (profile === 'no-commerce' && allowed.length !== operations.length)
+        ) {
+            entries.push([name, new Set(allowed.map(({ op }) => op))]);
+        }
+    }
+    return new Map(entries);
+}
 
-/** Bundle tools included in `readonly` with their surface narrowed to read
- * operations only via `operationAllowlist` — the tool itself stays visible
- * (registered, listed) but a mutating operation is rejected at dispatch. */
-const READONLY_BUNDLE_OPERATIONS = new Map<string, ReadonlySet<string>>([
-    ['files', new Set(['list', 'download'])],
-    ['device_action', new Set(['clipboard_get'])],
-    ['messages', new Set(['list', 'get', 'conversations'])],
-    ['manage_credentials', new Set(['get'])],
-    ['numbers', new Set(['countries', 'capacity', 'list', 'get', 'messages'])],
-    ['mailboxes', new Set(['list', 'capacity', 'get', 'otp', 'messages', 'message', 'connection'])],
-    // create/update/rotate_secret/test are mutations.
-    [
-        'webhooks',
-        new Set([
-            'deliveries',
-            'integrations',
-            'integration_targets',
-            'list',
-            'get',
-            'list_deliveries',
-            'get_delivery',
-            'delivery_stats',
-        ]),
-    ],
-    ['assistant', ASSISTANT_READ_OPERATIONS],
-    // reboot/reset/rename are mutations.
-    [
-        'manage_device',
-        new Set([
-            'summary',
-            'retrieve_capabilities',
-            'recordings_list',
-            'recordings_screenshots',
-            'recordings_status',
-            'screenshots_list',
-            'traffic_sessions_retrieve',
-            'traffic_sessions_list',
-            'media_sessions_retrieve_current',
-            'screenshots_image',
-            'recordings_video',
-            'recordings_trajectory',
-            'count',
-            'get_capabilities',
-            'wait_ready',
-        ]),
-    ],
-    // install/delete/start/stop are mutations.
-    ['manage_device_apps', new Set(['list_installs', 'list_packages'])],
-    // upload/delete are mutations.
-    ['manage_device_files', new Set(['list', 'download'])],
-    // set_*/proxy_connect/proxy_disconnect are mutations.
-    [
-        'configure_device',
-        new Set(['get_language', 'get_timezone', 'get_location', 'get_time', 'get_overlay', 'get_proxy_status']),
-    ],
-    // activate/enable/remove are mutations.
-    ['manage_esim', new Set(['status', 'apn_list', 'list'])],
-    // create_upload_url/confirm_upload/mark_failed/delete are mutations.
-    ['apps', new Set(['storage_usage', 'list', 'get', 'versions'])],
-    // create/update/delete are mutations.
-    ['proxies', new Set(['list', 'get'])],
-    // buy_proxy/cancel_proxy are mutations.
-    [
-        'connect',
-        new Set([
-            'list_countries',
-            'list_proxies',
-            'get_proxy',
-            'ping_proxy',
-            'list_connections',
-            'list_users',
-            'get_user',
-            'list_user_connections',
-        ]),
-    ],
-    // Configuration and execution changes mutate state; validation and simulation do not.
-    [
-        'manage_flow',
-        new Set([
-            'validate',
-            'dry_run',
-            'capacity',
-            'delivery_options',
-            'template_context',
-            'list_repairs',
-            'execution_screenshot',
-            'execution_metrics',
-        ]),
-    ],
-    // ingest is a mutation; dry_run only simulates ingest,
-    // dry_run has no side effects.
-    ['workflow_events', new Set(['dry_run'])],
-]);
+const READONLY_BUNDLE_OPERATIONS = bundleOperations('readonly');
+const NO_COMMERCE_BUNDLE_OPERATIONS = bundleOperations('no-commerce');
 
-// Mixed input and credential bundles expose only their read operations in readonly.
-
-/** Commerce-adjacent device lifecycle tools — provisioning/destroying a
- * billed device. Excluded from the `no-commerce` default and from
- * `readonly`; only `full` includes them. */
+/** Existing tool-level exclusions for provisioning and destroying billed devices. */
 const COMMERCE_TOOL_NAMES = new Set<string>(['create_device', 'terminate_device']);
-
-/** `connect` operations excluded from `no-commerce` — buying/cancelling a
- * proxy is a billed action; the `connect` tool otherwise stays fully
- * available. */
-const NO_COMMERCE_CONNECT_OPERATIONS = allExcept(CONNECT_OPERATIONS, ['buy_proxy', 'cancel_proxy']);
-
-const NO_COMMERCE_NUMBERS_OPERATIONS = allExcept(NUMBERS_OPERATIONS, ['create', 'delete', 'send']);
-const NO_COMMERCE_MAILBOXES_OPERATIONS = allExcept(MAILBOXES_OPERATIONS, ['create', 'delete', 'uncancel', 'restart']);
-const NO_COMMERCE_MANAGE_DEVICE_OPERATIONS = allExcept(MANAGE_DEVICE_OPERATIONS, ['stop', 'resume']);
-const NO_COMMERCE_MANAGE_ESIM_OPERATIONS = allExcept(MANAGE_ESIM_OPERATIONS, ['activate']);
-const NO_COMMERCE_MANAGE_FLOW_OPERATIONS = allExcept(MANAGE_FLOW_OPERATIONS, [
-    'activate',
-    'run',
-    'verify',
-    'fire_trigger',
-]);
-
-const NO_COMMERCE_ASSISTANT_OPERATIONS = allExcept(ASSISTANT_OPERATIONS, [
-    'create_session',
-    'update_session',
-    'send_message',
-    'abort',
-    'answer_permission',
-    'answer_question',
-    'reject_question',
-]);
 
 function toolNames(filter: (name: string) => boolean): ReadonlySet<string> {
     return new Set(ALL_TOOL_NAMES.filter(filter));
@@ -199,16 +77,7 @@ export function policyForProfile(profile: PolicyProfile): Policy {
         case 'no-commerce':
             return {
                 toolAllowlist: toolNames((name) => !COMMERCE_TOOL_NAMES.has(name)),
-                operationAllowlist: new Map([
-                    ['connect', NO_COMMERCE_CONNECT_OPERATIONS],
-                    ['numbers', NO_COMMERCE_NUMBERS_OPERATIONS],
-                    ['mailboxes', NO_COMMERCE_MAILBOXES_OPERATIONS],
-                    ['manage_device', NO_COMMERCE_MANAGE_DEVICE_OPERATIONS],
-                    ['manage_esim', NO_COMMERCE_MANAGE_ESIM_OPERATIONS],
-                    ['manage_flow', NO_COMMERCE_MANAGE_FLOW_OPERATIONS],
-                    ['assistant', NO_COMMERCE_ASSISTANT_OPERATIONS],
-                    ['workflow_events', new Set(['dry_run'])],
-                ]),
+                operationAllowlist: NO_COMMERCE_BUNDLE_OPERATIONS,
             };
         case 'readonly':
             return {

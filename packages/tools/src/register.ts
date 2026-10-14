@@ -1,5 +1,4 @@
-/** Canonical list of every tool this package registers — the single source
- * of truth `fullAccessPolicy()` and the schema-snapshot test both read from. */
+import { BUNDLE_TOOLS } from './tools/bundle-tools.js';
 import { registerFilesTools } from './tools/files.js';
 import { registerMessagesTools } from './tools/messages.js';
 import { registerMailboxesTools } from './tools/mailboxes.js';
@@ -24,47 +23,25 @@ import { registerWebhookTools } from './tools/webhooks.js';
 import { registerWorkflowEventsTool } from './tools/workflow-events.js';
 import { registerWorkflowTools } from './tools/workflows.js';
 
-export const ALL_TOOL_NAMES = [
-    'files',
-    'messages',
-    'mailboxes',
-    'numbers',
-    'list_devices',
-    'get_device',
-    'get_device_screenshot',
-    'get_device_ui_state',
-    'list_apps_on_device',
-    'create_device',
-    'terminate_device',
-    'list_workflow_resources',
-    'get_workflow_resource',
-    'create_action',
-    'create_trigger',
-    'create_flow',
-    'manage_flow',
-    'workflow_events',
-    'webhooks',
-    'assistant',
-    'list_credentials',
-    'list_credential_packages',
-    'run_task',
-    'get_task',
-    'list_tasks',
-    'stop_task',
-    'send_task_message',
-    'get_task_media',
-    // Device recordings, screenshots and media sessions are operations of manage_device.
-    'manage_device',
-    'device_action',
-    'manage_device_apps',
-    'manage_device_files',
-    'configure_device',
-    'manage_esim',
-    'apps',
-    'manage_credentials',
-    'proxies',
-    'connect',
-    'platform_catalog',
+const TOOL_REGISTRATIONS = [
+    registerNumbersTools,
+    registerMailboxesTools,
+    registerMessagesTools,
+    registerFilesTools,
+    registerDeviceTools,
+    registerWorkflowTools,
+    registerManageFlowTool,
+    registerWorkflowEventsTool,
+    registerWebhookTools,
+    registerAssistantTool,
+    registerCredentialTools,
+    registerTaskTools,
+    registerDeviceControlTools,
+    registerAppsTools,
+    registerManageCredentialsTool,
+    registerProxiesTools,
+    registerConnectTools,
+    registerPlatformCatalogTools,
 ] as const;
 
 /**
@@ -83,31 +60,9 @@ export function fullAccessPolicy(): Policy {
  * listed here have no operation-level surface (their tool-level allowlist
  * gate is the only gate).
  */
-const OPERATION_FIELD: Readonly<Record<string, string>> = {
-    files: 'operation',
-    messages: 'operation',
-    mailboxes: 'operation',
-    numbers: 'operation',
-    webhooks: 'operation',
-    assistant: 'operation',
-    list_workflow_resources: 'resource',
-    get_workflow_resource: 'resource',
-    get_task: 'view',
-    get_task_media: 'kind',
-    manage_device: 'operation',
-    device_action: 'operation',
-    manage_device_apps: 'operation',
-    manage_device_files: 'operation',
-    configure_device: 'operation',
-    manage_esim: 'operation',
-    manage_flow: 'operation',
-    workflow_events: 'operation',
-    apps: 'operation',
-    manage_credentials: 'operation',
-    proxies: 'operation',
-    connect: 'operation',
-    platform_catalog: 'catalog',
-};
+const OPERATION_FIELD: Readonly<Record<string, string>> = Object.fromEntries(
+    Object.entries(BUNDLE_TOOLS).map(([name, { field }]) => [name, field]),
+);
 
 export type ToolCallOutcome = 'ok' | 'error' | 'denied';
 
@@ -256,24 +211,34 @@ export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): Mcp
     enforcePolicy(server, ctx, opts.onToolCall);
     opts.wrapRegisterTool?.(server);
 
-    registerNumbersTools(server, ctx);
-    registerMailboxesTools(server, ctx);
-    registerMessagesTools(server, ctx);
-    registerFilesTools(server, ctx);
-    registerDeviceTools(server, ctx);
-    registerWorkflowTools(server, ctx);
-    registerManageFlowTool(server, ctx);
-    registerWorkflowEventsTool(server, ctx);
-    registerWebhookTools(server, ctx);
-    registerAssistantTool(server, ctx);
-    registerCredentialTools(server, ctx);
-    registerTaskTools(server, ctx);
-    registerDeviceControlTools(server, ctx);
-    registerAppsTools(server, ctx);
-    registerManageCredentialsTool(server, ctx);
-    registerProxiesTools(server, ctx);
-    registerConnectTools(server, ctx);
-    registerPlatformCatalogTools(server, ctx);
+    for (const register of TOOL_REGISTRATIONS) register(server, ctx);
 
     return server;
 }
+
+/** Discover names through the real registrations without exposing a callable backend. */
+function registeredToolNames(): readonly string[] {
+    const names: string[] = [];
+    const metadataContext: ToolCtx = {
+        policy: { toolAllowlist: new Set() },
+        get backend(): ToolCtx['backend'] {
+            throw new Error('Tool registration must not call a backend');
+        },
+        get auth(): ToolCtx['auth'] {
+            throw new Error('Tool registration must not inspect identity');
+        },
+    };
+    buildMcpServer(metadataContext, {
+        wrapRegisterTool(server) {
+            const original = server.registerTool.bind(server);
+            server.registerTool = ((...args: [string, ...unknown[]]) => {
+                names.push(args[0]);
+                return Reflect.apply(original, server, args);
+            }) as typeof server.registerTool;
+        },
+    });
+    return Object.freeze(names);
+}
+
+/** Canonical names derived from exactly the registrations used by buildMcpServer. */
+export const ALL_TOOL_NAMES = registeredToolNames();
