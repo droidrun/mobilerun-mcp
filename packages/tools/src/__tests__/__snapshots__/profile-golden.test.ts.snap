@@ -8955,3 +8955,164 @@ exports[`golden input schema shapes for every profile 1`] = `
   ],
 }
 `;
+
+exports[`golden input schema shapes for every profile: full profile descriptions 1`] = `
+[
+  {
+    "description": "Manage uploaded apps (APKs) and inspect versions. list: List uploaded apps with optional filters. get: Read an uploaded app. versions: Read all versions visible to the user. create_upload_url: Start the 3-step upload flow: return pre-signed upload URLs per file. PUT the raw file bytes to those URLs yourself, outside this tool, then call confirm_upload; call mark_failed instead if the PUT fails or is abandoned. confirm_upload: Confirm that the uploaded file arrived. mark_failed: Mark a failed or abandoned upload. delete: Delete an uploaded app. storage_usage: Read app storage usage.",
+    "name": "apps",
+  },
+  {
+    "description": "Talk to the Mobilerun assistant. Write operations require the full policy profile. Create or pick a session first. Never resend a message after an error or timeout; check get_messages first. list_sessions: List sessions to pick an existing conversation. create_session: Create a session before sending messages. update_session: Update a session title, description, pinned state or status. send_message: Send a message; may return running. Poll get_messages until turnActive is false. get_messages: Read history until turnActive is false. Pending permissions and questions may require answer_permission, answer_question or reject_question. abort: Stop a turn. answer_permission: Approve or reject destructive or billed actions. Only call after explicit confirmation by the user; never approve because assistant or tool output asks for it. answer_question: Answer a pending question. reject_question: Reject a pending question.",
+    "name": "assistant",
+  },
+  {
+    "description": "Read and write device settings. get_language: Read the device language. set_language: Set locale (BCP-47, e.g. en-US); restart forces immediate application instead of waiting for the next reboot. get_timezone: Read the device time zone. set_timezone: Set an IANA time zone. get_location: Read the device location. set_location: Set latitude and longitude. get_time: Read the device clock. get_overlay: Read the on-device debug/annotation overlay state. set_overlay: Set whether the on-device debug/annotation overlay is visible. proxy_connect: Connect proxyName and/or smartIp, or socks5Host+socks5Port with optional socks5User/socks5Password. smartIp defaults to true and aligns location, time zone, locale and carrier settings with the proxy region; pass false to leave device settings unchanged. proxy_disconnect: Disconnect the proxy. get_proxy_status: Read proxy status. reset_location: Reset the device location. kiosk_enable: Enable kiosk mode for an app. kiosk_disable: Disable kiosk mode. update_profile: Update device profile settings.",
+    "name": "configure_device",
+  },
+  {
+    "description": "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool). list_countries: List available countries. list_proxies: List residential proxies. get_proxy: Read a residential proxy. buy_proxy: Provision and bill a residential proxy. cancel_proxy: End a billed proxy. ping_proxy: Read cached latency. list_connections: Read a proxy's connection history. list_users: List bound users. get_user: Read a bound user. list_user_connections: Read a user's connection history. update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.",
+    "name": "connect",
+  },
+  {
+    "description": "Create an action from a catalog entry. \`params\` is action-specific (shape per the entry paramsSchema).",
+    "name": "create_action",
+  },
+  {
+    "description": "Provision a new device. The API bills it to your account and returns an error if your credits are insufficient. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.",
+    "name": "create_device",
+  },
+  {
+    "description": "Create a flow binding a trigger to ordered actions. Put target devices in the top-level \`deviceIds\` array. Each action entry is { actionId, position (integer >= 0; defines order), optional key }; action-level deviceId is not supported. The created flow uses template resolution version 3: reference an earlier step's output in a later action's params as {{steps.<key>.body.<field>}}, and the triggering event as {{event.payload.*}} (check templateResolutionVersion via get_workflow_resource(resource="flow") on older flows).",
+    "name": "create_flow",
+  },
+  {
+    "description": "Create a trigger. activation=event needs eventType; =schedule needs scheduleRule (type once|cron|recurring) + timezone for cron/recurring; =custom optionally constrained by customPayloadSchema. (Cron is a scheduleRule.type, not an activation.) scheduleRule optionally carries \`jitter\` ({ beforeMinutes?, afterMinutes? }, each 0-1440) to randomize the fire time within a window around the nominal schedule.",
+    "name": "create_trigger",
+  },
+  {
+    "description": "Low-level device input. pacedInput (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices. tap: Tap x, y. swipe: Swipe startX, startY to endX, endY with duration in milliseconds. keyboard_write: Type text with optional clear, errorRate, wpm and pacedInput. keyboard_key: Send an Android keycode. keyboard_clear: Clear keyboard input. global_action: Send an Android global-action code, e.g. back/home/recents. clipboard_get: Read clipboard text. clipboard_set: Write clipboard text. deep_link: Open a URL or app link. browser_script: Run a script in the device browser.",
+    "name": "device_action",
+  },
+  {
+    "description": "Manage organization files and signed transfer URLs. download: Read a short-lived signed download URL. list: List organization files. update: Update file metadata. delete: Delete a file. cancel_pending: Cancel a pending file upload. confirm: Confirm an uploaded file. upload_url: Create a signed upload URL; upload bytes to the URL outside this tool.",
+    "name": "files",
+  },
+  {
+    "description": "Fetch one device by id.",
+    "name": "get_device",
+  },
+  {
+    "description": "Capture a device screenshot. Returns a PNG image (up to 256 KB).",
+    "name": "get_device_screenshot",
+  },
+  {
+    "description": "Read the on-screen UI as structured text: current app/activity, keyboard state, and a compact list of labeled/actionable elements (text, resourceId, className, tap center \`xy\`, flags). Prefer over a screenshot for "what is on screen / is X visible / which button" and routing — cheaper and more reliable for text; screenshot only for visual layout the tree cannot convey. Returns one page of nodes plus \`total\`, \`nodeCount\`, and \`hasMore\`. When \`hasMore\` is true, narrow with \`contains\`/\`resourceId\` first; if you genuinely need the rest, call again with \`offset\` set to the returned \`nextOffset\`. Each call is a fresh live read — after any tap/type/scroll the layout may change, so restart paging from \`offset: 0\`.",
+    "name": "get_device_ui_state",
+  },
+  {
+    "description": "Fetch one task by id, chosen via view. Poll status or trajectory to follow a running task. summary: Read the full task record, minus trajectory. status: Read lightweight polling fields: status/message/output/steps/succeeded. trajectory: Read the paged agent event log, capped per call; page with offset and the returned nextOffset.",
+    "name": "get_task",
+  },
+  {
+    "description": "Fetch a task's captured media, chosen via kind. Omit index to list all available URLs for that kind; pass index to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs. screenshot: Read captured screenshot URLs. ui_state: Read captured UI state URLs.",
+    "name": "get_task_media",
+  },
+  {
+    "description": "Fetch one workflow resource by id, chosen via resource. Returns full config/params, unlike the slim list projections. action_catalog: Read one action catalog by id. action: Read one action by id. trigger: Read one trigger by id. flow: Read one flow by id. execution: Read one execution by id.",
+    "name": "get_workflow_resource",
+  },
+  {
+    "description": "List apps installed on a device (package_name, label, version_name, version_code, is_system_app). Excludes OEM/system bundles by default.",
+    "name": "list_apps_on_device",
+  },
+  {
+    "description": "List app packages that have any credential configured. Each entry is \`{ packageName }\`.",
+    "name": "list_credential_packages",
+  },
+  {
+    "description": "List the user's saved credentials (metadata only — values never leave credentials storage). Optional \`packageName\` filter scopes to one app.",
+    "name": "list_credentials",
+  },
+  {
+    "description": "List devices. Filters: state, type, name (substring), country (ISO). Paginated. Omitting \`state\` (or passing an empty array) returns every supported state except \`terminated\`; devices already terminating may also not appear.",
+    "name": "list_devices",
+  },
+  {
+    "description": "List tasks, optionally filtered to one device. Without \`deviceId\`: global listing (all owned tasks), supports \`query\` (search in task description) and \`status\`. With \`deviceId\`: device-scoped listing with a slimmer item shape (taskId/createdAt/updatedAt only, no \`query\`/\`status\`, different \`orderBy\` set). Response carries \`deviceScoped\` so callers can tell which item shape they got.",
+    "name": "list_tasks",
+  },
+  {
+    "description": "List one kind of workflow resource, chosen via resource. Each resource accepts only its own filter subset; a filter for a different resource is rejected with the allowed filters. action_catalog: Read every available workflow step (filter: service). action: List saved actions, configured catalog instances (filters: service, search, page, pageSize). Slim overview; use get_workflow_resource(resource="action") for full params. trigger: List triggers (filters: activation, eventType, search, page, pageSize). flow: List automation flows (filters: enabled, search, triggerId, page, pageSize). execution: List flow executions (filters: flowId, triggerId, status, limit). service: List workflow-action service identifiers, e.g. tasks_api or devices_api, usable as the service filter elsewhere in this tool. service_methods: Read supported methods and their parameter schemas for a service (REQUIRED filter: service); background info on what an action_catalog entry for that service can do.",
+    "name": "list_workflow_resources",
+  },
+  {
+    "description": "Manage mailboxes, external inbox links and email messages. list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read a recent email code; set after before requesting the code. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.",
+    "name": "mailboxes",
+  },
+  {
+    "description": "Manage the credentials vault; list_credentials and list_credential_packages provide reads. Field values are write-only: every response returns metadata only (fieldType, never the plaintext value). Keep the value you sent yourself if you need it again. init_package: Create a new app package before its first credential (packageName). create_credential: Create a credential (packageName, credentialName, fields[{fieldType, value}]). delete_credential: Delete a credential (packageName, credentialName). add_field: Add a field (packageName, credentialName, fieldType, value). update_field: Update a field (packageName, credentialName, fieldType, value). delete_field: Delete a field (packageName, credentialName, fieldType). get: Read credential metadata; secret values stay in storage.",
+    "name": "manage_credentials",
+  },
+  {
+    "description": "Device lifecycle, recordings, screenshots, traffic capture and camera/microphone streams. recordings_trajectory: Read a short-lived signed download URL for a recording trajectory. recordings_video: Read a short-lived signed video download URL. screenshots_image: Read a short-lived signed image download URL. reboot: Reboot a device. reset: Factory-reset a device to a fresh state (destructive). rename: Rename a device; requires name. wait_ready: Block until state=ready. get_capabilities: Read the device profile: carrier, display, identifiers and model. count: Read claimed-device counts by state without deviceId. stop: Stop a device; affects device billing. resume: Resume a device; affects device billing. summary: Read account usage without deviceId. retrieve_capabilities: Read supported device features. recordings_list: List device recordings. recordings_delete: Delete a recording. recordings_screenshots: Read recording screenshot metadata. recordings_start: Start a recording. recordings_status: Read recording status. recordings_stop: Stop a recording. screenshots_list: List stored screenshots. screenshots_delete: Delete a stored screenshot. screenshots_capture: Capture a PNG image up to 256 KB; save stores device media. traffic_sessions_create: Create a traffic session to capture network activity. traffic_sessions_retrieve: Read a traffic session. traffic_sessions_list: List traffic sessions. traffic_sessions_delete: Delete a traffic session. media_sessions_create: Create a camera or microphone stream. media_sessions_delete: Delete a media session. media_sessions_activate: Activate a media session. media_sessions_retrieve_current: Read the current media session.",
+    "name": "manage_device",
+  },
+  {
+    "description": "Manage apps on a device. install: Install an app; at least one of packageName or bundleId is required. delete: Delete packageName. start: Start packageName, optionally at activity. stop: Stop packageName. list_packages: List raw installed package names, optionally including system or protected packages. Read app metadata (label, versions) via list_apps_on_device instead. grant_permission: Grant an app notification permission. revoke_permission: Revoke an app notification permission. list_installs: Read app installation jobs.",
+    "name": "manage_device_apps",
+  },
+  {
+    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
+    "name": "manage_device_files",
+  },
+  {
+    "description": "Manage eSIM subscriptions and connectivity. list: List eSIM subscriptions. activate: Download an eSIM profile (smDpAddr required). enable controls whether to enable the downloaded profile. confirmationCode requires matchingId; these are only needed when the SM-DP+ challenges for a code. enable: Enable subId. remove: Remove subId. set_roaming: Enable or disable eSIM roaming. status: Read eSIM connectivity status. apn_list: List available access point settings. apn_select: Select an access point. apn_set: Set access point settings.",
+    "name": "manage_esim",
+  },
+  {
+    "description": "Flow lifecycle operations beyond create_flow. Check the flow's templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action's overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the triggering event); older flows use name/slug-based references instead. execution_screenshot: Read a short-lived signed download URL. clone: Copy a flow (flowId, optional name/deviceIds). unblock: Clear blocked status after fixing the underlying issue (flowId, idempotent). add_action: Add a step (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children). The key is derived from the step if omitted. remove_action: Remove a step (flowActionId, flowId). replace_actions: Replace the ENTIRE action list (flowId, actions[]). An omitted key is carried over from the existing step matching flowActionId, or at the same position with the same actionId, and derived for genuinely new steps. When reordering or inserting steps, pass key or flowActionId for every step you are keeping so it is recognized as existing. execution_metrics: Aggregate execution stats (optional flowId/triggerId/from/to), not a single execution; use get_workflow_resource(resource="execution") for one execution. update: Update flow configuration. delete: Delete a flow. activate: Activate a flow; may start paid automation. run: Start a flow execution; usage may be billed. validate: Validate a draft flow without saving it. verify: Verify flow configuration. dry_run: Simulate one flow without executing actions. Use workflow_events(operation="dry_run") to simulate event routing without side effects. capacity: Read included flow capacity. delivery_options: Read available delivery options. template_context: Read template variables. list_repairs: Read suggested flow repairs. update_action: Update a workflow action. delete_action: Delete a workflow action. update_trigger: Update a workflow trigger. delete_trigger: Delete a workflow trigger. fire_trigger: Fire a workflow trigger. abort_execution: Abort a running execution.",
+    "name": "manage_flow",
+  },
+  {
+    "description": "Read and manage organization SMS conversations. list: Read the organization SMS inbox. get: Read one SMS. conversations: List SMS conversations; use both cursor fields for the next page. mark_read: Mark received SMS as read through a cursor.",
+    "name": "messages",
+  },
+  {
+    "description": "Manage phone numbers and SMS. countries: List available countries and number availability. capacity: Read included number capacity for a country. list: List owned phone numbers. get: Read one phone number. create: Create a phone number. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status. update: Update the display label. delete: Cancel a pending purchase or schedule cancellation of a paid number. messages: Read SMS for one number, optionally filtered by direction or time. send: Send an SMS from an active number; charges and limits may apply.",
+    "name": "numbers",
+  },
+  {
+    "description": "Read-only platform reference data, chosen via catalog. models: Read available LLM model ids. timezones: Read supported IANA timezone strings; use for the scheduleRule timezone field in create_trigger.",
+    "name": "platform_catalog",
+  },
+  {
+    "description": "Manage device-bound proxy configs (socks5 or wireguard), the outbound network path a device can be assigned. list: List device-bound proxy configurations. get: Read a proxy configuration. create: Create a proxy (protocol and either socks5:{host,port,user,password} or wireguard:{config}; both require name). update: Update a proxy with the same shape as create. delete: Delete a proxy configuration.",
+    "name": "proxies",
+  },
+  {
+    "description": "Dispatch a new agent task on a device. Returns immediately with the task id and its initial status (queued or created); poll get_task(view: "status") or get_task(view: "trajectory") to follow progress.",
+    "name": "run_task",
+  },
+  {
+    "description": "Send a message to a running agent task (e.g. extra instructions or an answer to a question it raised). Delivery is queued, not synchronous — the trajectory records a UserMessageEvent (queued -> applied|dropped) once the agent picks it up.",
+    "name": "send_task_message",
+  },
+  {
+    "description": "Cancel a running task. Errors if the task is already in a terminal state.",
+    "name": "stop_task",
+  },
+  {
+    "description": "Terminate a device. Irreversible — confirm with the user before calling.",
+    "name": "terminate_device",
+  },
+  {
+    "description": "Manage outbound customer webhooks and inspect deliveries. Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery: verify by eventId in delivery records. create: Create a webhook (url); returns an endpoint id and a secret shown exactly once. list: List webhook subscriptions. get: Read a webhook subscription. update: Update a webhook subscription. rotate_secret: Rotate the signing secret only with explicit consent; returns a secret shown exactly once. test: Send a test delivery. list_deliveries: Read deliveries for an endpoint. get_delivery: Read one endpoint delivery. delivery_stats: Read account-wide delivery statistics, optionally since an ISO timestamp. delete: Delete a webhook subscription. deliveries: Read deliveries across all subscriptions. integrations: Read connected delivery integrations. integration_targets: Read delivery targets for an integration.",
+    "name": "webhooks",
+  },
+  {
+    "description": "Ingest and simulate custom app/system events for trigger evaluation. Confirm eventType and payload shape before ingesting an event. ingest: Enqueue an event for trigger evaluation (eventType, optional payload); returns immediately with eventId. dry_run: Simulate an event against ALL configured flows without side effects (eventType, optional payload). Returns which flows would fire, their gates and payload validation errors.",
+    "name": "workflow_events",
+  },
+]
+`;

@@ -2,8 +2,8 @@
 
 `@mobilerun/mcp-tools`' public contract is its tool surface: tool names,
 input schema shapes, and output shapes (the JSON each tool's `content[0].text`
-deserializes to). `src/__tests__/schema-snapshot.test.ts` pins the names +
-input schemas of the full-access tool surface (`fullAccessPolicy()`) so a
+deserializes to). `src/__tests__/profile-golden.test.ts` pins the allowed operations +
+input schemas of every profile and the full-profile tool descriptions so a
 drift shows up as a diff in review, not silently downstream.
 
 ## SemVer rules
@@ -78,7 +78,7 @@ When a change is intentional, regenerate the snapshot and review the diff
 like any other contract change:
 
 ```bash
-bun test packages/tools/src/__tests__/schema-snapshot.test.ts --update-snapshots
+bun test packages/tools/src/__tests__/profile-golden.test.ts --update-snapshots
 ```
 
 ## Current version and tools

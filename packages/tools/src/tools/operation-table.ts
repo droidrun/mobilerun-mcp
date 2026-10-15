@@ -7,15 +7,13 @@ import { asErrorResult, asTextResult } from '../text-result.js';
 export type Operation<Input> = {
     op: string;
     input: z.ZodRawShape;
-    access: 'read' | 'write' | 'commerce';
-    /** Assistant writes retain their existing full-profile gate. */
-    fullOnly?: boolean;
+    access: 'read' | 'write' | 'commerce' | 'full';
     /** A payload may require another operation's access in addition to its declared operation. */
     effectiveOp?: (input: Record<string, unknown>) => string;
     doc: string;
     run: (ctx: ToolCtx, input: Input) => Promise<CallToolResult>;
 };
-type SurfaceOperation = Pick<Operation<never>, 'op' | 'input' | 'access' | 'fullOnly' | 'doc'>;
+type SurfaceOperation = Pick<Operation<never>, 'op' | 'input' | 'access' | 'doc'>;
 function operationValues<T extends SurfaceOperation>(table: readonly T[]): [T['op'], ...T['op'][]] {
     if (table.length === 0) throw new Error('An operation table must not be empty');
     return table.map(({ op }) => op) as [T['op'], ...T['op'][]];

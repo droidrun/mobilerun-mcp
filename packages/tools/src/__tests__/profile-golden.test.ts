@@ -61,6 +61,7 @@ test('golden allowed operations and activation gates for every profile', async (
 
 test('golden input schema shapes for every profile', async () => {
     const profiles: Record<string, unknown> = {};
+    let descriptions: unknown;
     for (const profile of POLICY_PROFILES) {
         const server = buildMcpServer({ backend: stubBackend(), auth: createAuthContext({ kind: 'api_key', subject: 'golden' }), policy: policyForProfile(profile) });
         const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -68,6 +69,8 @@ test('golden input schema shapes for every profile', async () => {
         await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
         try {
             const { tools } = await client.listTools();
+            if (profile === 'full') descriptions = [...tools].sort((a, b) => a.name.localeCompare(b.name))
+                .map(({ name, description }) => ({ name, description }));
             profiles[profile] = tools.sort((a, b) => a.name.localeCompare(b.name))
                 .map(({ name, inputSchema }) => ({ name, inputSchema: schemaShape(inputSchema, inputSchema) }));
         } finally {
@@ -76,4 +79,5 @@ test('golden input schema shapes for every profile', async () => {
         }
     }
     expect(profiles).toMatchSnapshot();
+    expect(descriptions).toMatchSnapshot('full profile descriptions');
 });
