@@ -21,7 +21,8 @@ function schemaShape(value: unknown, root: unknown): unknown {
 }
 
 test('golden allowed operations and activation gates for every profile', async () => {
-    const profiles: Record<string, unknown> = {};
+    const operations = new Map<string, Set<string>>();
+    const activationGates: Record<string, unknown> = {};
     for (const profile of POLICY_PROFILES) {
         const policy = policyForProfile(profile);
         const pairs = [...policy.toolAllowlist].flatMap((name) => {
@@ -31,9 +32,8 @@ test('golden allowed operations and activation gates for every profile', async (
             return bundle.operations.filter(({ op }) => !allowed || allowed.has(op)).map(({ op }) => `${name}.${op}`);
         });
         const allowed = policy.operationAllowlist?.get('manage_flow');
-        if (policy.toolAllowlist.has('manage_flow') && (!allowed || (allowed.has('update') && allowed.has('activate')))) {
-            pairs.push('manage_flow.update+enabled');
-        }
+        const allowsActivation = policy.toolAllowlist.has('manage_flow') && (!allowed || (allowed.has('update') && allowed.has('activate')));
+        operations.set(profile, new Set(pairs));
         const { backend, client, close } = await connect(policy);
         try {
             const activation = [];
@@ -42,16 +42,19 @@ test('golden allowed operations and activation gates for every profile', async (
                 const result = await client.callTool({ name: 'manage_flow', arguments: { operation: 'update', flowId: 'f1', ...fields } });
                 activation.push({ fields, denied: result.isError === true, calls: [...backend.calls] });
             }
-            profiles[profile] = { operations: pairs.sort(), activation };
+            activationGates[profile] = { effectiveOperations: allowsActivation ? ['manage_flow.update+enabled'] : [], activation };
         } finally {
             await close();
         }
     }
-    expect(profiles).toMatchSnapshot();
+    const matrix = [...new Set([...operations.values()].flatMap((pairs) => [...pairs]))].sort()
+        .map((operation) => `${operation}  ${POLICY_PROFILES.map((profile) => `${profile}:${operations.get(profile)?.has(operation) ? 'x' : '-'}`).join(' ')}`);
+    expect(matrix.join('\n')).toMatchSnapshot('operations matrix');
+    expect(activationGates).toMatchSnapshot('activation gates');
 });
 
 test('golden input schema shapes for every profile', async () => {
-    const profiles: Record<string, unknown> = {};
+    const profiles = new Map<string, { name: string; inputSchema: unknown }[]>();
     let descriptions: unknown;
     for (const profile of POLICY_PROFILES) {
         const { client, close } = await connect(profile);
@@ -59,12 +62,19 @@ test('golden input schema shapes for every profile', async () => {
             const { tools } = await client.listTools();
             if (profile === 'full') descriptions = [...tools].sort((a, b) => a.name.localeCompare(b.name))
                 .map(({ name, description }) => ({ name, description }));
-            profiles[profile] = tools.sort((a, b) => a.name.localeCompare(b.name))
-                .map(({ name, inputSchema }) => ({ name, inputSchema: schemaShape(inputSchema, inputSchema) }));
+            profiles.set(profile, tools.sort((a, b) => a.name.localeCompare(b.name))
+                .map(({ name, inputSchema }) => ({ name, inputSchema: schemaShape(inputSchema, inputSchema) })));
         } finally {
             await close();
         }
     }
-    expect(profiles).toMatchSnapshot();
+    const full = new Map(profiles.get('full')?.map(({ name, inputSchema }) => [name, inputSchema]));
+    for (const profile of POLICY_PROFILES.filter((profile) => profile !== 'full')) {
+        for (const { name, inputSchema } of profiles.get(profile) ?? []) {
+            expect(full.has(name)).toBe(true);
+            expect(inputSchema).toEqual(full.get(name));
+        }
+    }
+    expect(profiles.get('full')).toMatchSnapshot('full profile schemas');
     expect(descriptions).toMatchSnapshot('full profile descriptions');
 });
