@@ -37,7 +37,7 @@ function operationInput(table: readonly SurfaceOperation[], shared: z.ZodRawShap
             let schema = field;
             while (schema instanceof z.ZodOptional) schema = schema.unwrap();
             const definition = JSON.stringify(toJsonSchemaCompat(z.object({ value: schema })), function (key, value: unknown) {
-                if (key === 'description') return undefined;
+                if (key === 'description' && typeof value === 'string') return undefined;
                 if (value && typeof value === 'object' && !Array.isArray(value)) {
                     return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)));
                 }
@@ -74,7 +74,7 @@ async function runOperation(table: BundleTable, op: string, ctx: ToolCtx, input:
 
 type SdkMetadata = Pick<Operation<never>, 'doc' | 'effectiveOp'>;
 
-/** Pure SDK passthrough, with an optional device path argument and stripped body. */
+/** SDK passthrough with a stripped body, optional device path and custom result formatting. */
 export function sdkOp<
     const Op extends string,
     Value,
