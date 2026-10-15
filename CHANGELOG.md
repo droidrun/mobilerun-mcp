@@ -6,6 +6,8 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Changed
 
+- **Breaking:** `device_action` and `run_task` input `pacedInput` renamed to `humanize`, matching the API. `get_task` results report `humanize` instead of `stealth`.
+
 - Tool operations are declared in per-tool operation tables; tool schemas and profiles are unchanged.
 - Tool descriptions and field-error messages are regenerated from operation tables; wording may differ slightly.
 

@@ -35,7 +35,7 @@ export interface RunTaskParams {
     llmModel?: string;
     maxSteps?: number;
     outputSchema?: Record<string, unknown> | null;
-    stealth?: boolean;
+    humanize?: boolean;
     vision?: boolean;
     apps?: string[];
     credentials?: PackageCredentialsDto[];
@@ -70,7 +70,7 @@ export interface TaskSummaryDto {
     steps?: number | null;
     succeeded?: boolean | null;
     creditsUsed?: number | null;
-    stealth?: boolean;
+    humanize?: boolean;
     vision?: boolean;
     createdAt?: string;
     updatedAt?: string;

@@ -13,7 +13,7 @@ import { asTextResult } from '../text-result.js';
 export const DEVICE_ACTION_SHARED_FIELDS = {
     deviceId: z.string(),
     displayId: z.number().int().optional(),
-    pacedInput: z.boolean().optional().describe('tap/swipe/keyboard_write: send input with variable timing and gesture paths.'),
+    humanize: z.boolean().optional().describe('tap/swipe/keyboard_write: send input with variable timing and gesture paths.'),
     text: z.string().optional(),
     action: z
         .union([z.number().int(), deviceActionDeepLinkSchema.shape.action.unwrap()])
@@ -22,14 +22,14 @@ export const DEVICE_ACTION_SHARED_FIELDS = {
 };
 
 export const DEVICE_ACTION_INTRO =
-    'Low-level device input. pacedInput (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices.';
+    'Low-level device input. humanize (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices.';
 export const DEVICE_ACTION_TABLE = [
     operation({
         op: 'tap',
         input: {
             x: z.number().optional(),
             y: z.number().optional(),
-            pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput,
+            humanize: DEVICE_ACTION_SHARED_FIELDS.humanize,
             displayId: DEVICE_ACTION_SHARED_FIELDS.displayId,
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
@@ -38,12 +38,10 @@ export const DEVICE_ACTION_TABLE = [
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
 
-            // Keep the backend port name while the client adapter sends humanize.
-            const stealth = input.pacedInput;
             await ctx.backend.deviceControl.tap({
                 deviceId,
                 displayId,
-                stealth,
+                humanize: input.humanize,
                 x: requireValue(input.x, 'x', input.operation),
                 y: requireValue(input.y, 'y', input.operation),
             });
@@ -58,7 +56,7 @@ export const DEVICE_ACTION_TABLE = [
             endX: z.number().optional(),
             endY: z.number().optional(),
             duration: z.number().int().positive().optional().describe('Swipe duration in milliseconds.'),
-            pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput,
+            humanize: DEVICE_ACTION_SHARED_FIELDS.humanize,
             displayId: DEVICE_ACTION_SHARED_FIELDS.displayId,
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
@@ -67,12 +65,10 @@ export const DEVICE_ACTION_TABLE = [
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
 
-            // Keep the backend port name while the client adapter sends humanize.
-            const stealth = input.pacedInput;
             await ctx.backend.deviceControl.swipe({
                 deviceId,
                 displayId,
-                stealth,
+                humanize: input.humanize,
                 startX: requireValue(input.startX, 'startX', input.operation),
                 startY: requireValue(input.startY, 'startY', input.operation),
                 endX: requireValue(input.endX, 'endX', input.operation),
@@ -90,23 +86,21 @@ export const DEVICE_ACTION_TABLE = [
             errorRate: z
                 .number()
                 .optional()
-                .describe('keyboard_write with pacedInput: correction rate per character (backspace and retype). -1 uses the default.'),
-            pacedInput: DEVICE_ACTION_SHARED_FIELDS.pacedInput,
-            wpm: z.number().optional().describe('keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.'),
+                .describe('keyboard_write with humanize: correction rate per character (backspace and retype). -1 uses the default.'),
+            humanize: DEVICE_ACTION_SHARED_FIELDS.humanize,
+            wpm: z.number().optional().describe('keyboard_write with humanize: typing speed in words per minute. 0 uses the default.'),
             displayId: DEVICE_ACTION_SHARED_FIELDS.displayId,
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
         access: 'write',
-        doc: 'Type text with optional clear, errorRate, wpm and pacedInput.',
+        doc: 'Type text with optional clear, errorRate, wpm and humanize.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
 
-            // Keep the backend port name while the client adapter sends humanize.
-            const stealth = input.pacedInput;
             await ctx.backend.deviceControl.keyboardWrite({
                 deviceId,
                 displayId,
-                stealth,
+                humanize: input.humanize,
                 text: requireValue(input.text, 'text', input.operation),
                 clear: input.clear,
                 errorRate: input.errorRate,
@@ -127,7 +121,6 @@ export const DEVICE_ACTION_TABLE = [
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
 
-            // Keep the backend port name while the client adapter sends humanize.
             await ctx.backend.deviceControl.keyboardKey({
                 deviceId,
                 displayId,
@@ -144,7 +137,6 @@ export const DEVICE_ACTION_TABLE = [
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
 
-            // Keep the backend port name while the client adapter sends humanize.
             await ctx.backend.deviceControl.keyboardClear(deviceId, displayId);
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -161,7 +153,6 @@ export const DEVICE_ACTION_TABLE = [
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
 
-            // Keep the backend port name while the client adapter sends humanize.
             await ctx.backend.deviceControl.globalAction({
                 deviceId,
                 displayId,

@@ -158,7 +158,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
                 llmModel: z.string().optional().describe("e.g. 'gemini/gemini-2.5-flash'."),
                 maxSteps: z.number().int().positive().optional(),
                 outputSchema: z.record(z.string(), z.unknown()).nullable().optional().describe('JSON Schema for structured output.'),
-                pacedInput: z.boolean().optional().describe('Run the agent with paced device input (variable timing and gesture paths).'),
+                humanize: z.boolean().optional().describe('Run the agent with paced device input (variable timing and gesture paths).'),
                 vision: z.boolean().optional(),
                 apps: z.array(z.string()).optional().describe('Package names the task may use.'),
                 credentials: z
@@ -168,8 +168,7 @@ export function registerTaskTools(server: McpServer, ctx: ToolCtx): void {
                 files: z.array(z.string()).optional(),
             },
         },
-        // The API names `pacedInput` `stealth`.
-        async ({ pacedInput, ...params }) => asTextResult(await ctx.backend.tasks.runTask({ ...params, stealth: pacedInput })),
+        async (params) => asTextResult(await ctx.backend.tasks.runTask(params)),
     );
     registerBundle(server, ctx, 'get_task', GET_TASK_TABLE, {
         intro: GET_TASK_INTRO,

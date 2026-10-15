@@ -3,6 +3,7 @@ import { default as Mobilerun } from '@mobilerun/sdk';
 import { createSdkBackend } from '../sdk-backend/index.js';
 import { MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
 import { capturedImage, signedDownload } from '../sdk-backend/response.js';
+import { connect } from '../../../tools/src/__tests__/connect.js';
 
 function setup(result: unknown = { data: { ok: true }, items: [] }) {
     const requests: Array<{ url: URL; method: string; headers: Headers; body: unknown }> = [];
@@ -91,9 +92,9 @@ describe('SDK 6 domain requests', () => {
         expect(requests[2]!.body).toEqual({ enabled: false });
     });
 
-    test('device input and task requests send humanize without stealth', async () => {
+    test('device input and task requests pass humanize to the API', async () => {
         const { backend, requests } = setup();
-        await backend.deviceControl.tap({ deviceId: 'd1', x: 1, y: 2, stealth: true });
+        await backend.deviceControl.tap({ deviceId: 'd1', x: 1, y: 2, humanize: true });
         await backend.deviceControl.swipe({
             deviceId: 'd1',
             startX: 1,
@@ -101,10 +102,10 @@ describe('SDK 6 domain requests', () => {
             endX: 3,
             endY: 4,
             duration: 100,
-            stealth: false,
+            humanize: false,
         });
-        await backend.deviceControl.keyboardWrite({ deviceId: 'd1', text: 'Hello', stealth: true });
-        await backend.tasks.runTask({ deviceId: 'd1', task: 'Open settings', stealth: true });
+        await backend.deviceControl.keyboardWrite({ deviceId: 'd1', text: 'Hello', humanize: true });
+        await backend.tasks.runTask({ deviceId: 'd1', task: 'Open settings', humanize: true });
         for (const [i, expected] of [true, false, true, true].entries()) {
             const request = requests[i]!;
             const query = request.url.searchParams;
@@ -113,6 +114,27 @@ describe('SDK 6 domain requests', () => {
             expect(body && 'stealth' in body).not.toBe(true);
             expect(String(query.get('humanize') ?? body?.humanize)).toBe(String(expected));
         }
+    });
+
+    test.each([
+        { fields: { humanize: true, stealth: false }, expected: true },
+        { fields: { humanize: false, stealth: true }, expected: false },
+        { fields: { stealth: true }, expected: true },
+        { fields: { stealth: false }, expected: false },
+        { fields: {}, expected: undefined },
+    ])('get_task exposes humanize from API fields %j', async ({ fields, expected }) => {
+        const { backend } = setup({ task: {
+            id: 't1', deviceId: 'd1', llmModel: 'model', task: 'Open settings',
+            userId: 'u1', status: 'running', ...fields,
+        } });
+        const { client } = await connect('full', { backend });
+        const result = await client.callTool({ name: 'get_task', arguments: { taskId: 't1', view: 'summary' } });
+        expect(result.isError).not.toBe(true);
+        const content = result.content as Array<{ type: string; text?: string }>;
+        const summary = JSON.parse(content[0]?.text ?? '{}');
+        expect(summary.id).toBe('t1');
+        expect(summary.humanize).toBe(expected);
+        expect(summary).not.toHaveProperty('stealth');
     });
 
     test('media control tokens are forwarded as headers; void writes return JSON', async () => {

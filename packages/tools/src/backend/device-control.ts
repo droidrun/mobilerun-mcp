@@ -40,7 +40,7 @@ export interface DeviceActionParams {
     endX?: number;
     endY?: number;
     duration?: number;
-    stealth?: boolean;
+    humanize?: boolean;
     // keyboard_write
     text?: string;
     clear?: boolean;
