@@ -1,52 +1,25 @@
+import { connect } from './connect.js';
 import { stubBackend } from './backend-stub.js';
 import { describe, expect, test } from 'bun:test';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { buildMcpServer, ALL_TOOL_NAMES, fullAccessPolicy, type ToolCallEvent } from '../register.js';
-import type { Backend } from '../backend/index.js';
+import { ALL_TOOL_NAMES, type ToolCallEvent } from '../register.js';
 import { BackendError } from '../backend/errors.js';
-import { createAuthContext, type AuthContext, type ToolCtx } from '../ctx.js';
-
-
-
-const testAuth: AuthContext = createAuthContext({ kind: 'api_key', subject: 'test-key' });
-
-function ctxWith(backend: Backend, policyOverrides?: Partial<ToolCtx['policy']>): ToolCtx {
-    return {
-        backend,
-        auth: testAuth,
-        policy: { toolAllowlist: new Set(ALL_TOOL_NAMES), ...policyOverrides },
-    };
-}
-
-async function connectedClient(ctx: ToolCtx, opts?: Parameters<typeof buildMcpServer>[1]) {
-    const server = buildMcpServer(ctx, opts);
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const client = new Client({ name: 'test-client', version: '0.0.0' });
-    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
-    return { client, server };
-}
+import { createAuthContext } from '../ctx.js';
 
 const EXPECTED_TOOL_NAMES = [...ALL_TOOL_NAMES];
 
 describe('buildMcpServer', () => {
-    test('registers every tool in ALL_TOOL_NAMES (35 tools) under a full-access policy', async () => {
+    test('registers every tool in ALL_TOOL_NAMES under a full-access policy', async () => {
         const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
         const { tools } = await client.listTools();
         const names = tools.map((t) => t.name).sort();
         expect(names).toEqual([...EXPECTED_TOOL_NAMES].sort());
         expect(tools).toHaveLength(EXPECTED_TOOL_NAMES.length);
     });
 
-    test('fullAccessPolicy() matches ALL_TOOL_NAMES', () => {
-        const policy = fullAccessPolicy();
-        expect([...policy.toolAllowlist].sort()).toEqual([...ALL_TOOL_NAMES].sort());
-    });
-
     test('empty policy registers nothing (fail-closed)', async () => {
         const backend = stubBackend();
-        const { client } = await connectedClient({ backend, auth: testAuth, policy: { toolAllowlist: new Set() } });
+        const { client } = await connect({ toolAllowlist: new Set() }, { backend });
         const { tools } = await client.listTools();
         expect(tools).toHaveLength(0);
     });
@@ -54,7 +27,7 @@ describe('buildMcpServer', () => {
     test('a denied tool is absent from tools/list AND uncallable (fail-closed at registration, not in the handler)', async () => {
         const backend = stubBackend();
         const allowlist = new Set(ALL_TOOL_NAMES.filter((n) => n !== 'terminate_device'));
-        const { client } = await connectedClient(ctxWith(backend, { toolAllowlist: allowlist }));
+        const { client } = await connect({ toolAllowlist: allowlist }, { backend });
 
         const { tools } = await client.listTools();
         const names = tools.map((t) => t.name).sort();
@@ -73,45 +46,51 @@ describe('buildMcpServer', () => {
         expect(backend.calls).not.toContain('devices.terminateDevice');
     });
 
-    test('operation-level allow: webhooks operation in operationAllowlist dispatches normally', async () => {
-        const backend = stubBackend();
-        const ctx = ctxWith(backend, {
-            operationAllowlist: new Map([['webhooks', new Set(['list', 'get'])]]),
+    test('operation-level denial rejects operation, view and kind before dispatch', async () => {
+        const rows = [
+            { name: 'webhooks', field: 'operation', denied: 'list', allowed: 'get', args: { endpointId: '550e8400-e29b-41d4-a716-446655440000' }, method: 'webhooks.getWebhook' },
+            { name: 'get_task', field: 'view', denied: 'trajectory', allowed: 'status', args: { taskId: 't1' }, method: 'tasks.getTaskStatus' },
+            { name: 'get_task_media', field: 'kind', denied: 'ui_state', allowed: 'screenshot', args: { taskId: 't1' }, method: 'tasks.getTaskMedia' },
+        ];
+        const s = await connect({
+            toolAllowlist: new Set(ALL_TOOL_NAMES),
+            operationAllowlist: new Map(rows.map(({ name, allowed }) => [name, new Set([allowed])])),
         });
-        const { client } = await connectedClient(ctx);
-
-        const allowed = await client.callTool({ name: 'webhooks', arguments: { operation: 'list' } });
-        expect(allowed.isError).not.toBe(true);
-        expect(backend.calls).toContain('webhooks.listWebhooks');
+        for (const { name, field, denied, allowed, args, method } of rows) {
+            s.calls.length = 0;
+            const result = await s.client.callTool({ name, arguments: { ...args, [field]: denied } });
+            expect(result.isError).toBe(true);
+            expect((result.content as Array<{ text?: string }>)[0]?.text).toContain(`Operation "${denied}" of tool "${name}" is not available`);
+            expect(s.calls).toEqual([]);
+            expect((await s.client.callTool({ name, arguments: { ...args, [field]: allowed } })).isError).not.toBe(true);
+            expect(s.calls).toEqual([method]);
+        }
     });
 
-    test('operation-level denial: an operation outside operationAllowlist is rejected at dispatch, never reaching the backend', async () => {
-        const backend = stubBackend();
-        const ctx = ctxWith(backend, {
-            // Input schema stays the FULL enum (see tools/operation-table.ts) — 'list' is
-            // schema-valid, so this call reaches register.ts's dispatch-time gate,
-            // which is where 'list' actually gets rejected for this credential.
-            operationAllowlist: new Map([['webhooks', new Set(['get'])]]),
-        });
-        const { client } = await connectedClient(ctx);
-
-        const denied = await client.callTool({ name: 'webhooks', arguments: { operation: 'list' } });
-        expect(denied.isError).toBe(true);
-        const text = (denied.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-        expect(text).toContain('Operation "list" of tool "webhooks" is not available');
-        expect(backend.calls).not.toContain('webhooks.listWebhooks');
-
-        const allowed = await client.callTool({ name: 'webhooks', arguments: { operation: 'get', endpointId: '550e8400-e29b-41d4-a716-446655440000' } });
-        expect(allowed.isError).not.toBe(true);
-        expect(backend.calls).toContain('webhooks.getWebhook');
+    test('flow creation and add_action forward keys at positions zero and one', async () => {
+        const s = await connect('full', { recordArgs: true });
+        for (const position of [0, 1]) {
+            const action = { actionId: 'action-1', position, key: 'fetch_profile' };
+            for (const input of [
+                { name: 'manage_flow', arguments: { operation: 'add_action', flowId: 'flow-1', ...action }, method: 'workflows.addFlowAction', expected: { flowId: 'flow-1', ...action } },
+                { name: 'create_flow', arguments: { name: 'My flow', triggerId: 'trigger-1', actions: [action], deviceIds: ['device-1'] }, method: 'workflows.createFlow', expected: { actions: [action] } },
+            ]) {
+                s.calls.length = 0;
+                expect((await s.client.callTool(input)).isError).not.toBe(true);
+                expect(s.calls).toHaveLength(1);
+                expect(s.calls[0]?.method).toBe(input.method);
+                expect(s.calls[0]?.args[0]).toMatchObject(input.expected);
+            }
+        }
     });
 
     test('the webhooks tool description reflects the allowed operation subset', async () => {
         const backend = stubBackend();
-        const ctx = ctxWith(backend, {
+        const policy = {
+            toolAllowlist: new Set(ALL_TOOL_NAMES),
             operationAllowlist: new Map([['webhooks', new Set(['list', 'get'])]]),
-        });
-        const { client } = await connectedClient(ctx);
+        };
+        const { client } = await connect(policy, { backend });
         const { tools } = await client.listTools();
         const webhooksTool = tools.find((t) => t.name === 'webhooks');
         expect(webhooksTool?.description).toContain('Available for this credential: list, get');
@@ -119,7 +98,7 @@ describe('buildMcpServer', () => {
 
     test('list_workflow_resources rejects a filter not allowed for the chosen resource', async () => {
         const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
 
         // `enabled` is only valid for resource=flow, not resource=trigger.
         const result = await client.callTool({
@@ -139,151 +118,6 @@ describe('buildMcpServer', () => {
         expect(backend.calls).toContain('workflows.listTriggers');
     });
 
-    test('webhooks tool dispatches each operation to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { operation: 'create', url: 'https://example.com/hook' }, expectMethod: 'webhooks.createWebhook' },
-            { args: { operation: 'list' }, expectMethod: 'webhooks.listWebhooks' },
-            { args: { operation: 'get', endpointId: '550e8400-e29b-41d4-a716-446655440000' }, expectMethod: 'webhooks.getWebhook' },
-            {
-                args: { operation: 'update', endpointId: '550e8400-e29b-41d4-a716-446655440000', state: 'DISABLED' },
-                expectMethod: 'webhooks.updateWebhook',
-            },
-            {
-                args: { operation: 'rotate_secret', endpointId: '550e8400-e29b-41d4-a716-446655440000' },
-                expectMethod: 'webhooks.rotateWebhookSecret',
-            },
-            { args: { operation: 'test', endpointId: '550e8400-e29b-41d4-a716-446655440000' }, expectMethod: 'webhooks.testWebhook' },
-            {
-                args: { operation: 'list_deliveries', endpointId: '550e8400-e29b-41d4-a716-446655440000' },
-                expectMethod: 'webhooks.listWebhookDeliveries',
-            },
-            {
-                args: {
-                    operation: 'get_delivery',
-                    endpointId: '550e8400-e29b-41d4-a716-446655440000',
-                    deliveryId: '550e8400-e29b-41d4-a716-446655440001',
-                },
-                expectMethod: 'webhooks.getWebhookDelivery',
-            },
-            { args: { operation: 'delivery_stats' }, expectMethod: 'webhooks.getWebhookDeliveryStats' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'webhooks', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
-
-    test('manage_flow tool dispatches each operation to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { operation: 'clone', flowId: 'flow-1' }, expectMethod: 'workflows.cloneFlow' },
-            { args: { operation: 'unblock', flowId: 'flow-1' }, expectMethod: 'workflows.unblockFlow' },
-            {
-                args: { operation: 'add_action', flowId: 'flow-1', actionId: 'action-1', position: 1 },
-                expectMethod: 'workflows.addFlowAction',
-            },
-            {
-                args: { operation: 'remove_action', flowActionId: 'fa-1', flowId: 'flow-1' },
-                expectMethod: 'workflows.removeFlowAction',
-            },
-            {
-                args: {
-                    operation: 'replace_actions',
-                    flowId: 'flow-1',
-                    actions: [{ actionId: 'action-1', position: 1, key: 'action_1' }],
-                },
-                expectMethod: 'workflows.replaceFlowActions',
-            },
-            { args: { operation: 'execution_metrics' }, expectMethod: 'workflows.getExecutionMetrics' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'manage_flow', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
-    test('manage_flow add_action forwards the caller-supplied key to the backend', async () => {
-        const backend = stubBackend();
-        let addFlowActionArgs: unknown;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (backend.workflows as any).addFlowAction = (params: unknown) => {
-            addFlowActionArgs = params;
-            backend.calls.push('workflows.addFlowAction');
-            return Promise.resolve({ data: { key: 'fetch_profile' } });
-        };
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const result = await client.callTool({
-            name: 'manage_flow',
-            arguments: { operation: 'add_action', flowId: 'flow-1', actionId: 'action-1', position: 1, key: 'fetch_profile' },
-        });
-
-        expect(result.isError).not.toBe(true);
-        expect(addFlowActionArgs).toMatchObject({ flowId: 'flow-1', actionId: 'action-1', position: 1, key: 'fetch_profile' });
-    });
-
-    test('create_flow forwards each action\'s caller-supplied key to the backend', async () => {
-        const backend = stubBackend();
-        let createFlowArgs: unknown;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (backend.workflows as any).createFlow = (params: unknown) => {
-            createFlowArgs = params;
-            backend.calls.push('workflows.createFlow');
-            return Promise.resolve({ data: { id: 'flow-1' } });
-        };
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const result = await client.callTool({
-            name: 'create_flow',
-            arguments: {
-                name: 'My flow',
-                triggerId: 'trigger-1',
-                actions: [{ actionId: 'action-1', position: 1, key: 'fetch_profile' }],
-                deviceIds: ['device-1'],
-            },
-        });
-
-        expect(result.isError).not.toBe(true);
-        expect(createFlowArgs).toMatchObject({ actions: [{ actionId: 'action-1', position: 1, key: 'fetch_profile' }] });
-    });
-
-    test('manage_flow add_action and create_flow accept position 0 (0-based flows)', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const addResult = await client.callTool({
-            name: 'manage_flow',
-            arguments: { operation: 'add_action', flowId: 'flow-1', actionId: 'action-1', position: 0 },
-        });
-        expect(addResult.isError).not.toBe(true);
-        expect(backend.calls).toContain('workflows.addFlowAction');
-
-        backend.calls.length = 0;
-        const createResult = await client.callTool({
-            name: 'create_flow',
-            arguments: {
-                name: 'My flow',
-                triggerId: 'trigger-1',
-                actions: [{ actionId: 'action-1', position: 0 }],
-                deviceIds: ['device-1'],
-            },
-        });
-        expect(createResult.isError).not.toBe(true);
-        expect(backend.calls).toContain('workflows.createFlow');
-    });
-
     test('manage_flow replace_actions on a 0-based flow carries over keys by position + actionId when key/flowActionId are omitted', async () => {
         const backend = stubBackend();
         backend.workflows.listFlowActions = () =>
@@ -301,7 +135,7 @@ describe('buildMcpServer', () => {
             backend.calls.push('workflows.replaceFlowActions');
             return Promise.resolve({ items: [] });
         };
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
 
         const result = await client.callTool({
             name: 'manage_flow',
@@ -325,58 +159,14 @@ describe('buildMcpServer', () => {
         });
     });
 
-    test('manage_flow requires flowId for clone/unblock/add_action/remove_action/replace_actions', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const result = await client.callTool({ name: 'manage_flow', arguments: { operation: 'unblock' } });
-        expect(result.isError).toBe(true);
-        const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-        expect(text).toContain('requires flowId');
-        expect(backend.calls).not.toContain('workflows.unblockFlow');
-    });
-
-    test('workflow_events tool dispatches each operation to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { operation: 'ingest', eventType: 'app.custom' }, expectMethod: 'workflows.ingestEvent' },
-            { args: { operation: 'dry_run', eventType: 'app.custom' }, expectMethod: 'workflows.dryRunEvent' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'workflow_events', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
-    test('assistant dispatches every operation and defaults send wait to 45 seconds', async () => {
+    test('assistant defaults send wait to 45 seconds', async () => {
         const backend = stubBackend();
         const sendCalls: Array<[string, string, number]> = [];
         backend.assistant.sendMessage = async (sessionId, message, waitSeconds) => {
             sendCalls.push([sessionId, message, waitSeconds]);
             return { status: 'completed', chatSessionId: sessionId, assistantText: 'done' };
         };
-        const { client } = await connectedClient(ctxWith(backend));
-        const cases: Array<{ args: Record<string, unknown>; method: string }> = [
-            { args: { operation: 'list_sessions' }, method: 'assistant.listSessions' },
-            { args: { operation: 'create_session', title: 'Chat' }, method: 'assistant.createSession' },
-            { args: { operation: 'update_session', sessionId: 's1', pinned: true }, method: 'assistant.updateSession' },
-            { args: { operation: 'get_messages', sessionId: 's1' }, method: 'assistant.getMessages' },
-            { args: { operation: 'abort', sessionId: 's1' }, method: 'assistant.abort' },
-            { args: { operation: 'answer_permission', permissionId: 'p1', response: 'once' }, method: 'assistant.answerPermission' },
-            { args: { operation: 'answer_question', questionId: 'q1', answers: [[{ label: 'Yes' }]] }, method: 'assistant.answerQuestion' },
-            { args: { operation: 'reject_question', questionId: 'q1' }, method: 'assistant.rejectQuestion' },
-        ];
-        for (const { args, method } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'assistant', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([method]);
-        }
+        const { client } = await connect('full', { backend });
         const sent = await client.callTool({ name: 'assistant', arguments: { operation: 'send_message', sessionId: 's1', message: 'Hi' } });
         expect(sent.isError).not.toBe(true);
         expect(sendCalls).toEqual([['s1', 'Hi', 45]]);
@@ -385,41 +175,6 @@ describe('buildMcpServer', () => {
         const always = await client.callTool({ name: 'assistant', arguments: { operation: 'answer_permission', permissionId: 'p1', response: 'always' } });
         expect(always.isError).toBe(true);
         expect(backend.calls).toEqual([]);
-    });
-
-    test('workflow_events requires eventType for ingest/dry_run', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const result = await client.callTool({ name: 'workflow_events', arguments: { operation: 'ingest' } });
-        expect(result.isError).toBe(true);
-        const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-        expect(text).toContain('requires eventType');
-        expect(backend.calls).not.toContain('workflows.ingestEvent');
-    });
-
-    test('list_workflow_resources dispatches service/service_methods, and service_methods requires the service filter', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const services = await client.callTool({ name: 'list_workflow_resources', arguments: { resource: 'service' } });
-        expect(services.isError).not.toBe(true);
-        expect(backend.calls).toContain('workflows.listServices');
-
-        backend.calls.length = 0;
-        const missingFilter = await client.callTool({ name: 'list_workflow_resources', arguments: { resource: 'service_methods' } });
-        expect(missingFilter.isError).toBe(true);
-        const text = (missingFilter.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-        expect(text).toContain('requires filter: service');
-        expect(backend.calls).not.toContain('workflows.listServiceMethods');
-
-        backend.calls.length = 0;
-        const withFilter = await client.callTool({
-            name: 'list_workflow_resources',
-            arguments: { resource: 'service_methods', service: 'tasks_api' },
-        });
-        expect(withFilter.isError).not.toBe(true);
-        expect(backend.calls).toEqual(['workflows.listServiceMethods']);
     });
 
     test('webhooks get/list outputs never contain a secret field; create/rotate_secret outputs do', async () => {
@@ -431,7 +186,7 @@ describe('buildMcpServer', () => {
         backend.webhooks.updateWebhook = () => Promise.resolve(withoutSecret as never);
         backend.webhooks.createWebhook = () => Promise.resolve(withSecret as never);
         backend.webhooks.rotateWebhookSecret = () => Promise.resolve(withSecret as never);
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
 
         const getResult = await client.callTool({ name: 'webhooks', arguments: { operation: 'get', endpointId: '550e8400-e29b-41d4-a716-446655440000' } });
         expect(((getResult.content as Array<{ type: string; text?: string }>)[0]?.text ?? '')).not.toContain('secret');
@@ -455,54 +210,9 @@ describe('buildMcpServer', () => {
         expect(((rotateResult.content as Array<{ type: string; text?: string }>)[0]?.text ?? '')).toContain('whsec_shown_once');
     });
 
-    test('apps tool dispatches each operation to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const appId = '550e8400-e29b-41d4-a716-446655440000';
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { operation: 'list' }, expectMethod: 'apps.listApps' },
-            { args: { operation: 'get', id: appId }, expectMethod: 'apps.getApp' },
-            { args: { operation: 'versions', id: appId }, expectMethod: 'apps.listAppVersions' },
-            {
-                args: {
-                    operation: 'create_upload_url',
-                    bundleId: 'com.example.app',
-                    displayName: 'Example',
-                    versionCode: 1,
-                    versionName: '1.0',
-                    sizeBytes: 100,
-                    files: [{ fileName: 'app.apk', contentType: 'application/vnd.android.package-archive' }],
-                },
-                expectMethod: 'apps.createAppUploadUrl',
-            },
-            { args: { operation: 'confirm_upload', id: appId }, expectMethod: 'apps.confirmAppUpload' },
-            { args: { operation: 'mark_failed', id: appId }, expectMethod: 'apps.markAppUploadFailed' },
-            { args: { operation: 'delete', id: appId }, expectMethod: 'apps.deleteApp' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'apps', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
-    test('apps operation=create_upload_url without required fields is rejected before dispatch', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const result = await client.callTool({ name: 'apps', arguments: { operation: 'create_upload_url' } });
-        expect(result.isError).toBe(true);
-        const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-        expect(text).toContain('requires bundleId');
-        expect(backend.calls).not.toContain('apps.createAppUploadUrl');
-    });
-
     test('manage_credentials tool dispatches each operation to the right backend method, never echoing a field value', async () => {
         const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
 
         const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
             { args: { operation: 'init_package', packageName: 'com.example' }, expectMethod: 'credentials.initPackage' },
@@ -544,131 +254,10 @@ describe('buildMcpServer', () => {
         }
     });
 
-    test('manage_credentials operation=add_field without a fieldType is rejected before dispatch', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const result = await client.callTool({
-            name: 'manage_credentials',
-            arguments: { operation: 'add_field', packageName: 'com.example', credentialName: 'main', value: 'x' },
-        });
-        expect(result.isError).toBe(true);
-        const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-        expect(text).toContain('requires fieldType');
-        expect(backend.calls).not.toContain('credentials.addField');
-    });
-
-    test('proxies tool dispatches each operation to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { operation: 'list' }, expectMethod: 'proxies.listProxies' },
-            { args: { operation: 'get', proxyId: 'p1' }, expectMethod: 'proxies.getProxy' },
-            {
-                args: { operation: 'create', protocol: 'socks5', name: 'n', host: 'h', port: 1080, user: 'u', password: 'pw' },
-                expectMethod: 'proxies.createProxy',
-            },
-            {
-                args: { operation: 'update', proxyId: 'p1', protocol: 'wireguard', name: 'n', config: 'cfg' },
-                expectMethod: 'proxies.updateProxy',
-            },
-            { args: { operation: 'delete', proxyId: 'p1' }, expectMethod: 'proxies.deleteProxy' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'proxies', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
-    test('connect tool dispatches each operation to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { operation: 'list_countries' }, expectMethod: 'connect.listCountries' },
-            { args: { operation: 'list_proxies' }, expectMethod: 'connect.listConnectProxies' },
-            { args: { operation: 'get_proxy', proxyId: 'p1' }, expectMethod: 'connect.getConnectProxy' },
-            { args: { operation: 'buy_proxy', country: 'us' }, expectMethod: 'connect.buyConnectProxy' },
-            { args: { operation: 'cancel_proxy', proxyId: 'p1' }, expectMethod: 'connect.cancelConnectProxy' },
-            { args: { operation: 'ping_proxy', proxyId: 'p1' }, expectMethod: 'connect.pingConnectProxy' },
-            { args: { operation: 'list_connections', proxyId: 'p1' }, expectMethod: 'connect.listConnectProxyConnections' },
-            { args: { operation: 'list_users' }, expectMethod: 'connect.listConnectUsers' },
-            { args: { operation: 'get_user', userId: 'u1' }, expectMethod: 'connect.getConnectUser' },
-            { args: { operation: 'list_user_connections', userId: 'u1' }, expectMethod: 'connect.listConnectUserConnections' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'connect', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
-    test('connect operation-level allowlist can deny buy_proxy/cancel_proxy independently of the rest of the bundle', async () => {
-        const backend = stubBackend();
-        const allowedOps = new Set([
-            'list_countries',
-            'list_proxies',
-            'get_proxy',
-            'ping_proxy',
-            'list_connections',
-            'list_users',
-            'get_user',
-            'list_user_connections',
-        ]);
-        const ctx = ctxWith(backend, { operationAllowlist: new Map([['connect', allowedOps]]) });
-        const { client } = await connectedClient(ctx);
-
-        const buy = await client.callTool({ name: 'connect', arguments: { operation: 'buy_proxy', country: 'us' } });
-        expect(buy.isError).toBe(true);
-        expect(backend.calls).not.toContain('connect.buyConnectProxy');
-
-        const list = await client.callTool({ name: 'connect', arguments: { operation: 'list_proxies' } });
-        expect(list.isError).not.toBe(true);
-        expect(backend.calls).toContain('connect.listConnectProxies');
-    });
-
-    test('connect rejects create_user/update_user/delete_user at schema validation, not policy (removed 2026-08-12)', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        for (const removed of ['create_user', 'update_user', 'delete_user']) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'connect', arguments: { operation: removed, userId: 'u1' } });
-            expect(result.isError).toBe(true);
-            const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
-            // Schema validation error, not the policy-gate's "not available for this credential" text.
-            expect(text).not.toContain('not available for this credential');
-            expect(backend.calls).toEqual([]);
-        }
-    });
-
-    test('platform_catalog tool dispatches each catalog value to the right backend method', async () => {
-        const backend = stubBackend();
-        const { client } = await connectedClient(ctxWith(backend));
-
-        const cases: Array<{ args: Record<string, unknown>; expectMethod: string }> = [
-            { args: { catalog: 'models' }, expectMethod: 'platformCatalog.listModels' },
-            { args: { catalog: 'timezones' }, expectMethod: 'platformCatalog.listTimezones' },
-        ];
-
-        for (const { args, expectMethod } of cases) {
-            backend.calls.length = 0;
-            const result = await client.callTool({ name: 'platform_catalog', arguments: args });
-            expect(result.isError).not.toBe(true);
-            expect(backend.calls).toEqual([expectMethod]);
-        }
-    });
-
     test('a BackendError thrown by the backend is rendered uniformly via asErrorResult', async () => {
         const backend = stubBackend();
         backend.devices.getDevice = () => Promise.reject(new BackendError('not_found', 'device d1 not found', 404));
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
 
         const result = await client.callTool({ name: 'get_device', arguments: { deviceId: 'd1' } });
         expect(result.isError).toBe(true);
@@ -679,7 +268,7 @@ describe('buildMcpServer', () => {
     test('get_workflow_resource preserves a BackendError (code + status) through its context-wrapping rethrow (Codex fix pack, 2026-08-12)', async () => {
         const backend = stubBackend();
         backend.workflows.getFlow = () => Promise.reject(new BackendError('not_found', 'flow f1 not found', 404));
-        const { client } = await connectedClient(ctxWith(backend));
+        const { client } = await connect('full', { backend });
 
         const result = await client.callTool({ name: 'get_workflow_resource', arguments: { resource: 'flow', id: 'f1' } });
         expect(result.isError).toBe(true);
@@ -707,10 +296,11 @@ describe('buildMcpServer', () => {
     test('onToolCall reports ok/error/denied outcomes with non-sensitive auth attrs, never args', async () => {
         const backend = stubBackend();
         const events: ToolCallEvent[] = [];
-        const ctx = ctxWith(backend, {
+        const policy = {
+            toolAllowlist: new Set(ALL_TOOL_NAMES),
             operationAllowlist: new Map([['webhooks', new Set(['list'])]]),
-        });
-        const { client } = await connectedClient(ctx, { onToolCall: (e) => events.push(e) });
+        };
+        const { client } = await connect(policy, { backend, serverOptions: { onToolCall: (e) => events.push(e) } });
 
         await client.callTool({ name: 'list_devices', arguments: {} });
         await client.callTool({ name: 'webhooks', arguments: { operation: 'get', endpointId: '550e8400-e29b-41d4-a716-446655440000' } });

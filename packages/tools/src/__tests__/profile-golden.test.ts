@@ -1,11 +1,7 @@
 import { expect, test } from 'bun:test';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { createAuthContext } from '../ctx.js';
+import { connect } from './connect.js';
 import { POLICY_PROFILES, policyForProfile } from '../policies.js';
-import { buildMcpServer } from '../register.js';
 import { BUNDLE_TOOLS } from '../tools/bundle-tools.js';
-import { stubBackend } from './backend-stub.js';
 
 // Expand local refs so field traversal order cannot hide or invent a shape change.
 // Preserve every schema constraint except descriptions; required sets are unordered.
@@ -38,11 +34,7 @@ test('golden allowed operations and activation gates for every profile', async (
         if (policy.toolAllowlist.has('manage_flow') && (!allowed || (allowed.has('update') && allowed.has('activate')))) {
             pairs.push('manage_flow.update+enabled');
         }
-        const backend = stubBackend();
-        const server = buildMcpServer({ backend, auth: createAuthContext({ kind: 'api_key', subject: 'golden' }), policy });
-        const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-        const client = new Client({ name: 'profile-golden', version: '0.0.0' });
-        await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+        const { backend, client, close } = await connect(policy);
         try {
             const activation = [];
             for (const fields of [{ enabled: true }, { lifecycleStatus: 'enabled' }, { enabled: false, lifecycleStatus: 'enabled' }]) {
@@ -52,8 +44,7 @@ test('golden allowed operations and activation gates for every profile', async (
             }
             profiles[profile] = { operations: pairs.sort(), activation };
         } finally {
-            await client.close();
-            await server.close();
+            await close();
         }
     }
     expect(profiles).toMatchSnapshot();
@@ -63,10 +54,7 @@ test('golden input schema shapes for every profile', async () => {
     const profiles: Record<string, unknown> = {};
     let descriptions: unknown;
     for (const profile of POLICY_PROFILES) {
-        const server = buildMcpServer({ backend: stubBackend(), auth: createAuthContext({ kind: 'api_key', subject: 'golden' }), policy: policyForProfile(profile) });
-        const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-        const client = new Client({ name: 'profile-golden', version: '0.0.0' });
-        await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+        const { client, close } = await connect(profile);
         try {
             const { tools } = await client.listTools();
             if (profile === 'full') descriptions = [...tools].sort((a, b) => a.name.localeCompare(b.name))
@@ -74,8 +62,7 @@ test('golden input schema shapes for every profile', async () => {
             profiles[profile] = tools.sort((a, b) => a.name.localeCompare(b.name))
                 .map(({ name, inputSchema }) => ({ name, inputSchema: schemaShape(inputSchema, inputSchema) }));
         } finally {
-            await client.close();
-            await server.close();
+            await close();
         }
     }
     expect(profiles).toMatchSnapshot();

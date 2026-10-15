@@ -1,6 +1,6 @@
 import type { Backend } from '../backend/index.js';
 
-type Call = { method: string; args: unknown[] };
+export type Call = { method: string; args: unknown[] };
 const responses: Record<string, unknown> = {
     'devices.getDeviceUiState': { a11y_tree: { children: [] }, phone_state: {} },
     'workflows.listFlowActions': { items: [] },
@@ -17,9 +17,9 @@ const responses: Record<string, unknown> = {
     'deviceControl.downloadFile': { content: 'ok' },
 };
 
-export function stubBackend(): Backend & { calls: string[] };
-export function stubBackend(options: { recordArgs: true; responses?: Record<string, unknown> }): Backend & { calls: Call[] };
-export function stubBackend(options?: { recordArgs: true; responses?: Record<string, unknown> }): Backend & { calls: string[] | Call[] } {
+export type StubOptions<Args extends boolean = boolean> = { recordArgs?: Args; responses?: Record<string, unknown> };
+
+export function stubBackend<Args extends boolean = false>(options: StubOptions<Args> = {}): Backend & { calls: Args extends true ? Call[] : string[] } {
     const calls: Array<string | Call> = [];
     const domains = new Map<PropertyKey, object>();
     return new Proxy({ calls }, {
@@ -37,5 +37,5 @@ export function stubBackend(options?: { recordArgs: true; responses?: Record<str
             }));
             return domains.get(domain);
         },
-    }) as Backend & { calls: string[] | Call[] };
+    }) as Backend & { calls: Args extends true ? Call[] : string[] };
 }
