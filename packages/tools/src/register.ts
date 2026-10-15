@@ -1,8 +1,14 @@
+/** Canonical list of every tool this package registers — the single source
+ * of truth `fullAccessPolicy()` and the schema-snapshot test both read from. */
+import { registerFilesTools } from './tools/files.js';
+import { registerMessagesTools } from './tools/messages.js';
+import { registerMailboxesTools } from './tools/mailboxes.js';
+import { registerNumbersTools } from './tools/numbers.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
-import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
+import { type RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import { type ServerNotification, type ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import { BackendError } from './backend/errors.js';
-import type { AuthContext, Policy, ToolCtx } from './ctx.js';
+import { type AuthContext, type Policy, type ToolCtx } from './ctx.js';
 import { asErrorResult } from './text-result.js';
 import { registerAppsTools } from './tools/apps.js';
 import { registerAssistantTool } from './tools/assistant.js';
@@ -18,9 +24,11 @@ import { registerWebhookTools } from './tools/webhooks.js';
 import { registerWorkflowEventsTool } from './tools/workflow-events.js';
 import { registerWorkflowTools } from './tools/workflows.js';
 
-/** Canonical list of every tool this package registers — the single source
- * of truth `fullAccessPolicy()` and the schema-snapshot test both read from. */
 export const ALL_TOOL_NAMES = [
+    'files',
+    'messages',
+    'mailboxes',
+    'numbers',
     'list_devices',
     'get_device',
     'get_device_screenshot',
@@ -45,8 +53,7 @@ export const ALL_TOOL_NAMES = [
     'stop_task',
     'send_task_message',
     'get_task_media',
-    // device_recordings is NOT here: no SDK support exists for it at all
-    // (see ../tools/device-control.ts's header).
+    // Device recordings, screenshots and media sessions are operations of manage_device.
     'manage_device',
     'device_action',
     'manage_device_apps',
@@ -77,6 +84,10 @@ export function fullAccessPolicy(): Policy {
  * gate is the only gate).
  */
 const OPERATION_FIELD: Readonly<Record<string, string>> = {
+    files: 'operation',
+    messages: 'operation',
+    mailboxes: 'operation',
+    numbers: 'operation',
     webhooks: 'operation',
     assistant: 'operation',
     list_workflow_resources: 'resource',
@@ -177,15 +188,26 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
 
             if (opField) {
                 const allowedOps = ctx.policy.operationAllowlist?.get(name);
-                if (allowedOps && operation !== undefined && !allowedOps.has(operation)) {
+                const enablesFlow =
+                    name === 'manage_flow' &&
+                    operation === 'update' &&
+                    (input?.enabled === true || input?.lifecycleStatus === 'enabled');
+                if (
+                    allowedOps &&
+                    operation !== undefined &&
+                    (!allowedOps.has(operation) || (enablesFlow && !allowedOps.has('activate')))
+                ) {
                     report('denied');
-                    return asErrorResult(`Operation "${operation}" of tool "${name}" is not available for this credential.`);
+                    return asErrorResult(
+                        `Operation "${operation}" of tool "${name}" is not available for this credential.`,
+                    );
                 }
             }
 
             try {
                 const result = await handler(...args);
-                const isToolResultError = !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
+                const isToolResultError =
+                    !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
                 report(isToolResultError ? 'error' : 'ok');
                 return result;
             } catch (err) {
@@ -230,13 +252,14 @@ export type BuildMcpServerOpts = {
  * (metrics/tier-gating), and `opts.onToolCall` for audit telemetry.
  */
 export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): McpServer {
-    const server = new McpServer(
-        { name: 'mobilerun', version: '0.1.0' },
-        { capabilities: { tools: {} } },
-    );
+    const server = new McpServer({ name: 'mobilerun', version: '0.1.0' }, { capabilities: { tools: {} } });
     enforcePolicy(server, ctx, opts.onToolCall);
     opts.wrapRegisterTool?.(server);
 
+    registerNumbersTools(server, ctx);
+    registerMailboxesTools(server, ctx);
+    registerMessagesTools(server, ctx);
+    registerFilesTools(server, ctx);
     registerDeviceTools(server, ctx);
     registerWorkflowTools(server, ctx);
     registerManageFlowTool(server, ctx);

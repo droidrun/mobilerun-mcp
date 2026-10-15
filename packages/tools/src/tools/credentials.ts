@@ -1,11 +1,9 @@
-// Credentials read tools. Dispatch goes through Backend.credentials rather
-// than a raw fetch with trust headers. See SdkBackend for how
-// list_credential_packages is derived — @mobilerun/sdk has no "list all
-// packages with credentials" endpoint (only
-// credentials.packages.list(packageName), which lists WITHIN one package).
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// Credentials read and mutation tools use separate policy operation gates.
+
+import { manageCredentialsGetSchema } from '../backend/credentials.js';
+import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { ToolCtx } from '../ctx.js';
+import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { allowedValuesNote, narrowedValues } from './policy-schema.js';
 
@@ -34,7 +32,7 @@ export function registerCredentialTools(server: McpServer, ctx: ToolCtx): void {
 
 // --- manage_credentials (write path) -----------------------------------
 // Kept as a separate tool/registration function from the read path above: this
-// package never mixes read with mutation under one operation enum.
+// package also offers metadata retrieval under the bundle's get operation.
 // SECRETS: every operation is a write that may carry a plaintext `value`
 // as INPUT (the field being set); the response never echoes it back — see
 // backend/credentials.ts's CredentialMetaDto (fieldType only, no `value`
@@ -47,13 +45,23 @@ const MANAGE_CREDENTIALS_OPERATIONS = [
     'add_field',
     'update_field',
     'delete_field',
+    'get',
 ] as const;
 const manageCredentialsOperationSchema = z.enum(MANAGE_CREDENTIALS_OPERATIONS);
 
-const fieldTypeSchema = z.enum(['email', 'username', 'password', 'api_token', 'phone_number', 'two_factor_secret', 'backup_codes']);
+const fieldTypeSchema = z.enum([
+    'email',
+    'username',
+    'password',
+    'api_token',
+    'phone_number',
+    'two_factor_secret',
+    'backup_codes',
+]);
 
 type ManageCredentialsInput = {
     operation: z.infer<typeof manageCredentialsOperationSchema>;
+    [key: string]: unknown;
     packageName?: string;
     credentialName?: string;
     fieldType?: z.infer<typeof fieldTypeSchema>;
@@ -67,11 +75,15 @@ function requireCredentialValue<T>(value: T | undefined, name: string, operation
 }
 
 async function executeManageCredentialsOperation(input: ManageCredentialsInput, ctx: ToolCtx): Promise<unknown> {
+    if (input.operation === 'get')
+        return ctx.backend.credentials.manageCredentialsGet(manageCredentialsGetSchema.strip().parse(input));
     const { operation } = input;
     const backend = ctx.backend.credentials;
 
     if (operation === 'init_package') {
-        return backend.initPackage({ packageName: requireCredentialValue(input.packageName, 'packageName', operation) });
+        return backend.initPackage({
+            packageName: requireCredentialValue(input.packageName, 'packageName', operation),
+        });
     }
 
     const packageName = requireCredentialValue(input.packageName, 'packageName', operation);
@@ -93,16 +105,29 @@ async function executeManageCredentialsOperation(input: ManageCredentialsInput, 
     const fieldType = requireCredentialValue(input.fieldType, 'fieldType', operation);
 
     if (operation === 'add_field') {
-        return backend.addField({ packageName, credentialName, fieldType, value: requireCredentialValue(input.value, 'value', operation) });
+        return backend.addField({
+            packageName,
+            credentialName,
+            fieldType,
+            value: requireCredentialValue(input.value, 'value', operation),
+        });
     }
     if (operation === 'update_field') {
-        return backend.updateField({ packageName, credentialName, fieldType, value: requireCredentialValue(input.value, 'value', operation) });
+        return backend.updateField({
+            packageName,
+            credentialName,
+            fieldType,
+            value: requireCredentialValue(input.value, 'value', operation),
+        });
     }
     return backend.deleteField({ packageName, credentialName, fieldType });
 }
 
 export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): void {
-    const operationValues = narrowedValues(MANAGE_CREDENTIALS_OPERATIONS, ctx.policy.operationAllowlist?.get('manage_credentials'));
+    const operationValues = narrowedValues(
+        MANAGE_CREDENTIALS_OPERATIONS,
+        ctx.policy.operationAllowlist?.get('manage_credentials'),
+    );
 
     server.registerTool(
         'manage_credentials',
@@ -117,14 +142,19 @@ export function registerManageCredentialsTool(server: McpServer, ctx: ToolCtx): 
                 'delete_field (packageName, credentialName, fieldType). ' +
                 'Field values are write-only: every response returns metadata only (fieldType, never the plaintext value) — ' +
                 'keep the value you sent yourself if you need it again.' +
+                ' Additional operations: get: Read credential metadata; secret values stay in storage.' +
                 allowedValuesNote(operationValues, MANAGE_CREDENTIALS_OPERATIONS),
             inputSchema: {
                 operation: manageCredentialsOperationSchema,
+                ...manageCredentialsGetSchema.partial().shape,
                 packageName: z.string().min(1).max(256).optional(),
                 credentialName: z.string().min(1).max(256).optional(),
                 fieldType: fieldTypeSchema.optional(),
                 value: z.string().min(1).max(4096).optional(),
-                fields: z.array(z.object({ fieldType: fieldTypeSchema, value: z.string().min(1).max(4096) })).min(1).optional(),
+                fields: z
+                    .array(z.object({ fieldType: fieldTypeSchema, value: z.string().min(1).max(4096) }))
+                    .min(1)
+                    .optional(),
             },
         },
         async (input) => asTextResult(await executeManageCredentialsOperation(input as ManageCredentialsInput, ctx)),

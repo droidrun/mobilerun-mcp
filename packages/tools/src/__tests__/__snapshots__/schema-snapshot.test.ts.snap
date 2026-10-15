@@ -73,6 +73,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "confirm_upload",
             "mark_failed",
             "delete",
+            "storage_usage",
           ],
           "type": "string",
         },
@@ -124,6 +125,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "queued",
             "available",
             "failed",
+            "pruned",
           ],
           "type": "string",
         },
@@ -302,6 +304,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "deviceId": {
           "type": "string",
         },
+        "displayId": {
+          "minimum": 0,
+          "type": "integer",
+        },
         "latitude": {
           "type": "number",
         },
@@ -325,7 +331,17 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "proxy_connect",
             "proxy_disconnect",
             "get_proxy_status",
+            "reset_location",
+            "kiosk_enable",
+            "kiosk_disable",
+            "update_profile",
           ],
+          "type": "string",
+        },
+        "packageName": {
+          "type": "string",
+        },
+        "profileId": {
           "type": "string",
         },
         "proxyName": {
@@ -388,6 +404,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "description": "ISO 8601.",
           "type": "string",
         },
+        "name": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
         "operation": {
           "enum": [
             "list_countries",
@@ -400,6 +422,8 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "list_users",
             "get_user",
             "list_user_connections",
+            "update_proxy",
+            "ensure_healthy",
           ],
           "type": "string",
         },
@@ -523,9 +547,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "deviceType": {
           "enum": [
-            "dedicated_physical_device",
-            "dedicated_premium_device",
-            "dedicated_ios_device",
+            "android_cloud_phone",
+            "android_physical_phone",
+            "ios_stealth_phone",
+            "android_emulator",
+            "ios_simulator",
+            "device_slot",
           ],
           "type": "string",
         },
@@ -715,12 +742,25 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "additionalProperties": false,
       "properties": {
         "action": {
-          "description": "global_action: Android global-action code.",
-          "type": "integer",
+          "anyOf": [
+            {
+              "type": "integer",
+            },
+            {
+              "type": "string",
+            },
+          ],
+          "description": "global_action: Android keycode; deep_link: intent action.",
+        },
+        "bundleId": {
+          "type": "string",
         },
         "clear": {
           "description": "keyboard_write: clear existing input before typing.",
           "type": "boolean",
+        },
+        "deepLink": {
+          "type": "string",
         },
         "deviceId": {
           "type": "string",
@@ -755,12 +795,22 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "keyboard_key",
             "keyboard_clear",
             "global_action",
+            "clipboard_get",
+            "clipboard_set",
+            "deep_link",
+            "browser_script",
           ],
           "type": "string",
         },
         "pacedInput": {
           "description": "tap/swipe/keyboard_write: send input with variable timing and gesture paths.",
           "type": "boolean",
+        },
+        "packageName": {
+          "type": "string",
+        },
+        "script": {
+          "type": "string",
         },
         "startX": {
           "type": "number",
@@ -789,6 +839,66 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "type": "object",
     },
     "name": "device_action",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "enabled": {
+          "type": "boolean",
+        },
+        "fileId": {
+          "description": "Required for update/delete/cancel_pending/confirm/download.",
+          "type": "string",
+        },
+        "filename": {
+          "description": "Required for upload_url.",
+          "type": "string",
+        },
+        "mimeType": {
+          "description": "Required for upload_url.",
+          "type": "string",
+        },
+        "operation": {
+          "enum": [
+            "download",
+            "list",
+            "update",
+            "delete",
+            "cancel_pending",
+            "confirm",
+            "upload_url",
+          ],
+          "type": "string",
+        },
+        "sizeBytes": {
+          "description": "Required for upload_url.",
+          "type": "number",
+        },
+        "zone": {
+          "enum": [
+            "user",
+            "agent",
+            "workflow",
+            "skills",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "files",
   },
   {
     "hasDescription": true,
@@ -1038,9 +1148,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "type": {
           "enum": [
-            "dedicated_physical_device",
-            "dedicated_premium_device",
-            "dedicated_ios_device",
+            "android_cloud_phone",
+            "android_physical_phone",
+            "ios_stealth_phone",
+            "android_emulator",
+            "ios_simulator",
+            "device_slot",
           ],
           "type": "string",
         },
@@ -1147,7 +1260,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "resource": {
           "enum": [
             "action_catalog",
-            "app_event_catalog",
             "action",
             "trigger",
             "flow",
@@ -1167,6 +1279,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "devices_api",
             "agents_api",
             "webhooks",
+            "integrations_api",
           ],
           "type": "string",
         },
@@ -1189,6 +1302,114 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "type": "object",
     },
     "name": "list_workflow_resources",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "description": "otp/messages: record this timestamp before requesting a fresh email code.",
+          "type": "string",
+        },
+        "billingPreference": {
+          "description": "create/restart: included may fall back to paid service; included_only refuses paid fallback; rent requests paid service.",
+          "enum": [
+            "included",
+            "included_only",
+            "rent",
+          ],
+          "type": "string",
+        },
+        "bindingHash": {
+          "type": "string",
+        },
+        "clientRequestId": {
+          "description": "Optional stable request key for create/connect retries.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string",
+        },
+        "connectionId": {
+          "description": "Required for connection. Identifier returned by connect.",
+          "type": "string",
+        },
+        "cursor": {
+          "type": "string",
+        },
+        "domainId": {
+          "type": "string",
+        },
+        "hasOtp": {
+          "type": "boolean",
+        },
+        "label": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "limit": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "localPart": {
+          "type": "string",
+        },
+        "mailboxId": {
+          "description": "Required for get/update/delete/uncancel/restart/disconnect/otp/messages/message.",
+          "type": "string",
+        },
+        "maxLength": {
+          "type": "number",
+        },
+        "messageId": {
+          "description": "Required for message. Opaque identifier from messages.",
+          "type": "string",
+        },
+        "minLength": {
+          "type": "number",
+        },
+        "operation": {
+          "enum": [
+            "list",
+            "capacity",
+            "create",
+            "get",
+            "update",
+            "delete",
+            "uncancel",
+            "restart",
+            "disconnect",
+            "otp",
+            "messages",
+            "message",
+            "connect",
+            "connection",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "sender": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "mailboxes",
   },
   {
     "hasDescription": true,
@@ -1243,6 +1464,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "add_field",
             "update_field",
             "delete_field",
+            "get",
           ],
           "type": "string",
         },
@@ -1270,9 +1492,40 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
-        "deviceId": {
-          "description": "Required for every operation except count.",
+        "camera": {
+          "type": "boolean",
+        },
+        "controlToken": {
+          "minLength": 1,
           "type": "string",
+        },
+        "cursor": {
+          "type": "string",
+        },
+        "deviceId": {
+          "description": "Required for every operation except count and summary.",
+          "type": "string",
+        },
+        "displayId": {
+          "minimum": 0,
+          "type": "integer",
+        },
+        "expiresInSeconds": {
+          "type": "number",
+        },
+        "hideOverlay": {
+          "type": "boolean",
+        },
+        "limit": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "maxBodyBytes": {
+          "type": "number",
+        },
+        "microphone": {
+          "type": "boolean",
         },
         "name": {
           "maxLength": 64,
@@ -1280,14 +1533,109 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "operation": {
           "enum": [
+            "recordings_trajectory",
+            "recordings_video",
+            "screenshots_image",
             "reboot",
             "reset",
             "rename",
             "wait_ready",
             "get_capabilities",
             "count",
+            "stop",
+            "resume",
+            "summary",
+            "retrieve_capabilities",
+            "recordings_list",
+            "recordings_delete",
+            "recordings_screenshots",
+            "recordings_start",
+            "recordings_status",
+            "recordings_stop",
+            "screenshots_list",
+            "screenshots_delete",
+            "screenshots_capture",
+            "traffic_sessions_create",
+            "traffic_sessions_retrieve",
+            "traffic_sessions_list",
+            "traffic_sessions_delete",
+            "media_sessions_create",
+            "media_sessions_delete",
+            "media_sessions_activate",
+            "media_sessions_retrieve_current",
           ],
           "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "quality": {
+          "type": "number",
+        },
+        "recordingId": {
+          "type": "string",
+        },
+        "retentionDays": {
+          "type": "number",
+        },
+        "save": {
+          "type": "boolean",
+        },
+        "screenshotId": {
+          "type": "string",
+        },
+        "sessionId": {
+          "type": "string",
+        },
+        "state": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "creating",
+                  "assigned",
+                  "ready",
+                  "rebooting",
+                  "migrating",
+                  "resetting",
+                  "terminated",
+                  "maintenance",
+                  "stopped",
+                  "unknown",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "status": {
+          "type": "string",
+        },
+        "type": {
+          "type": "string",
+        },
+        "types": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            {
+              "type": "null",
+            },
+          ],
         },
       },
       "required": [
@@ -1314,6 +1662,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "deviceId": {
           "type": "string",
         },
+        "displayId": {
+          "minimum": 0,
+          "type": "integer",
+        },
         "includeProtectedPackages": {
           "type": "boolean",
         },
@@ -1327,10 +1679,17 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "start",
             "stop",
             "list_packages",
+            "grant_permission",
+            "revoke_permission",
+            "list_installs",
           ],
           "type": "string",
         },
         "packageName": {
+          "type": "string",
+        },
+        "permission": {
+          "const": "POST_NOTIFICATIONS",
           "type": "string",
         },
       },
@@ -1349,7 +1708,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "additionalProperties": false,
       "properties": {
         "contentBase64": {
-          "maxLength": 349526,
+          "maxLength": 349528,
           "type": "string",
         },
         "contentType": {
@@ -1390,16 +1749,38 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "apn": {
+          "type": "string",
+        },
+        "apnId": {
+          "type": "number",
+        },
         "confirmationCode": {
           "type": "string",
         },
         "deviceId": {
           "type": "string",
         },
+        "displayId": {
+          "minimum": 0,
+          "type": "integer",
+        },
         "enable": {
           "type": "boolean",
         },
+        "enabled": {
+          "type": "boolean",
+        },
         "matchingId": {
+          "type": "string",
+        },
+        "mcc": {
+          "type": "string",
+        },
+        "mnc": {
+          "type": "string",
+        },
+        "name": {
           "type": "string",
         },
         "operation": {
@@ -1408,7 +1789,18 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "activate",
             "enable",
             "remove",
+            "set_roaming",
+            "status",
+            "apn_list",
+            "apn_select",
+            "apn_set",
           ],
+          "type": "string",
+        },
+        "protocol": {
+          "type": "string",
+        },
+        "roamingProtocol": {
           "type": "string",
         },
         "smDpAddr": {
@@ -1416,6 +1808,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "subId": {
           "type": "integer",
+        },
+        "type": {
+          "type": "string",
         },
       },
       "required": [
@@ -1436,86 +1831,378 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "actions": {
-          "description": "Full replacement action list for operation=replace_actions.",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "actionId": {
-                "$ref": "#/properties/children/items/properties/actionId",
-              },
-              "children": {
-                "items": {
-                  "$ref": "#/properties/children/items",
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "actionId": {
+                    "type": "string",
+                  },
+                  "children": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "actionId": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/actionId",
+                        },
+                        "continueOnError": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/continueOnError",
+                        },
+                        "flowActionId": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/flowActionId",
+                        },
+                        "key": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/key",
+                        },
+                        "nameOverride": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/nameOverride",
+                        },
+                        "overrides": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/overrides",
+                        },
+                        "position": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/position",
+                        },
+                        "recordingEnabled": {
+                          "$ref": "#/properties/actions/anyOf/0/items/properties/recordingEnabled",
+                        },
+                      },
+                      "required": [
+                        "actionId",
+                        "position",
+                      ],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "continueOnError": {
+                    "type": "boolean",
+                  },
+                  "flowActionId": {
+                    "description": "operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — the reliable way to identify a kept step when reordering or inserting.",
+                    "type": "string",
+                  },
+                  "key": {
+                    "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this tool carry over the key of the existing step matching flowActionId, or at the same position with the same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new rather than risking a wrong carry-over onto a shifted position.",
+                    "type": "string",
+                  },
+                  "nameOverride": {
+                    "type": "string",
+                  },
+                  "overrides": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "params": {
+                            "additionalProperties": {},
+                            "type": "object",
+                          },
+                        },
+                        "type": "object",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "position": {
+                    "minimum": 0,
+                    "type": "integer",
+                  },
+                  "recordingEnabled": {
+                    "type": "boolean",
+                  },
                 },
-                "type": "array",
+                "required": [
+                  "actionId",
+                  "position",
+                ],
+                "type": "object",
               },
-              "continueOnError": {
-                "$ref": "#/properties/children/items/properties/continueOnError",
-              },
-              "flowActionId": {
-                "$ref": "#/properties/children/items/properties/flowActionId",
-              },
-              "key": {
-                "$ref": "#/properties/children/items/properties/key",
-              },
-              "nameOverride": {
-                "$ref": "#/properties/children/items/properties/nameOverride",
-              },
-              "overrides": {
-                "$ref": "#/properties/overrides",
-              },
-              "position": {
-                "$ref": "#/properties/children/items/properties/position",
-              },
+              "type": "array",
             },
-            "required": [
-              "actionId",
-              "position",
-            ],
-            "type": "object",
-          },
-          "type": "array",
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "actionId": {
+                        "type": "string",
+                      },
+                      "children": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "actionId": {
+                              "type": "string",
+                            },
+                            "continueOnError": {
+                              "type": "boolean",
+                            },
+                            "key": {
+                              "type": "string",
+                            },
+                            "nameOverride": {
+                              "type": "string",
+                            },
+                            "overrides": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "params": {
+                                      "additionalProperties": {},
+                                      "type": "object",
+                                    },
+                                  },
+                                  "type": "object",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "position": {
+                              "type": "number",
+                            },
+                            "recordingEnabled": {
+                              "type": "boolean",
+                            },
+                          },
+                          "required": [
+                            "actionId",
+                            "position",
+                          ],
+                          "type": "object",
+                        },
+                        "type": "array",
+                      },
+                      "continueOnError": {
+                        "type": "boolean",
+                      },
+                      "key": {
+                        "type": "string",
+                      },
+                      "nameOverride": {
+                        "type": "string",
+                      },
+                      "overrides": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "params": {
+                                "additionalProperties": {},
+                                "type": "object",
+                              },
+                            },
+                            "type": "object",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "position": {
+                        "type": "number",
+                      },
+                      "recordingEnabled": {
+                        "type": "boolean",
+                      },
+                    },
+                    "required": [
+                      "actionId",
+                      "position",
+                    ],
+                    "type": "object",
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "continueOnError": {
+                        "type": "boolean",
+                      },
+                      "draft": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "method": {
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "params": {
+                            "additionalProperties": {},
+                            "type": "object",
+                          },
+                          "service": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "method",
+                          "name",
+                          "service",
+                        ],
+                        "type": "object",
+                      },
+                      "key": {
+                        "type": "string",
+                      },
+                      "nameOverride": {
+                        "type": "string",
+                      },
+                      "overrides": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "params": {
+                                "additionalProperties": {},
+                                "type": "object",
+                              },
+                            },
+                            "type": "object",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "position": {
+                        "type": "number",
+                      },
+                      "recordingEnabled": {
+                        "type": "boolean",
+                      },
+                    },
+                    "required": [
+                      "draft",
+                      "position",
+                    ],
+                    "type": "object",
+                  },
+                ],
+              },
+              "type": "array",
+            },
+          ],
+          "description": "Full replacement action list for operation=replace_actions.",
+        },
+        "activation": {
+          "enum": [
+            "event",
+            "schedule",
+            "custom",
+          ],
+          "type": "string",
+        },
+        "captureScreenshots": {
+          "type": "boolean",
         },
         "children": {
           "description": "Nested loop/branch child actions for operation=add_action.",
           "items": {
-            "additionalProperties": false,
-            "properties": {
-              "actionId": {
-                "type": "string",
-              },
-              "continueOnError": {
-                "type": "boolean",
-              },
-              "flowActionId": {
-                "description": "operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — the reliable way to identify a kept step when reordering or inserting.",
-                "type": "string",
-              },
-              "key": {
-                "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this tool carry over the key of the existing step matching flowActionId, or at the same position with the same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new rather than risking a wrong carry-over onto a shifted position.",
-                "type": "string",
-              },
-              "nameOverride": {
-                "type": "string",
-              },
-              "overrides": {
-                "$ref": "#/properties/overrides",
-              },
-              "position": {
-                "minimum": 0,
-                "type": "integer",
-              },
-            },
-            "required": [
-              "actionId",
-              "position",
-            ],
-            "type": "object",
+            "$ref": "#/properties/actions/anyOf/0/items/properties/children/items",
           },
           "type": "array",
         },
+        "conditions": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "all": {
+                  "items": {},
+                  "type": "array",
+                },
+                "any": {
+                  "items": {},
+                  "type": "array",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
         "continueOnError": {
           "type": "boolean",
+        },
+        "cooldownScope": {
+          "enum": [
+            "flow",
+            "device",
+          ],
+          "type": "string",
+        },
+        "cooldownSeconds": {
+          "type": [
+            "number",
+            "null",
+          ],
+        },
+        "customPayloadSchema": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "delivery": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "destination": {
+                  "enum": [
+                    "mobilerun",
+                    "one_drive",
+                    "google_drive",
+                  ],
+                  "type": "string",
+                },
+                "folder": {
+                  "type": "string",
+                },
+                "recording": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "filename": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "filename",
+                  ],
+                  "type": "object",
+                },
+                "screenshots": {},
+              },
+              "required": [
+                "destination",
+              ],
+              "type": "object",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "description": {
+          "type": "string",
+        },
+        "deviceId": {
+          "type": "string",
         },
         "deviceIds": {
           "description": "Target devices for operation=clone; defaults to the source flow's devices.",
@@ -1523,6 +2210,15 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "type": "string",
           },
           "type": "array",
+        },
+        "enabled": {
+          "type": "boolean",
+        },
+        "eventType": {
+          "type": "string",
+        },
+        "executionId": {
+          "type": "string",
         },
         "flowActionId": {
           "description": "The flow-action binding id (not the actionId) for operation=remove_action.",
@@ -1538,8 +2234,21 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "null",
           ],
         },
+        "healthMonitoringEnabled": {
+          "type": "boolean",
+        },
+        "invocationId": {
+          "type": "string",
+        },
         "key": {
           "description": "operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
+          "type": "string",
+        },
+        "lifecycleStatus": {
+          "enum": [
+            "enabled",
+            "disabled",
+          ],
           "type": "string",
         },
         "name": {
@@ -1549,33 +2258,53 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "nameOverride": {
           "type": "string",
         },
+        "notifyOnFailure": {
+          "type": "boolean",
+        },
+        "notifyOnSuccess": {
+          "type": "boolean",
+        },
+        "notifyWebhookId": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
         "operation": {
           "enum": [
+            "execution_screenshot",
             "clone",
             "unblock",
             "add_action",
             "remove_action",
             "replace_actions",
             "execution_metrics",
+            "update",
+            "delete",
+            "activate",
+            "run",
+            "validate",
+            "verify",
+            "dry_run",
+            "capacity",
+            "delivery_options",
+            "template_context",
+            "list_repairs",
+            "update_action",
+            "delete_action",
+            "update_trigger",
+            "delete_trigger",
+            "fire_trigger",
+            "abort_execution",
           ],
           "type": "string",
         },
         "overrides": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "properties": {
-                "params": {
-                  "additionalProperties": {},
-                  "type": "object",
-                },
-              },
-              "type": "object",
-            },
-            {
-              "type": "null",
-            },
-          ],
+          "$ref": "#/properties/actions/anyOf/0/items/properties/overrides",
+        },
+        "params": {
+          "additionalProperties": {},
+          "type": "object",
         },
         "parentFlowActionId": {
           "description": "Nest under this flow-action id (loop/branch parent) for operation=add_action.",
@@ -1584,9 +2313,96 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "null",
           ],
         },
+        "payload": {
+          "additionalProperties": {},
+          "type": "object",
+        },
         "position": {
           "minimum": 0,
           "type": "integer",
+        },
+        "recordingEnabled": {
+          "type": "boolean",
+        },
+        "recordingPolicy": {
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "enum": [
+                "off",
+                "flow",
+                "selected_steps",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "mode",
+          ],
+          "type": "object",
+        },
+        "scheduleRule": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "dateTime": {
+                  "type": "string",
+                },
+                "expression": {
+                  "type": "string",
+                },
+                "jitter": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "afterMinutes": {
+                      "type": "number",
+                    },
+                    "beforeMinutes": {
+                      "type": "number",
+                    },
+                  },
+                  "type": "object",
+                },
+                "rrule": {
+                  "type": "string",
+                },
+                "type": {
+                  "enum": [
+                    "once",
+                    "cron",
+                    "recurring",
+                  ],
+                  "type": "string",
+                },
+              },
+              "required": [
+                "type",
+              ],
+              "type": "object",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "screenshotId": {
+          "type": "string",
+        },
+        "selfHealingEnabled": {
+          "type": "boolean",
+        },
+        "selfHealingMaxAttempts": {
+          "type": "number",
+        },
+        "templateResolutionVersion": {
+          "type": "number",
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null",
+          ],
         },
         "to": {
           "description": "ISO 8601 range end for operation=execution_metrics.",
@@ -1597,6 +2413,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
         "triggerId": {
           "description": "Filter for operation=execution_metrics.",
+          "type": "string",
+        },
+        "verificationExecutionId": {
           "type": "string",
         },
       },
@@ -1613,11 +2432,187 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "cursorLastMessageId": {
+          "type": "string",
+        },
+        "cursorLastOccurredAt": {
+          "type": "string",
+        },
+        "direction": {
+          "enum": [
+            "all",
+            "inbound",
+            "outbound",
+          ],
+          "type": "string",
+        },
+        "esimId": {
+          "type": "string",
+        },
+        "limit": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "messageId": {
+          "description": "Required for get.",
+          "type": "string",
+        },
+        "numberId": {
+          "type": "string",
+        },
+        "operation": {
+          "enum": [
+            "list",
+            "get",
+            "conversations",
+            "mark_read",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "peerKey": {
+          "description": "Required for mark_read; canonical conversation key.",
+          "type": "string",
+        },
+        "peerNumber": {
+          "type": "string",
+        },
+        "status": {
+          "enum": [
+            "all",
+            "received",
+            "queued",
+            "claimed",
+            "sending",
+            "sent",
+            "sent_unconfirmed",
+            "delivered",
+            "failed",
+          ],
+          "type": "string",
+        },
+        "upToMessageId": {
+          "description": "Required for mark_read; inclusive cursor message id.",
+          "type": "string",
+        },
+        "upToOccurredAt": {
+          "description": "Required for mark_read; cursor timestamp paired with upToMessageId.",
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "messages",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "billingPreference": {
+          "enum": [
+            "included",
+            "included_only",
+            "rent",
+          ],
+          "type": "string",
+        },
+        "body": {
+          "description": "Required SMS text for send.",
+          "type": "string",
+        },
+        "clientRequestId": {
+          "description": "Optional stable purchase request key; reuse it for retries.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string",
+        },
+        "country": {
+          "description": "Country code from countries. Required for capacity.",
+          "type": "string",
+        },
+        "deliveryReport": {
+          "type": "boolean",
+        },
+        "direction": {
+          "enum": [
+            "all",
+            "inbound",
+            "outbound",
+          ],
+          "type": "string",
+        },
+        "label": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "numberId": {
+          "description": "Required for get/update/delete/messages/send.",
+          "type": "string",
+        },
+        "operation": {
+          "enum": [
+            "countries",
+            "capacity",
+            "list",
+            "get",
+            "create",
+            "update",
+            "delete",
+            "messages",
+            "send",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "type": "integer",
+        },
+        "pageSize": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "integer",
+        },
+        "since": {
+          "type": "string",
+        },
+        "to": {
+          "description": "Required destination phone number for send.",
+          "type": "string",
+        },
+      },
+      "required": [
+        "operation",
+      ],
+      "type": "object",
+    },
+    "name": "numbers",
+  },
+  {
+    "hasDescription": true,
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
         "catalog": {
           "enum": [
             "models",
             "timezones",
-            "app_event_types",
           ],
           "type": "string",
         },
@@ -1640,15 +2635,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "host": {
-          "description": "Required for protocol=socks5 on create/update, or for operation=lookup.",
-          "type": "string",
-        },
-        "lookupPassword": {
-          "description": "Optional socks5 auth for operation=lookup.",
-          "type": "string",
-        },
-        "lookupUser": {
-          "description": "Optional socks5 auth for operation=lookup.",
+          "description": "Required for protocol=socks5 on create/update.",
           "type": "string",
         },
         "name": {
@@ -1662,7 +2649,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "create",
             "update",
             "delete",
-            "lookup",
           ],
           "type": "string",
         },
@@ -1671,7 +2657,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "port": {
-          "description": "Required for protocol=socks5 on create/update, or for operation=lookup.",
+          "description": "Required for protocol=socks5 on create/update.",
           "exclusiveMinimum": 0,
           "type": "integer",
         },
@@ -1845,6 +2831,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "capabilityId": {
+          "type": "string",
+        },
         "deliveryId": {
           "format": "uuid",
           "type": "string",
@@ -1864,6 +2853,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "format": "uuid",
           "type": "string",
         },
+        "eventId": {
+          "type": "string",
+        },
         "eventTypes": {
           "items": {
             "maxLength": 256,
@@ -1872,6 +2864,13 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           },
           "maxItems": 100,
           "type": "array",
+        },
+        "kind": {
+          "enum": [
+            "http",
+            "integration",
+          ],
+          "type": "string",
         },
         "operation": {
           "enum": [
@@ -1884,7 +2883,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "list_deliveries",
             "get_delivery",
             "delivery_stats",
-            "list_event_types",
+            "delete",
+            "deliveries",
+            "integrations",
+            "integration_targets",
           ],
           "type": "string",
         },
@@ -1896,6 +2898,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "exclusiveMinimum": 0,
           "maximum": 100,
           "type": "integer",
+        },
+        "revision": {
+          "type": "number",
         },
         "since": {
           "description": "ISO 8601 timestamp filter for operation=delivery_stats.",
@@ -1909,14 +2914,27 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "status": {
-          "description": "Webhook status filter for operation=list.",
-          "enum": [
-            "active",
-            "failing",
-            "blocked",
-            "disabled",
+          "anyOf": [
+            {
+              "enum": [
+                "active",
+                "failing",
+                "blocked",
+                "disabled",
+              ],
+              "type": "string",
+            },
+            {
+              "enum": [
+                "pending",
+                "success",
+                "skipped",
+                "dead",
+              ],
+              "type": "string",
+            },
           ],
-          "type": "string",
+          "description": "Status filter for list or deliveries; each operation accepts its own statuses.",
         },
         "url": {
           "format": "uri",
@@ -1944,7 +2962,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "enum": [
             "ingest",
             "dry_run",
-            "list_event_types",
           ],
           "type": "string",
         },

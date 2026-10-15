@@ -1,0 +1,2 @@
+export const MAX_INLINE_FILE_BYTES = 256 * 1024;
+export const MAX_INLINE_BASE64_CHARS = Math.ceil(MAX_INLINE_FILE_BYTES / 3) * 4;

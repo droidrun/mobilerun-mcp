@@ -4,7 +4,9 @@
 // wrap their payload in a `{ data: ... }` envelope and which don't; this
 // package doesn't normalize that inconsistency away, it types it faithfully
 // so tool output shapes don't silently change.
-import type { PageMeta } from './devices.js';
+
+import { z } from 'zod';
+import { type PageMeta } from './devices.js';
 
 export interface ListWebhooksOpts {
     status?: 'active' | 'failing' | 'blocked' | 'disabled';
@@ -31,7 +33,7 @@ export interface WebhookDeliveryStatsOpts {
 
 interface WebhookDto {
     id: string;
-    url: string;
+    url: string | null;
     description: string | null;
     eventTypes: string[];
     state: 'ACTIVE' | 'DISABLED' | 'DELETED';
@@ -108,14 +110,11 @@ interface WebhookDeliveryStatsDto {
     };
 }
 
-interface WebhookEventTypesDto {
-    data: {
-        schemaVersion: number;
-        sources: Array<{ source: string; events: Array<{ type: string; description: string }> }>;
-    };
-}
-
 export interface WebhooksBackend {
+    webhooksDelete(params: z.infer<typeof webhooksDeleteSchema>): Promise<unknown>;
+    webhooksDeliveries(params: z.infer<typeof webhooksDeliveriesSchema>): Promise<unknown>;
+    webhooksIntegrations(): Promise<unknown>;
+    webhooksIntegrationTargets(params: z.infer<typeof webhooksIntegrationTargetsSchema>): Promise<unknown>;
     createWebhook(params: CreateWebhookParams): Promise<WebhookEnvelopeDto>;
     listWebhooks(opts: ListWebhooksOpts): Promise<WebhookListDto>;
     getWebhook(endpointId: string): Promise<WebhookEnvelopeDto>;
@@ -125,5 +124,30 @@ export interface WebhooksBackend {
     listWebhookDeliveries(endpointId: string, opts: ListWebhookDeliveriesOpts): Promise<WebhookDeliveryListDto>;
     getWebhookDelivery(endpointId: string, deliveryId: string): Promise<WebhookDeliveryDetailEnvelopeDto>;
     getWebhookDeliveryStats(opts: WebhookDeliveryStatsOpts): Promise<WebhookDeliveryStatsDto>;
-    listWebhookEventTypes(): Promise<WebhookEventTypesDto>;
 }
+
+export const webhooksDeleteSchema = z
+    .object({
+        endpointId: z.string(),
+    })
+    .strict();
+
+export const webhooksDeliveriesSchema = z
+    .object({
+        eventId: z.string().optional(),
+        kind: z.union([z.literal('http'), z.literal('integration')]).optional(),
+        page: z.number().int().positive().optional(),
+        pageSize: z.number().int().positive().max(100).optional(),
+        since: z.string().optional(),
+        status: z
+            .union([z.literal('pending'), z.literal('success'), z.literal('skipped'), z.literal('dead')])
+            .optional(),
+    })
+    .strict();
+
+export const webhooksIntegrationTargetsSchema = z
+    .object({
+        capabilityId: z.string(),
+        revision: z.number(),
+    })
+    .strict();

@@ -19,7 +19,13 @@ export type DeviceState =
 
 // Mirrors @mobilerun/sdk's DeviceCreateParams.deviceType / DeviceListParams.type
 // union exactly (verified against the SDK's shipped .d.ts — see SdkBackend).
-export type DeviceType = 'dedicated_physical_device' | 'dedicated_premium_device' | 'dedicated_ios_device';
+export type DeviceType =
+    | 'android_cloud_phone'
+    | 'android_physical_phone'
+    | 'ios_stealth_phone'
+    | 'android_emulator'
+    | 'ios_simulator'
+    | 'device_slot';
 
 export interface ListDevicesOpts {
     state?: readonly DeviceState[];
@@ -73,7 +79,7 @@ export interface DeviceListDto {
 
 export interface DeviceScreenshotDto {
     deviceId: string;
-    /** Raw SDK screenshot result — base64 payload or a signed URL, shape undocumented upstream (see README caveat). */
+    /** Base64 PNG content, bounded by the shared inline transfer limit. */
     screenshot: string;
 }
 

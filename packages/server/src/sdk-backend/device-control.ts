@@ -1,35 +1,240 @@
-import Mobilerun, { toFile } from '@mobilerun/sdk';
-import type {
-    AppInstallOpts,
-    AppStartOpts,
-    DeviceActionParams,
-    DeviceCapabilitiesDto,
-    DeviceControlBackend,
-    EsimActivateOpts,
-    FileListOpts,
-    FileUploadOpts,
-    ListPackagesOpts,
-    LocationDto,
-    ProxyConnectOpts,
-    SetLanguageOpts,
+/** Device-control mappings over the typed public client. */
+import { captureDeviceScreenshot, headerOpts, signedDownload, signedDownloadOpts } from './response.js';
+import { default as Mobilerun, toFile } from '@mobilerun/sdk';
+import {
+    type AppInstallOpts,
+    type AppStartOpts,
+    type DeviceActionParams,
+    type DeviceCapabilitiesDto,
+    type DeviceControlBackend,
+    type EsimActivateOpts,
+    type FileListOpts,
+    type FileUploadOpts,
+    type ListPackagesOpts,
+    type LocationDto,
+    type ProxyConnectOpts,
+    type SetLanguageOpts,
 } from '@mobilerun/mcp-tools';
 
-function headerOpts(displayId: number | undefined) {
-    return displayId !== undefined ? { 'X-Device-Display-ID': displayId } : {};
-}
-
-/**
- * DeviceControlBackend over @mobilerun/sdk's `client.devices.{actions,apps,
- * esim,files,keyboard,language,location,packages,profile,proxy,state,
- * timezone}` — every mapping verified against the SDK's shipped .d.ts (not
- * guessed). See ../../tools/src/tools/device-control.ts's header for the
- * originally-sketched operations that turned out to have no SDK surface at all
- * (deeplink/execute-script, app permission grant/revoke, list_installs,
- * kiosk mode, location reset, esim APN/roaming/connectivity-status) and
- * were dropped rather than stubbed here.
- */
 export function createDeviceControlBackend(client: Mobilerun): DeviceControlBackend {
     return {
+        async manageDeviceRecordingsTrajectory(deviceId, params) {
+            return signedDownload(
+                client.devices.recordings.trajectory(params.recordingId, { deviceId }, signedDownloadOpts),
+            );
+        },
+        async manageDeviceRecordingsVideo(deviceId, params) {
+            return signedDownload(
+                client.devices.recordings.video(params.recordingId, { deviceId }, signedDownloadOpts),
+            );
+        },
+        async manageDeviceScreenshotsImage(deviceId, params) {
+            return signedDownload(
+                client.devices.screenshots.image(params.screenshotId, { deviceId }, signedDownloadOpts),
+            );
+        },
+        async manageDeviceStop(deviceId) {
+            await client.devices.stop(deviceId);
+            return { success: true };
+        },
+        async manageDeviceResume(deviceId) {
+            await client.devices.resume(deviceId);
+            return { success: true };
+        },
+        async manageDeviceSummary(params) {
+            return client.devices.summary({ state: params.state });
+        },
+        async manageDeviceRetrieveCapabilities(deviceId) {
+            return client.devices.retrieveCapabilities(deviceId);
+        },
+        async deviceActionClipboardGet(deviceId, params) {
+            return client.devices.clipboard.get(deviceId, {
+                ...headerOpts(params.displayId),
+            });
+        },
+        async deviceActionClipboardSet(deviceId, params) {
+            await client.devices.clipboard.set(deviceId, {
+                text: params.text,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async deviceActionDeepLink(deviceId, params) {
+            await client.devices.deepLink.executeDeepLink(deviceId, {
+                deepLink: params.deepLink,
+                action: params.action,
+                bundleId: params.bundleId,
+                packageName: params.packageName,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async deviceActionBrowserScript(deviceId, params) {
+            return client.devices.browser.executeScript(deviceId, {
+                script: params.script,
+                ...headerOpts(params.displayId),
+            });
+        },
+        async manageDeviceAppsGrantPermission(deviceId, params) {
+            await client.devices.apps.grantPermission(params.permission, {
+                deviceId,
+                packageName: params.packageName,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async manageDeviceAppsRevokePermission(deviceId, params) {
+            await client.devices.apps.revokePermission(params.permission, {
+                deviceId,
+                packageName: params.packageName,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async manageDeviceAppsListInstalls(deviceId, params) {
+            return client.devices.apps.listInstalls(deviceId, {
+                ...headerOpts(params.displayId),
+            });
+        },
+        async configureDeviceResetLocation(deviceId, params) {
+            await client.devices.location.reset(deviceId, {
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async configureDeviceKioskEnable(deviceId, params) {
+            await client.devices.kiosk.enable(deviceId, {
+                packageName: params.packageName,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async configureDeviceKioskDisable(deviceId, params) {
+            await client.devices.kiosk.disable(deviceId, {
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async configureDeviceUpdateProfile(deviceId, params) {
+            await client.devices.profile.update(deviceId, {
+                profileId: params.profileId,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async manageEsimSetRoaming(deviceId, params) {
+            await client.devices.esim.setRoaming(deviceId, {
+                enabled: params.enabled,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async manageEsimStatus(deviceId, params) {
+            return client.devices.esim.status(deviceId, {
+                ...headerOpts(params.displayId),
+            });
+        },
+        async manageEsimApnList(deviceId, params) {
+            return client.devices.esim.apn.list(deviceId, {
+                ...headerOpts(params.displayId),
+            });
+        },
+        async manageEsimApnSelect(deviceId, params) {
+            await client.devices.esim.apn.select(deviceId, {
+                apnId: params.apnId,
+                subId: params.subId,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async manageEsimApnSet(deviceId, params) {
+            await client.devices.esim.apn.set(deviceId, {
+                apn: params.apn,
+                mcc: params.mcc,
+                mnc: params.mnc,
+                name: params.name,
+                protocol: params.protocol,
+                roamingProtocol: params.roamingProtocol,
+                subId: params.subId,
+                type: params.type,
+                ...headerOpts(params.displayId),
+            });
+            return { success: true };
+        },
+        async manageDeviceRecordingsList(deviceId, params) {
+            return client.devices.recordings.list(deviceId, { status: params.status, type: params.type });
+        },
+        async manageDeviceRecordingsDelete(deviceId, params) {
+            await client.devices.recordings.delete(params.recordingId, { deviceId });
+            return { success: true };
+        },
+        async manageDeviceRecordingsScreenshots(deviceId, params) {
+            return client.devices.recordings.screenshots(params.recordingId, { deviceId });
+        },
+        async manageDeviceRecordingsStart(deviceId, params) {
+            return client.devices.recordings.start(deviceId, {
+                name: params.name,
+                quality: params.quality,
+                retentionDays: params.retentionDays,
+                types: params.types,
+            });
+        },
+        async manageDeviceRecordingsStatus(deviceId, params) {
+            return client.devices.recordings.status(params.recordingId, { deviceId });
+        },
+        async manageDeviceRecordingsStop(deviceId, params) {
+            return client.devices.recordings.stop(params.recordingId, { deviceId });
+        },
+        async manageDeviceScreenshotsList(deviceId, params) {
+            return client.devices.screenshots.list(deviceId, { cursor: params.cursor, limit: params.limit });
+        },
+        async manageDeviceScreenshotsDelete(deviceId, params) {
+            await client.devices.screenshots.delete(params.screenshotId, { deviceId });
+            return { success: true };
+        },
+        async manageDeviceScreenshotsCapture(deviceId, params) {
+            return captureDeviceScreenshot(client, deviceId, params);
+        },
+        async manageDeviceTrafficSessionsCreate(deviceId, params) {
+            return client.devices.trafficSessions.create(deviceId, {
+                expiresInSeconds: params.expiresInSeconds,
+                maxBodyBytes: params.maxBodyBytes,
+            });
+        },
+        async manageDeviceTrafficSessionsRetrieve(deviceId, params) {
+            return client.devices.trafficSessions.retrieve(params.sessionId, { deviceId });
+        },
+        async manageDeviceTrafficSessionsList(deviceId, params) {
+            return client.devices.trafficSessions.list(deviceId, {
+                page: params.page,
+                pageSize: params.pageSize,
+            });
+        },
+        async manageDeviceTrafficSessionsDelete(deviceId, params) {
+            return client.devices.trafficSessions.delete(params.sessionId, { deviceId });
+        },
+        async manageDeviceMediaSessionsCreate(deviceId, params) {
+            return client.devices.mediaSessions.create(deviceId, {
+                camera: params.camera,
+                microphone: params.microphone,
+            });
+        },
+        async manageDeviceMediaSessionsDelete(deviceId, params) {
+            await client.devices.mediaSessions.delete(params.sessionId, {
+                deviceId,
+                'X-Media-Control-Token': params.controlToken,
+            });
+            return { success: true };
+        },
+        async manageDeviceMediaSessionsActivate(deviceId, params) {
+            return client.devices.mediaSessions.activate(params.sessionId, {
+                deviceId,
+                'X-Media-Control-Token': params.controlToken,
+            });
+        },
+        async manageDeviceMediaSessionsRetrieveCurrent(deviceId) {
+            return client.devices.mediaSessions.retrieveCurrent(deviceId);
+        },
         // manage_device
         async rebootDevice(deviceId) {
             await client.devices.reboot(deviceId);
@@ -60,7 +265,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.actions.tap(params.deviceId, {
                 x: params.x!,
                 y: params.y!,
-                stealth: params.stealth,
+                humanize: params.stealth,
                 ...headerOpts(params.displayId),
             });
         },
@@ -71,7 +276,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
                 endX: params.endX!,
                 endY: params.endY!,
                 duration: params.duration!,
-                stealth: params.stealth,
+                humanize: params.stealth,
                 ...headerOpts(params.displayId),
             });
         },
@@ -81,7 +286,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
                 clear: params.clear,
                 errorRate: params.errorRate,
                 wpm: params.wpm,
-                stealth: params.stealth,
+                humanize: params.stealth,
                 ...headerOpts(params.displayId),
             });
         },
@@ -92,7 +297,10 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.keyboard.clear(deviceId, headerOpts(displayId));
         },
         async globalAction(params: DeviceActionParams) {
-            await client.devices.actions.global(params.deviceId, { action: params.action!, ...headerOpts(params.displayId) });
+            await client.devices.actions.global(params.deviceId, {
+                action: params.action!,
+                ...headerOpts(params.displayId),
+            });
         },
 
         // manage_device_apps
@@ -101,7 +309,10 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             // packageName/bundleId as the "primary" key — either works with
             // the other optional, so this cast is safe for our "at least one"
             // validation already done at the tool layer.
-            await client.devices.apps.install(deviceId, { packageName: opts.packageName, bundleId: opts.bundleId } as Parameters<typeof client.devices.apps.install>[1]);
+            await client.devices.apps.install(deviceId, {
+                packageName: opts.packageName,
+                bundleId: opts.bundleId,
+            } as Parameters<typeof client.devices.apps.install>[1]);
         },
         async deleteApp(deviceId, packageName) {
             await client.devices.apps.delete(packageName, { deviceId });
@@ -167,7 +378,11 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.actions.setOverlayVisible(deviceId, { visible });
         },
         async connectProxy(deviceId, opts: ProxyConnectOpts) {
-            await client.devices.proxy.connect(deviceId, { name: opts.name, smartIp: opts.smartIp, socks5: opts.socks5 });
+            await client.devices.proxy.connect(deviceId, {
+                name: opts.name,
+                smartIp: opts.smartIp,
+                socks5: opts.socks5,
+            });
         },
         async disconnectProxy(deviceId) {
             await client.devices.proxy.disconnect(deviceId);

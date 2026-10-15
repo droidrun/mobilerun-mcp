@@ -3,14 +3,7 @@
 // manage_device, device_action, manage_device_apps, manage_device_files,
 // configure_device, manage_esim.
 //
-// Every method here was verified against @mobilerun/sdk 5.1.0's shipped
-// .d.ts — see the header comment in
-// ../tools/device-control.ts for the full list of originally-sketched
-// operations that turned out to have no SDK-side surface at all and were
-// dropped rather than stubbed. In particular: `device_recordings`
-// (list/start/get/stop/delete/trajectory/video) has zero SDK support — no
-// `recordings` resource exists anywhere in the client — so that entire
-// bundle tool is NOT built here or registered anywhere.
+import { z } from 'zod';
 
 export interface DeviceCapabilitiesDto {
     carrier: Record<string, unknown>;
@@ -98,7 +91,7 @@ export interface FileUploadOpts {
     contentType?: string;
 }
 export interface FileDownloadDto {
-    /** Raw SDK response — shape (base64 vs plain text) is undocumented upstream, same open caveat as the device screenshot tool. */
+    /** Raw client response; the device-file endpoint does not document whether content is base64 or plain text. */
     content: string;
 }
 
@@ -145,6 +138,133 @@ export interface EsimActivateOpts {
 }
 
 export interface DeviceControlBackend {
+    manageDeviceRecordingsTrajectory(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsTrajectorySchema>,
+    ): Promise<unknown>;
+    manageDeviceRecordingsVideo(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsVideoSchema>,
+    ): Promise<unknown>;
+    manageDeviceScreenshotsImage(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceScreenshotsImageSchema>,
+    ): Promise<unknown>;
+    manageDeviceStop(deviceId: string): Promise<unknown>;
+    manageDeviceResume(deviceId: string): Promise<unknown>;
+    manageDeviceSummary(params: z.infer<typeof manageDeviceSummarySchema>): Promise<unknown>;
+    manageDeviceRetrieveCapabilities(deviceId: string): Promise<unknown>;
+    deviceActionClipboardGet(
+        deviceId: string,
+        params: z.infer<typeof deviceActionClipboardGetSchema>,
+    ): Promise<unknown>;
+    deviceActionClipboardSet(
+        deviceId: string,
+        params: z.infer<typeof deviceActionClipboardSetSchema>,
+    ): Promise<unknown>;
+    deviceActionDeepLink(deviceId: string, params: z.infer<typeof deviceActionDeepLinkSchema>): Promise<unknown>;
+    deviceActionBrowserScript(
+        deviceId: string,
+        params: z.infer<typeof deviceActionBrowserScriptSchema>,
+    ): Promise<unknown>;
+    manageDeviceAppsGrantPermission(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceAppsGrantPermissionSchema>,
+    ): Promise<unknown>;
+    manageDeviceAppsRevokePermission(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceAppsRevokePermissionSchema>,
+    ): Promise<unknown>;
+    manageDeviceAppsListInstalls(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceAppsListInstallsSchema>,
+    ): Promise<unknown>;
+    configureDeviceResetLocation(
+        deviceId: string,
+        params: z.infer<typeof configureDeviceResetLocationSchema>,
+    ): Promise<unknown>;
+    configureDeviceKioskEnable(
+        deviceId: string,
+        params: z.infer<typeof configureDeviceKioskEnableSchema>,
+    ): Promise<unknown>;
+    configureDeviceKioskDisable(
+        deviceId: string,
+        params: z.infer<typeof configureDeviceKioskDisableSchema>,
+    ): Promise<unknown>;
+    configureDeviceUpdateProfile(
+        deviceId: string,
+        params: z.infer<typeof configureDeviceUpdateProfileSchema>,
+    ): Promise<unknown>;
+    manageEsimSetRoaming(deviceId: string, params: z.infer<typeof manageEsimSetRoamingSchema>): Promise<unknown>;
+    manageEsimStatus(deviceId: string, params: z.infer<typeof manageEsimStatusSchema>): Promise<unknown>;
+    manageEsimApnList(deviceId: string, params: z.infer<typeof manageEsimApnListSchema>): Promise<unknown>;
+    manageEsimApnSelect(deviceId: string, params: z.infer<typeof manageEsimApnSelectSchema>): Promise<unknown>;
+    manageEsimApnSet(deviceId: string, params: z.infer<typeof manageEsimApnSetSchema>): Promise<unknown>;
+    manageDeviceRecordingsList(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsListSchema>,
+    ): Promise<unknown>;
+    manageDeviceRecordingsDelete(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsDeleteSchema>,
+    ): Promise<unknown>;
+    manageDeviceRecordingsScreenshots(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsScreenshotsSchema>,
+    ): Promise<unknown>;
+    manageDeviceRecordingsStart(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsStartSchema>,
+    ): Promise<unknown>;
+    manageDeviceRecordingsStatus(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsStatusSchema>,
+    ): Promise<unknown>;
+    manageDeviceRecordingsStop(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceRecordingsStopSchema>,
+    ): Promise<unknown>;
+    manageDeviceScreenshotsList(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceScreenshotsListSchema>,
+    ): Promise<unknown>;
+    manageDeviceScreenshotsDelete(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceScreenshotsDeleteSchema>,
+    ): Promise<unknown>;
+    manageDeviceScreenshotsCapture(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceScreenshotsCaptureSchema>,
+    ): Promise<{ mimeType: 'image/png'; contentBase64: string }>;
+    manageDeviceTrafficSessionsCreate(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceTrafficSessionsCreateSchema>,
+    ): Promise<unknown>;
+    manageDeviceTrafficSessionsRetrieve(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceTrafficSessionsRetrieveSchema>,
+    ): Promise<unknown>;
+    manageDeviceTrafficSessionsList(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceTrafficSessionsListSchema>,
+    ): Promise<unknown>;
+    manageDeviceTrafficSessionsDelete(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceTrafficSessionsDeleteSchema>,
+    ): Promise<unknown>;
+    manageDeviceMediaSessionsCreate(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceMediaSessionsCreateSchema>,
+    ): Promise<unknown>;
+    manageDeviceMediaSessionsDelete(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceMediaSessionsDeleteSchema>,
+    ): Promise<unknown>;
+    manageDeviceMediaSessionsActivate(
+        deviceId: string,
+        params: z.infer<typeof manageDeviceMediaSessionsActivateSchema>,
+    ): Promise<unknown>;
+    manageDeviceMediaSessionsRetrieveCurrent(deviceId: string): Promise<unknown>;
     // manage_device
     rebootDevice(deviceId: string): Promise<void>;
     resetDevice(deviceId: string): Promise<void>;
@@ -194,3 +314,268 @@ export interface DeviceControlBackend {
     enableEsim(deviceId: string, subId: number): Promise<void>;
     removeEsim(deviceId: string, subId: number): Promise<void>;
 }
+
+export const manageDeviceStopSchema = z.object({}).strict();
+
+export const manageDeviceResumeSchema = z.object({}).strict();
+
+export const manageDeviceSummarySchema = z
+    .object({
+        state: z
+            .union([
+                z.array(
+                    z.union([
+                        z.literal('creating'),
+                        z.literal('assigned'),
+                        z.literal('ready'),
+                        z.literal('rebooting'),
+                        z.literal('migrating'),
+                        z.literal('resetting'),
+                        z.literal('terminated'),
+                        z.literal('maintenance'),
+                        z.literal('stopped'),
+                        z.literal('unknown'),
+                    ]),
+                ),
+                z.null(),
+            ])
+            .optional(),
+    })
+    .strict();
+
+export const manageDeviceRetrieveCapabilitiesSchema = z.object({}).strict();
+
+export const deviceActionClipboardGetSchema = z
+    .object({
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const deviceActionClipboardSetSchema = z
+    .object({
+        text: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const deviceActionDeepLinkSchema = z
+    .object({
+        deepLink: z.string(),
+        action: z.string().optional(),
+        bundleId: z.string().optional(),
+        packageName: z.string().optional(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const deviceActionBrowserScriptSchema = z
+    .object({
+        script: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageDeviceAppsGrantPermissionSchema = z
+    .object({
+        permission: z.literal('POST_NOTIFICATIONS'),
+        packageName: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageDeviceAppsRevokePermissionSchema = z
+    .object({
+        permission: z.literal('POST_NOTIFICATIONS'),
+        packageName: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageDeviceAppsListInstallsSchema = z
+    .object({
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const configureDeviceResetLocationSchema = z
+    .object({
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const configureDeviceKioskEnableSchema = z
+    .object({
+        packageName: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const configureDeviceKioskDisableSchema = z
+    .object({
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const configureDeviceUpdateProfileSchema = z
+    .object({
+        profileId: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageEsimSetRoamingSchema = z
+    .object({
+        enabled: z.boolean(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageEsimStatusSchema = z
+    .object({
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageEsimApnListSchema = z
+    .object({
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageEsimApnSelectSchema = z
+    .object({
+        apnId: z.number(),
+        subId: z.number(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageEsimApnSetSchema = z
+    .object({
+        apn: z.string(),
+        mcc: z.string(),
+        mnc: z.string(),
+        name: z.string(),
+        protocol: z.string(),
+        roamingProtocol: z.string(),
+        subId: z.number(),
+        type: z.string(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageDeviceRecordingsListSchema = z
+    .object({
+        status: z.string().optional(),
+        type: z.string().optional(),
+    })
+    .strict();
+
+export const manageDeviceRecordingsDeleteSchema = z
+    .object({
+        recordingId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceRecordingsScreenshotsSchema = z
+    .object({
+        recordingId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceRecordingsStartSchema = z
+    .object({
+        name: z.string().optional(),
+        quality: z.number().optional(),
+        retentionDays: z.number().optional(),
+        types: z.union([z.array(z.string()), z.null()]).optional(),
+    })
+    .strict();
+
+export const manageDeviceRecordingsStatusSchema = z
+    .object({
+        recordingId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceRecordingsStopSchema = z
+    .object({
+        recordingId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceScreenshotsListSchema = z
+    .object({
+        cursor: z.string().optional(),
+        limit: z.number().int().positive().max(100).optional(),
+    })
+    .strict();
+
+export const manageDeviceScreenshotsDeleteSchema = z
+    .object({
+        screenshotId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceScreenshotsCaptureSchema = z
+    .object({
+        hideOverlay: z.boolean().optional(),
+        save: z.boolean().optional(),
+        displayId: z.number().int().nonnegative().optional(),
+    })
+    .strict();
+
+export const manageDeviceTrafficSessionsCreateSchema = z
+    .object({
+        expiresInSeconds: z.number().optional(),
+        maxBodyBytes: z.number().optional(),
+    })
+    .strict();
+
+export const manageDeviceTrafficSessionsRetrieveSchema = z
+    .object({
+        sessionId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceTrafficSessionsListSchema = z
+    .object({
+        page: z.number().int().positive().optional(),
+        pageSize: z.number().int().positive().max(100).optional(),
+    })
+    .strict();
+
+export const manageDeviceTrafficSessionsDeleteSchema = z
+    .object({
+        sessionId: z.string(),
+    })
+    .strict();
+
+export const manageDeviceMediaSessionsCreateSchema = z
+    .object({
+        camera: z.boolean(),
+        microphone: z.boolean(),
+    })
+    .strict();
+
+export const manageDeviceMediaSessionsDeleteSchema = z
+    .object({
+        sessionId: z.string(),
+        controlToken: z.string().min(1),
+    })
+    .strict();
+
+export const manageDeviceMediaSessionsActivateSchema = z
+    .object({
+        sessionId: z.string(),
+        controlToken: z.string().min(1),
+    })
+    .strict();
+
+export const manageDeviceMediaSessionsRetrieveCurrentSchema = z.object({}).strict();
+
+export const manageDeviceScreenshotsImageSchema = z.object({ screenshotId: z.string() }).strict();
+
+export const manageDeviceRecordingsVideoSchema = z.object({ recordingId: z.string() }).strict();
+
+export const manageDeviceRecordingsTrajectorySchema = z.object({ recordingId: z.string() }).strict();

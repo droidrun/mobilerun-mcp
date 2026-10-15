@@ -1,16 +1,3 @@
-import type Mobilerun from '@mobilerun/sdk';
-import type {
-    AddFieldParams,
-    CreateCredentialParams,
-    CredentialFieldDto,
-    CredentialMetaDto,
-    CredentialsBackend,
-    DeleteCredentialParams,
-    DeleteFieldParams,
-    InitPackageParams,
-    UpdateFieldParams,
-} from '@mobilerun/mcp-tools';
-
 /**
  * Strips `value` from every field of a raw @mobilerun/sdk `Credential` —
  * the ONLY place in this codebase where a plaintext credential value from
@@ -19,6 +6,19 @@ import type {
  * type has no `value` field to begin with — see backend/credentials.ts's
  * SECRETS note).
  */
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import {
+    type AddFieldParams,
+    type CreateCredentialParams,
+    type CredentialFieldDto,
+    type CredentialMetaDto,
+    type CredentialsBackend,
+    type DeleteCredentialParams,
+    type DeleteFieldParams,
+    type InitPackageParams,
+    type UpdateFieldParams,
+} from '@mobilerun/mcp-tools';
+
 function toCredentialMeta(cred: {
     credentialName: string;
     packageName: string;
@@ -37,6 +37,12 @@ function toCredentialMeta(cred: {
 
 export function createCredentialsBackend(client: Mobilerun): CredentialsBackend {
     return {
+        async manageCredentialsGet(params) {
+            const result = await client.credentials.packages.credentials.retrieve(params.credentialName, {
+                packageName: params.packageName,
+            });
+            return { data: toCredentialMeta(result.data) };
+        },
         async listCredentials(packageName?: string) {
             // NORMALIZATION: the
             // SDK itself returns two different envelope shapes depending on the
@@ -54,30 +60,8 @@ export function createCredentialsBackend(client: Mobilerun): CredentialsBackend 
             return { items: result.items, pagination: result.pagination };
         },
         async listCredentialPackages() {
-            // GAP: @mobilerun/sdk has no "list all packages with credentials"
-            // endpoint — verified against credentials/packages/packages.d.ts:
-            // `packages.list(packageName)` lists credentials WITHIN one already-
-            // known package, it doesn't enumerate package names. Derived here
-            // from the top-level credentials.list() by collecting distinct
-            // `packageName` values across (bounded) pages, rather than inventing
-            // a raw-fetch call to an undocumented endpoint. This is a known,
-            // documented limitation (see the roadmap).
-            const packageNames = new Set<string>();
-            let page = 1;
-            const pageSize = 100;
-            const MAX_PAGES = 20; // bound: 2000 credentials is enough headroom, avoids an unbounded loop
-            for (; page <= MAX_PAGES; page++) {
-                const result = await client.credentials.list({ page, pageSize });
-                const items = result.items ?? [];
-                for (const item of items) {
-                    if (item && typeof item === 'object' && 'packageName' in item) {
-                        packageNames.add((item as { packageName: string }).packageName);
-                    }
-                }
-                const totalPages = (result.pagination as { pages?: number } | undefined)?.pages;
-                if (!totalPages || page >= totalPages || items.length < pageSize) break;
-            }
-            return { items: Array.from(packageNames).map((packageName) => ({ packageName })), derived: true as const };
+            const result = await client.credentials.packages.listAll();
+            return { items: result.data.map(({ packageName }) => ({ packageName })), derived: false };
         },
         async initPackage(params: InitPackageParams) {
             return client.credentials.packages.create({ packageName: params.packageName });
@@ -90,7 +74,9 @@ export function createCredentialsBackend(client: Mobilerun): CredentialsBackend 
             return { data: toCredentialMeta(result.data), message: result.message, success: result.success };
         },
         async deleteCredential(params: DeleteCredentialParams) {
-            const result = await client.credentials.packages.credentials.delete(params.credentialName, { packageName: params.packageName });
+            const result = await client.credentials.packages.credentials.delete(params.credentialName, {
+                packageName: params.packageName,
+            });
             return { data: toCredentialMeta(result.data), message: result.message, success: result.success };
         },
         async addField(params: AddFieldParams) {

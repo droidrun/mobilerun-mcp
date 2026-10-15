@@ -1,5 +1,5 @@
-import type Mobilerun from '@mobilerun/sdk';
-import { APIConnectionError, APIConnectionTimeoutError, APIError } from '@mobilerun/sdk';
+import { idempotencyOpts } from './request-options.js';
+import { type default as Mobilerun, APIConnectionError, APIConnectionTimeoutError, APIError } from '@mobilerun/sdk';
 import { BackendError, type AssistantBackend, type AssistantSession } from '@mobilerun/mcp-tools';
 
 function sessionSummary(session: AssistantSession): AssistantSession {
@@ -15,7 +15,7 @@ export function createAssistantBackend(client: Mobilerun): AssistantBackend {
             return { sessions: result.sessions.map(sessionSummary) };
         },
         async createSession(title, description) {
-            const result = await conversations.create({ title, description, 'Idempotency-Key': crypto.randomUUID() });
+            const result = await conversations.create({ title, description }, idempotencyOpts(crypto.randomUUID()));
             return { session: sessionSummary(result.session) };
         },
         async updateSession(sessionId, params) {
@@ -43,10 +43,17 @@ export function createAssistantBackend(client: Mobilerun): AssistantBackend {
                     };
                 }
                 if (err instanceof APIError && err.status === 409) {
-                    throw new BackendError('upstream_error', 'A turn is already running in this session; poll get_messages or call abort.', 409);
+                    throw new BackendError(
+                        'upstream_error',
+                        'A turn is already running in this session; poll get_messages or call abort.',
+                        409,
+                    );
                 }
                 if (err instanceof APIConnectionError) {
-                    throw new BackendError('upstream_error', `${err.message} the message may have been delivered; call get_messages before resending.`);
+                    throw new BackendError(
+                        'upstream_error',
+                        `${err.message} the message may have been delivered; call get_messages before resending.`,
+                    );
                 }
                 throw err;
             }

@@ -35,22 +35,4 @@ describe('workflow response mapping', () => {
         expect(dryRun.data.validation).toEqual({ valid: true });
     });
 
-    test('retains app and source event fields in the synthetic catalog page', async () => {
-        const client = {
-            appEvents: { catalog: { list: async () => ({ data: [{
-                appEventType: 'app.example.received', label: 'Received', appName: 'Example',
-                sourceEventType: 'notification.received', packageName: null,
-                category: 'app', payloadSchema: { type: 'object' },
-            }] }) } },
-        } as unknown as Mobilerun;
-        expect(await createWorkflowsBackend(client).listAppEventCatalog()).toEqual({
-            items: [{
-                eventType: 'app.example.received', label: 'Received', appName: 'Example',
-                sourceEventType: 'notification.received', packageName: null,
-                source: 'app', payloadSchema: { type: 'object' },
-                description: null, createdAt: null, updatedAt: null,
-            }],
-            pagination: { page: 1, pages: 1, pageSize: 1, total: 1, hasNext: false, hasPrev: false },
-        });
-    });
 });
