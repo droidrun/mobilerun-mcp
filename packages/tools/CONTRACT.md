@@ -113,7 +113,7 @@ profile golden tests pin allowed operations and description-free input
 shapes for all three profiles.
 
 Saved media downloads return short-lived signed URLs. Screenshot capture
-returns PNG bytes as base64, capped at 2 MB. Upload bytes are sent
+returns PNG bytes as base64, capped at 256 KB. Upload bytes are sent
 to signed upload URLs outside the tools. Credential retrieval exposes only
 field metadata, using the existing redaction mechanism.
 

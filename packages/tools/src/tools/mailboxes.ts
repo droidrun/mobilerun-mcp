@@ -19,7 +19,7 @@ import {
 import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { awaitCheckoutUrl } from './checkout.js';
-import { operation, registerBundle, sdkOp } from './operation-table.js';
+import { registerBundle, sdkOp } from './operation-table.js';
 const MAILBOXES_SHARED_FIELDS = {
     billingPreference: billingPreferenceSchema
         .optional()
@@ -42,26 +42,13 @@ export const MAILBOXES_TABLE = [
     sdkOp('capacity', z.object({}), (ctx) => ctx.backend.mailboxes.mailboxesCapacity(), 'read', {
         doc: 'Read included mailbox capacity.',
     }),
-    operation({
-        op: 'create',
-        input: {
-            ...mailboxesCreateSchema.partial().shape,
-            billingPreference: MAILBOXES_SHARED_FIELDS.billingPreference,
-            clientRequestId: MAILBOXES_SHARED_FIELDS.clientRequestId,
-        },
-        access: 'commerce',
+    sdkOp('create', mailboxesCreateSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesCreate(params), 'commerce', {
         doc: 'Create a mailbox; may start paid service.',
-        run: async (ctx, raw) => {
-            const input = raw;
-
-            return asTextResult(
-                await awaitCheckoutUrl(
-                    await ctx.backend.mailboxes.mailboxesCreate(mailboxesCreateSchema.strip().parse(input)),
-                    'id',
-                    (id) => ctx.backend.mailboxes.mailboxesGet({ mailboxId: id }),
-                ),
-            );
-        },
+        result: async (ctx, value) => asTextResult(await awaitCheckoutUrl(
+            value,
+            'id',
+            (id) => ctx.backend.mailboxes.mailboxesGet({ mailboxId: id }),
+        )),
     }),
     sdkOp('get', mailboxesGetSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesGet(params), 'read', {
         doc: 'Read a mailbox.',

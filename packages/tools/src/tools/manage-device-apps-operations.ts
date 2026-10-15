@@ -28,8 +28,8 @@ export const MANAGE_APPS_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const packageName = input.packageName as string | undefined;
-            const bundleId = input.bundleId as string | undefined;
+            const packageName = input.packageName;
+            const bundleId = input.bundleId;
             if (!packageName && !bundleId) throw new Error('operation=install requires packageName and/or bundleId');
             await ctx.backend.deviceControl.installApp(deviceId, { packageName, bundleId });
             return asTextResult({ status: 'install_requested', deviceId, packageName, bundleId });
@@ -43,7 +43,7 @@ export const MANAGE_APPS_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const packageName = input.packageName as string | undefined;
+            const packageName = input.packageName;
             const pkg = requireValue(packageName, 'packageName', input.operation);
             await ctx.backend.deviceControl.deleteApp(deviceId, pkg);
             return asTextResult({ status: 'ok', operation: input.operation, deviceId, packageName: pkg });
@@ -61,9 +61,9 @@ export const MANAGE_APPS_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const packageName = input.packageName as string | undefined;
+            const packageName = input.packageName;
             const pkg = requireValue(packageName, 'packageName', input.operation);
-            await ctx.backend.deviceControl.startApp(deviceId, pkg, { activity: input.activity as string | undefined });
+            await ctx.backend.deviceControl.startApp(deviceId, pkg, { activity: input.activity });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId, packageName: pkg });
         },
     }),
@@ -75,7 +75,7 @@ export const MANAGE_APPS_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const packageName = input.packageName as string | undefined;
+            const packageName = input.packageName;
             const pkg = requireValue(packageName, 'packageName', input.operation);
             await ctx.backend.deviceControl.stopApp(deviceId, pkg);
             return asTextResult({ status: 'ok', operation: input.operation, deviceId, packageName: pkg });
@@ -93,8 +93,8 @@ export const MANAGE_APPS_TABLE = [
         run: async (ctx, input) =>
             asTextResult(
                 await ctx.backend.deviceControl.listPackages(input.deviceId, {
-                    ...ifDefined('includeSystemPackages', input.includeSystemPackages as boolean | undefined),
-                    ...ifDefined('includeProtectedPackages', input.includeProtectedPackages as boolean | undefined),
+                    ...ifDefined('includeSystemPackages', input.includeSystemPackages),
+                    ...ifDefined('includeProtectedPackages', input.includeProtectedPackages),
                 }),
             ),
     }),

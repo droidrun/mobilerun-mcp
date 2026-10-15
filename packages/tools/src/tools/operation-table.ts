@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { toJsonSchemaCompat } from '@modelcontextprotocol/sdk/server/zod-json-schema-compat.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -29,6 +30,26 @@ export function operation<const Op extends string, Shape extends z.ZodRawShape>(
 }
 /** Merge per-operation fields; shared overrides retain flat union constraints. */
 function operationInput(table: readonly SurfaceOperation[], shared: z.ZodRawShape = {}): z.ZodRawShape {
+    const definitions = new Map<string, string>();
+    for (const { op, input } of table) {
+        for (const [key, field] of Object.entries(input)) {
+            if (Object.hasOwn(shared, key)) continue;
+            let schema = field;
+            while (schema instanceof z.ZodOptional) schema = schema.unwrap();
+            const definition = JSON.stringify(toJsonSchemaCompat(z.object({ value: schema })), function (key, value: unknown) {
+                if (key === 'description') return undefined;
+                if (value && typeof value === 'object' && !Array.isArray(value)) {
+                    return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)));
+                }
+                return value;
+            });
+            const previous = definitions.get(key);
+            if (previous !== undefined && previous !== definition) {
+                throw new Error(`Conflicting definitions for field "${key}" in operation=${op}; declare a shared field explicitly`);
+            }
+            definitions.set(key, definition);
+        }
+    }
     const merged: z.ZodRawShape = Object.assign({}, ...table.map(({ input }) => input), shared);
     // Stable field traversal keeps JSON Schema reference anchors independent of dispatch order.
     return Object.fromEntries(Object.entries(merged).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
@@ -56,16 +77,17 @@ type SdkMetadata = Pick<Operation<never>, 'doc' | 'effectiveOp'>;
 /** Pure SDK passthrough, with an optional device path argument and stripped body. */
 export function sdkOp<
     const Op extends string,
+    Value,
     S extends z.ZodRawShape,
     Device extends z.ZodType<string | undefined> | undefined = undefined,
 >(
     op: Op,
     schema: z.ZodObject<S>,
-    call: (ctx: ToolCtx, params: z.infer<z.ZodObject<S>>, deviceId: Device extends undefined ? undefined : string) => Promise<unknown>,
+    call: (ctx: ToolCtx, params: z.infer<z.ZodObject<S>>, deviceId: Device extends undefined ? undefined : string) => Promise<Value>,
     access: Operation<never>['access'],
-    metadata: SdkMetadata & { deviceId?: Device },
+    metadata: SdkMetadata & { deviceId?: Device; result?: (ctx: ToolCtx, value: Value) => CallToolResult | Promise<CallToolResult> },
 ): Operation<Record<string, unknown>> & { op: Op } {
-    const { deviceId, ...details } = metadata;
+    const { deviceId, result, ...details } = metadata;
     const input: z.ZodRawShape = { ...schema.partial().shape };
     if (deviceId) input.deviceId = deviceId;
     return {
@@ -77,7 +99,8 @@ export function sdkOp<
             // Check the path argument before parsing the body, as device adapters do.
             const id = deviceId ? requireValue(raw.deviceId as string | undefined, 'deviceId', op) : undefined;
             const params = schema.strip().parse(raw);
-            return asTextResult(await call(ctx, params, id as Device extends undefined ? undefined : string));
+            const value = await call(ctx, params, id as Device extends undefined ? undefined : string);
+            return result ? result(ctx, value) : asTextResult(value);
         },
     };
 }
@@ -117,8 +140,9 @@ export function registerBundle(server: McpServer, ctx: ToolCtx, name: string, ta
                       keys,
                       input,
                   )
-                : opts.beforeRun?.(input);
-            if (error) return asErrorResult(error);
+                : null;
+            const validationError = error ?? opts.beforeRun?.(input);
+            if (validationError) return asErrorResult(validationError);
             try {
                 return await runOperation(table, op, ctx, input);
             } catch (error) {

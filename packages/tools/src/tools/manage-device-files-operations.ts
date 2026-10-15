@@ -40,15 +40,15 @@ export const MANAGE_FILES_TABLE = [
         run: async (ctx, input) => {
             const { deviceId, path } = input;
 
-            const contentBase64 = requireValue(input.contentBase64 as string | undefined, 'contentBase64', input.operation);
+            const contentBase64 = requireValue(input.contentBase64, 'contentBase64', input.operation);
             if (contentBase64.length > MAX_INLINE_BASE64_CHARS) {
                 return asErrorResult(`upload payload exceeds the ${MAX_INLINE_FILE_BYTES / 1024}KB inline limit — use a smaller file.`);
             }
             await ctx.backend.deviceControl.uploadFile(deviceId, {
                 path,
                 contentBase64,
-                fileName: input.fileName as string | undefined,
-                contentType: input.contentType as string | undefined,
+                fileName: input.fileName,
+                contentType: input.contentType,
             });
             return asTextResult({ status: 'uploaded', deviceId, path });
         },

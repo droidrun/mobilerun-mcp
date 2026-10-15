@@ -121,8 +121,7 @@ export const LIST_WORKFLOW_RESOURCES_TABLE = [
         doc: 'Read supported methods and their parameter schemas for a service (REQUIRED filter: service); background info on what an action_catalog entry for that service can do.',
         run: async (ctx, input) => {
             if (input.service === undefined) return asErrorResult('resource=service_methods requires filter: service');
-            const filters = input;
-            return asTextResult(await ctx.backend.workflows.listServiceMethods(filters.service as string));
+            return asTextResult(await ctx.backend.workflows.listServiceMethods(input.service));
         },
     }),
 ] as const;

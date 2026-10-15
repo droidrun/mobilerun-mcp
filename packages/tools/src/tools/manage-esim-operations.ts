@@ -39,10 +39,10 @@ export const MANAGE_ESIM_TABLE = [
         run: async (ctx, input) =>
             asTextResult(
                 await ctx.backend.deviceControl.activateEsim(input.deviceId, {
-                    enable: requireValue(input.enable as boolean | undefined, 'enable', input.operation),
-                    smDpAddr: requireValue(input.smDpAddr as string | undefined, 'smDpAddr', input.operation),
-                    confirmationCode: input.confirmationCode as string | undefined,
-                    matchingId: input.matchingId as string | undefined,
+                    enable: requireValue(input.enable, 'enable', input.operation),
+                    smDpAddr: requireValue(input.smDpAddr, 'smDpAddr', input.operation),
+                    confirmationCode: input.confirmationCode,
+                    matchingId: input.matchingId,
                 }),
             ),
     }),
@@ -54,7 +54,7 @@ export const MANAGE_ESIM_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const subId = requireValue(input.subId as number | undefined, 'subId', input.operation);
+            const subId = requireValue(input.subId, 'subId', input.operation);
             await ctx.backend.deviceControl.enableEsim(deviceId, subId);
             return asTextResult({ status: 'ok', operation: input.operation, deviceId, subId });
         },
@@ -67,7 +67,7 @@ export const MANAGE_ESIM_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const subId = requireValue(input.subId as number | undefined, 'subId', input.operation);
+            const subId = requireValue(input.subId, 'subId', input.operation);
             await ctx.backend.deviceControl.removeEsim(deviceId, subId);
             return asTextResult({ status: 'ok', operation: input.operation, deviceId, subId });
         },

@@ -13,7 +13,7 @@ import {
 import { type ToolCtx } from '../ctx.js';
 import { asTextResult } from '../text-result.js';
 import { awaitCheckoutUrl } from './checkout.js';
-import { operation, registerBundle, sdkOp } from './operation-table.js';
+import { registerBundle, sdkOp } from './operation-table.js';
 const NUMBERS_SHARED_FIELDS = {
     country: z.string().optional().describe('Country code from countries. Required for capacity.'),
     numberId: z.string().optional().describe('Required for get/update/delete/messages/send.'),
@@ -36,26 +36,13 @@ export const NUMBERS_TABLE = [
     sdkOp('get', numbersGetSchema, (ctx, params) => ctx.backend.numbers.numbersGet(params), 'read', {
         doc: 'Read one phone number.',
     }),
-    operation({
-        op: 'create',
-        input: {
-            ...numbersCreateSchema.partial().shape,
-            country: NUMBERS_SHARED_FIELDS.country,
-            clientRequestId: NUMBERS_SHARED_FIELDS.clientRequestId,
-        },
-        access: 'commerce',
+    sdkOp('create', numbersCreateSchema, (ctx, params) => ctx.backend.numbers.numbersCreate(params), 'commerce', {
         doc: 'Create a phone number. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status.',
-        run: async (ctx, raw) => {
-            const input = raw;
-
-            return asTextResult(
-                await awaitCheckoutUrl(
-                    await ctx.backend.numbers.numbersCreate(numbersCreateSchema.strip().parse(input)),
-                    'numberId',
-                    (id) => ctx.backend.numbers.numbersGet({ numberId: id }),
-                ),
-            );
-        },
+        result: async (ctx, value) => asTextResult(await awaitCheckoutUrl(
+            value,
+            'numberId',
+            (id) => ctx.backend.numbers.numbersGet({ numberId: id }),
+        )),
     }),
     sdkOp('update', numbersUpdateSchema, (ctx, params) => ctx.backend.numbers.numbersUpdate(params), 'write', {
         doc: 'Update the display label.',

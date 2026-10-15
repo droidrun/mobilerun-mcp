@@ -27,6 +27,7 @@ import {
 import { operation, requireValue, sdkOp } from './operation-table.js';
 
 import { z } from 'zod';
+import { MAX_INLINE_FILE_BYTES } from '../inline-limits.js';
 import { type ToolCtx } from '../ctx.js';
 import { asImageResult, asTextResult } from '../text-result.js';
 
@@ -138,38 +139,39 @@ export const MANAGE_DEVICE_TABLE = [
     sdkOp('count', z.object({}), (ctx) => ctx.backend.deviceControl.countDevices(), 'read', {
         doc: 'Read claimed-device counts by state without deviceId.',
     }),
-    operation({
-        op: 'stop',
-        input: { ...manageDeviceStopSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        access: 'commerce',
-        doc: 'Stop a device; affects device billing.',
-        run: async (ctx, input) =>
-            asTextResult(await ctx.backend.deviceControl.manageDeviceStop(requireValue(input.deviceId, 'deviceId', input.operation))),
-    }),
-    operation({
-        op: 'resume',
-        input: { ...manageDeviceResumeSchema.partial().shape, deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-        access: 'commerce',
-        doc: 'Resume a device; affects device billing.',
-        run: async (ctx, input) =>
-            asTextResult(await ctx.backend.deviceControl.manageDeviceResume(requireValue(input.deviceId, 'deviceId', input.operation))),
-    }),
+    sdkOp(
+        'stop',
+        manageDeviceStopSchema,
+        (ctx, _params, deviceId) => ctx.backend.deviceControl.manageDeviceStop(deviceId),
+        'commerce',
+        {
+            doc: 'Stop a device; affects device billing.',
+            deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
+        },
+    ),
+    sdkOp(
+        'resume',
+        manageDeviceResumeSchema,
+        (ctx, _params, deviceId) => ctx.backend.deviceControl.manageDeviceResume(deviceId),
+        'commerce',
+        {
+            doc: 'Resume a device; affects device billing.',
+            deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
+        },
+    ),
     sdkOp('summary', manageDeviceSummarySchema, (ctx, params) => ctx.backend.deviceControl.manageDeviceSummary(params), 'read', {
         doc: 'Read account usage without deviceId.',
     }),
-    operation({
-        op: 'retrieve_capabilities',
-        input: {
-            ...manageDeviceRetrieveCapabilitiesSchema.partial().shape,
+    sdkOp(
+        'retrieve_capabilities',
+        manageDeviceRetrieveCapabilitiesSchema,
+        (ctx, _params, deviceId) => ctx.backend.deviceControl.manageDeviceRetrieveCapabilities(deviceId),
+        'read',
+        {
+            doc: 'Read supported device features.',
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
         },
-        access: 'read',
-        doc: 'Read supported device features.',
-        run: async (ctx, input) =>
-            asTextResult(
-                await ctx.backend.deviceControl.manageDeviceRetrieveCapabilities(requireValue(input.deviceId, 'deviceId', input.operation)),
-            ),
-    }),
+    ),
     sdkOp(
         'recordings_list',
         manageDeviceRecordingsListSchema,
@@ -226,22 +228,17 @@ export const MANAGE_DEVICE_TABLE = [
         'write',
         { doc: 'Delete a stored screenshot.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
     ),
-    operation({
-        op: 'screenshots_capture',
-        input: {
-            ...manageDeviceScreenshotsCaptureSchema.partial().shape,
+    sdkOp(
+        'screenshots_capture',
+        manageDeviceScreenshotsCaptureSchema,
+        (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsCapture(deviceId, params),
+        'write',
+        {
+            doc: `Capture a PNG image up to ${MAX_INLINE_FILE_BYTES / 1024} KB; save stores device media.`,
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
+            result: (_ctx, value) => asImageResult(value),
         },
-        access: 'write',
-        doc: 'Capture a PNG image up to 256 KB; save stores device media.',
-        run: async (ctx, input) =>
-            asImageResult(
-                await ctx.backend.deviceControl.manageDeviceScreenshotsCapture(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                    manageDeviceScreenshotsCaptureSchema.strip().parse(input),
-                ),
-            ),
-    }),
+    ),
     // Traffic-session reads redact stream tokens when policy denies this creation operation.
     sdkOp(
         'traffic_sessions_create',
@@ -253,44 +250,28 @@ export const MANAGE_DEVICE_TABLE = [
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
         },
     ),
-    operation({
-        op: 'traffic_sessions_retrieve',
-        input: {
-            ...manageDeviceTrafficSessionsRetrieveSchema.partial().shape,
+    sdkOp(
+        'traffic_sessions_retrieve',
+        manageDeviceTrafficSessionsRetrieveSchema,
+        (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsRetrieve(deviceId, params),
+        'read',
+        {
+            doc: 'Read a traffic session.',
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
+            result: (ctx, value) => asTextResult(redactTrafficStream(value, ctx)),
         },
-        access: 'read',
-        doc: 'Read a traffic session.',
-        run: async (ctx, input) =>
-            asTextResult(
-                redactTrafficStream(
-                    await ctx.backend.deviceControl.manageDeviceTrafficSessionsRetrieve(
-                        requireValue(input.deviceId, 'deviceId', input.operation),
-                        manageDeviceTrafficSessionsRetrieveSchema.strip().parse(input),
-                    ),
-                    ctx,
-                ),
-            ),
-    }),
-    operation({
-        op: 'traffic_sessions_list',
-        input: {
-            ...manageDeviceTrafficSessionsListSchema.partial().shape,
+    ),
+    sdkOp(
+        'traffic_sessions_list',
+        manageDeviceTrafficSessionsListSchema,
+        (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsList(deviceId, params),
+        'read',
+        {
+            doc: 'List traffic sessions.',
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
+            result: (ctx, value) => asTextResult(redactTrafficStream(value, ctx)),
         },
-        access: 'read',
-        doc: 'List traffic sessions.',
-        run: async (ctx, input) =>
-            asTextResult(
-                redactTrafficStream(
-                    await ctx.backend.deviceControl.manageDeviceTrafficSessionsList(
-                        requireValue(input.deviceId, 'deviceId', input.operation),
-                        manageDeviceTrafficSessionsListSchema.strip().parse(input),
-                    ),
-                    ctx,
-                ),
-            ),
-    }),
+    ),
     sdkOp(
         'traffic_sessions_delete',
         manageDeviceTrafficSessionsDeleteSchema,
@@ -319,19 +300,14 @@ export const MANAGE_DEVICE_TABLE = [
         'write',
         { doc: 'Activate a media session.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
     ),
-    operation({
-        op: 'media_sessions_retrieve_current',
-        input: {
-            ...manageDeviceMediaSessionsRetrieveCurrentSchema.partial().shape,
+    sdkOp(
+        'media_sessions_retrieve_current',
+        manageDeviceMediaSessionsRetrieveCurrentSchema,
+        (ctx, _params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsRetrieveCurrent(deviceId),
+        'read',
+        {
+            doc: 'Read the current media session.',
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
         },
-        access: 'read',
-        doc: 'Read the current media session.',
-        run: async (ctx, input) =>
-            asTextResult(
-                await ctx.backend.deviceControl.manageDeviceMediaSessionsRetrieveCurrent(
-                    requireValue(input.deviceId, 'deviceId', input.operation),
-                ),
-            ),
-    }),
+    ),
 ] as const;

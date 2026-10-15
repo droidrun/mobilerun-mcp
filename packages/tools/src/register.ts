@@ -135,11 +135,10 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
             if (opField) {
                 const allowedOps = ctx.policy.operationAllowlist?.get(name);
                 const entry = bundle?.operations.find((entry) => entry.op === operation);
-                const effective = entry?.effectiveOp?.(input ?? {}) ?? operation;
                 if (
                     allowedOps &&
                     operation !== undefined &&
-                    (!allowedOps.has(operation) || (effective !== undefined && !allowedOps.has(effective)))
+                    (!allowedOps.has(operation) || !allowedOps.has(entry?.effectiveOp?.(input ?? {}) ?? operation))
                 ) {
                     report('denied');
                     return asErrorResult(`Operation "${operation}" of tool "${name}" is not available for this credential.`);

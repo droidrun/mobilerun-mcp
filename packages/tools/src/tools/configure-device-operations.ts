@@ -36,8 +36,8 @@ export const CONFIGURE_DEVICE_TABLE = [
             const { deviceId } = input;
 
             await ctx.backend.deviceControl.setLanguage(deviceId, {
-                locale: requireValue(input.locale as string | undefined, 'locale', input.operation),
-                restart: input.restart as boolean | undefined,
+                locale: requireValue(input.locale, 'locale', input.operation),
+                restart: input.restart,
             });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -59,7 +59,7 @@ export const CONFIGURE_DEVICE_TABLE = [
 
             await ctx.backend.deviceControl.setTimezone(
                 deviceId,
-                requireValue(input.timezone as string | undefined, 'timezone', input.operation),
+                requireValue(input.timezone, 'timezone', input.operation),
             );
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -84,8 +84,8 @@ export const CONFIGURE_DEVICE_TABLE = [
             const { deviceId } = input;
 
             await ctx.backend.deviceControl.setLocation(deviceId, {
-                latitude: requireValue(input.latitude as number | undefined, 'latitude', input.operation),
-                longitude: requireValue(input.longitude as number | undefined, 'longitude', input.operation),
+                latitude: requireValue(input.latitude, 'latitude', input.operation),
+                longitude: requireValue(input.longitude, 'longitude', input.operation),
             });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -114,7 +114,7 @@ export const CONFIGURE_DEVICE_TABLE = [
 
             await ctx.backend.deviceControl.setOverlay(
                 deviceId,
-                requireValue(input.visible as boolean | undefined, 'visible', input.operation),
+                requireValue(input.visible, 'visible', input.operation),
             );
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -135,19 +135,19 @@ export const CONFIGURE_DEVICE_TABLE = [
         run: async (ctx, input) => {
             const { deviceId } = input;
 
-            const socks5Host = input.socks5Host as string | undefined;
-            const socks5Port = input.socks5Port as number | undefined;
+            const socks5Host = input.socks5Host;
+            const socks5Port = input.socks5Port;
             await ctx.backend.deviceControl.connectProxy(deviceId, {
-                name: input.proxyName as string | undefined,
+                name: input.proxyName,
                 // Default smart-IP on: align device location, time zone, locale, and carrier with the proxy region unless the caller explicitly opts out.
-                smartIp: (input.smartIp as boolean | undefined) ?? true,
+                smartIp: input.smartIp ?? true,
                 socks5:
                     socks5Host && socks5Port !== undefined
                         ? {
                               host: socks5Host,
                               port: socks5Port,
-                              user: input.socks5User as string | undefined,
-                              password: input.socks5Password as string | undefined,
+                              user: input.socks5User,
+                              password: input.socks5Password,
                           }
                         : undefined,
             });

@@ -39,13 +39,13 @@ export const DEVICE_ACTION_TABLE = [
             const { deviceId, displayId } = input;
 
             // Keep the backend port name while the client adapter sends humanize.
-            const stealth = input.pacedInput as boolean | undefined;
+            const stealth = input.pacedInput;
             await ctx.backend.deviceControl.tap({
                 deviceId,
                 displayId,
                 stealth,
-                x: requireValue(input.x as number | undefined, 'x', input.operation),
-                y: requireValue(input.y as number | undefined, 'y', input.operation),
+                x: requireValue(input.x, 'x', input.operation),
+                y: requireValue(input.y, 'y', input.operation),
             });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -68,16 +68,16 @@ export const DEVICE_ACTION_TABLE = [
             const { deviceId, displayId } = input;
 
             // Keep the backend port name while the client adapter sends humanize.
-            const stealth = input.pacedInput as boolean | undefined;
+            const stealth = input.pacedInput;
             await ctx.backend.deviceControl.swipe({
                 deviceId,
                 displayId,
                 stealth,
-                startX: requireValue(input.startX as number | undefined, 'startX', input.operation),
-                startY: requireValue(input.startY as number | undefined, 'startY', input.operation),
-                endX: requireValue(input.endX as number | undefined, 'endX', input.operation),
-                endY: requireValue(input.endY as number | undefined, 'endY', input.operation),
-                duration: requireValue(input.duration as number | undefined, 'duration', input.operation),
+                startX: requireValue(input.startX, 'startX', input.operation),
+                startY: requireValue(input.startY, 'startY', input.operation),
+                endX: requireValue(input.endX, 'endX', input.operation),
+                endY: requireValue(input.endY, 'endY', input.operation),
+                duration: requireValue(input.duration, 'duration', input.operation),
             });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -102,15 +102,15 @@ export const DEVICE_ACTION_TABLE = [
             const { deviceId, displayId } = input;
 
             // Keep the backend port name while the client adapter sends humanize.
-            const stealth = input.pacedInput as boolean | undefined;
+            const stealth = input.pacedInput;
             await ctx.backend.deviceControl.keyboardWrite({
                 deviceId,
                 displayId,
                 stealth,
-                text: requireValue(input.text as string | undefined, 'text', input.operation),
-                clear: input.clear as boolean | undefined,
-                errorRate: input.errorRate as number | undefined,
-                wpm: input.wpm as number | undefined,
+                text: requireValue(input.text, 'text', input.operation),
+                clear: input.clear,
+                errorRate: input.errorRate,
+                wpm: input.wpm,
             });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },
@@ -131,7 +131,7 @@ export const DEVICE_ACTION_TABLE = [
             await ctx.backend.deviceControl.keyboardKey({
                 deviceId,
                 displayId,
-                key: requireValue(input.key as number | undefined, 'key', input.operation),
+                key: requireValue(input.key, 'key', input.operation),
             });
             return asTextResult({ status: 'ok', operation: input.operation, deviceId });
         },

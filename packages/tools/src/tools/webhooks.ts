@@ -40,7 +40,7 @@ export const WEBHOOK_TABLE = [
                 description: input.description,
             });
             return asTextResult(
-                await withSecretHandling(
+                withSecretHandling(
                     result,
                     'Show the returned plaintext data.secret to the user now, exactly once, and tell them to store it securely. Never place it in workflow action data.',
                 ),
@@ -105,7 +105,7 @@ export const WEBHOOK_TABLE = [
             const endpointId = requireValue(input.endpointId, 'endpointId', input.operation, 'webhooks');
             const result = await ctx.backend.webhooks.rotateWebhookSecret(endpointId);
             return asTextResult(
-                await withSecretHandling(
+                withSecretHandling(
                     result,
                     'Show the returned plaintext data.secret to the user now, exactly once, and tell them to store it securely. The previous secret is already invalid.',
                 ),
@@ -175,10 +175,6 @@ export const WEBHOOK_TABLE = [
         { doc: 'Read delivery targets for an integration.' },
     ),
 ] as const;
-
-// Full-set schema — used to type WebhookToolInput regardless of any
-// per-credential operation narrowing applied to the registered tool's
-// actual input schema (see registerWebhookTools).
 
 function withSecretHandling(result: unknown, secretHandling: string): Record<string, unknown> {
     if (result !== null && typeof result === 'object' && !Array.isArray(result)) {
