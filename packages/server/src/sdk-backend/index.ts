@@ -1,3 +1,7 @@
+import { createFilesBackend } from './files.js';
+import { createMessagesBackend } from './messages.js';
+import { createMailboxesBackend } from './mailboxes.js';
+import { createNumbersBackend } from './numbers.js';
 import type Mobilerun from '@mobilerun/sdk';
 import type { Backend } from '@mobilerun/mcp-tools';
 import { createAppsBackend } from './apps.js';
@@ -25,6 +29,10 @@ import { createWorkflowsBackend } from './workflows.js';
  */
 export function createSdkBackend(client: Mobilerun): Backend {
     return {
+        files: withBackendErrors(createFilesBackend(client)),
+        messages: withBackendErrors(createMessagesBackend(client)),
+        mailboxes: withBackendErrors(createMailboxesBackend(client)),
+        numbers: withBackendErrors(createNumbersBackend(client)),
         devices: withBackendErrors(createDevicesBackend(client)),
         workflows: withBackendErrors(createWorkflowsBackend(client)),
         webhooks: withBackendErrors(createWebhooksBackend(client)),

@@ -1,8 +1,6 @@
 export type { ToolCtx, AuthContext, Policy } from './ctx.js';
 export { createAuthContext } from './ctx.js';
-export type {
-    Backend,
-} from './backend/index.js';
+export type { Backend } from './backend/index.js';
 export type {
     DevicesBackend,
     DeviceState,
@@ -50,12 +48,7 @@ export type {
     ListWebhookDeliveriesOpts,
     WebhookDeliveryStatsOpts,
 } from './backend/webhooks.js';
-export type {
-    AssistantBackend,
-    AssistantAnswer,
-    AssistantSession,
-    AssistantHistory,
-} from './backend/assistant.js';
+export type { AssistantBackend, AssistantAnswer, AssistantSession, AssistantHistory } from './backend/assistant.js';
 export type {
     CredentialsBackend,
     InitPackageParams,
@@ -67,18 +60,8 @@ export type {
     CredentialFieldDto,
     CredentialMetaDto,
 } from './backend/credentials.js';
-export type {
-    AppsBackend,
-    ListAppsOpts,
-    CreateUploadUrlParams,
-} from './backend/apps.js';
-export type {
-    ProxiesBackend,
-    ListProxiesOpts,
-    CreateProxyParams,
-    UpdateProxyParams,
-    ProxyLookupParams,
-} from './backend/proxies.js';
+export type { AppsBackend, ListAppsOpts, CreateUploadUrlParams } from './backend/apps.js';
+export type { ProxiesBackend, ListProxiesOpts, CreateProxyParams, UpdateProxyParams } from './backend/proxies.js';
 export type {
     ConnectBackend,
     ListCountriesOpts,
@@ -87,9 +70,7 @@ export type {
     ListConnectionsOpts,
     ListConnectUsersOpts,
 } from './backend/connect.js';
-export type {
-    PlatformCatalogBackend,
-} from './backend/platform-catalog.js';
+export type { PlatformCatalogBackend } from './backend/platform-catalog.js';
 export type {
     TasksBackend,
     TaskStatus,
@@ -160,3 +141,13 @@ export { registerAppsTools } from './tools/apps.js';
 export { registerProxiesTools } from './tools/proxies.js';
 export { registerConnectTools } from './tools/connect.js';
 export { registerPlatformCatalogTools } from './tools/platform-catalog.js';
+export type { NumbersBackend } from './backend/numbers.js';
+export { registerNumbersTools } from './tools/numbers.js';
+export type { MailboxesBackend } from './backend/mailboxes.js';
+export { registerMailboxesTools } from './tools/mailboxes.js';
+export type { MessagesBackend } from './backend/messages.js';
+export { registerMessagesTools } from './tools/messages.js';
+export type { FilesBackend } from './backend/files.js';
+export { registerFilesTools } from './tools/files.js';
+
+export { MAX_INLINE_FILE_BYTES } from './inline-limits.js';

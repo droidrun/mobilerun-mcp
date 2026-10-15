@@ -1,15 +1,35 @@
-import type Mobilerun from '@mobilerun/sdk';
-import type {
-    CreateWebhookParams,
-    ListWebhookDeliveriesOpts,
-    ListWebhooksOpts,
-    UpdateWebhookParams,
-    WebhookDeliveryStatsOpts,
-    WebhooksBackend,
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import {
+    type CreateWebhookParams,
+    type ListWebhookDeliveriesOpts,
+    type ListWebhooksOpts,
+    type UpdateWebhookParams,
+    type WebhookDeliveryStatsOpts,
+    type WebhooksBackend,
 } from '@mobilerun/mcp-tools';
 
 export function createWebhooksBackend(client: Mobilerun): WebhooksBackend {
     return {
+        async webhooksDelete(params) {
+            await client.webhooks.delete(params.endpointId);
+            return { success: true };
+        },
+        async webhooksDeliveries(params) {
+            return client.webhooks.deliveries.list({
+                eventId: params.eventId,
+                kind: params.kind,
+                page: params.page,
+                pageSize: params.pageSize,
+                since: params.since,
+                status: params.status,
+            });
+        },
+        async webhooksIntegrations() {
+            return client.webhooks.integrations.list();
+        },
+        async webhooksIntegrationTargets(params) {
+            return client.webhooks.integrations.listTargets(params.capabilityId, { revision: params.revision });
+        },
         async createWebhook(params: CreateWebhookParams) {
             return client.webhooks.create({
                 url: params.url,
@@ -54,9 +74,6 @@ export function createWebhooksBackend(client: Mobilerun): WebhooksBackend {
         },
         async getWebhookDeliveryStats(opts: WebhookDeliveryStatsOpts) {
             return client.webhooks.deliveries.stats({ since: opts.since });
-        },
-        async listWebhookEventTypes() {
-            return client.webhooks.eventTypes();
         },
     };
 }

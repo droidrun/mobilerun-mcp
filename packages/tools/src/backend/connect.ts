@@ -5,7 +5,9 @@
 // its own tool-input `operation` value so a policy profile (e.g.
 // `no-commerce`) can deny them
 // individually without touching the rest of this bundle; see tools/connect.ts.
-import type { PageMeta } from './devices.js';
+
+import { z } from 'zod';
+import { type PageMeta } from './devices.js';
 
 type ConnectionStatus = 'active' | 'closed';
 type ConnectionProtocol = 'tcp' | 'udp' | 'unknown';
@@ -144,6 +146,8 @@ export interface ListConnectUsersOpts {
     pageSize?: number;
 }
 export interface ConnectBackend {
+    connectUpdateProxy(params: z.infer<typeof connectUpdateProxySchema>): Promise<unknown>;
+    connectEnsureHealthy(params: z.infer<typeof connectEnsureHealthySchema>): Promise<unknown>;
     listCountries(opts: ListCountriesOpts): Promise<CountryListDto>;
     listConnectProxies(opts: ListConnectProxiesOpts): Promise<ConnectProxyListDto>;
     getConnectProxy(id: string): Promise<ConnectProxyDto>;
@@ -155,3 +159,16 @@ export interface ConnectBackend {
     getConnectUser(id: string): Promise<ConnectUserDto>;
     listConnectUserConnections(id: string, opts: ListConnectionsOpts): Promise<ConnectionListDto>;
 }
+
+export const connectUpdateProxySchema = z
+    .object({
+        proxyId: z.string(),
+        name: z.union([z.string(), z.null()]).optional(),
+    })
+    .strict();
+
+export const connectEnsureHealthySchema = z
+    .object({
+        proxyId: z.string(),
+    })
+    .strict();

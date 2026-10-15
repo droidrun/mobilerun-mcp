@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // Credentials port — see devices.ts's file header for the DTO philosophy.
 //
 // Field values are write-only inputs. SdkBackend maps both list and write
@@ -6,14 +7,7 @@
 import type { PageMeta } from './devices.js';
 
 export interface CredentialFieldDto {
-    fieldType:
-        | 'email'
-        | 'username'
-        | 'password'
-        | 'api_token'
-        | 'phone_number'
-        | 'two_factor_secret'
-        | 'backup_codes';
+    fieldType: 'email' | 'username' | 'password' | 'api_token' | 'phone_number' | 'two_factor_secret' | 'backup_codes';
 }
 
 /** Normalized by SdkBackend — the SDK itself returns two different envelope
@@ -30,8 +24,8 @@ interface CredentialPackageDto {
 }
 interface CredentialPackageListDto {
     items: CredentialPackageDto[];
-    /** True: derived client-side from paginated credentials.list (no direct SDK endpoint) — see SdkBackend. */
-    derived: true;
+    /** Whether package names were derived instead of read directly. */
+    derived: boolean;
 }
 
 // --- Write path (manage_credentials tool) -----------------------------
@@ -95,6 +89,7 @@ export interface DeleteFieldParams {
 }
 
 export interface CredentialsBackend {
+    manageCredentialsGet(params: z.infer<typeof manageCredentialsGetSchema>): Promise<unknown>;
     listCredentials(packageName?: string): Promise<CredentialListDto>;
     listCredentialPackages(): Promise<CredentialPackageListDto>;
     initPackage(params: InitPackageParams): Promise<InitPackageResultDto>;
@@ -104,3 +99,10 @@ export interface CredentialsBackend {
     updateField(params: UpdateFieldParams): Promise<CredentialMetaEnvelopeDto>;
     deleteField(params: DeleteFieldParams): Promise<CredentialMetaEnvelopeDto>;
 }
+
+export const manageCredentialsGetSchema = z
+    .object({
+        credentialName: z.string(),
+        packageName: z.string(),
+    })
+    .strict();

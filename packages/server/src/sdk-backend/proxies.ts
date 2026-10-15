@@ -1,5 +1,5 @@
 import type Mobilerun from '@mobilerun/sdk';
-import type { CreateProxyParams, ListProxiesOpts, ProxiesBackend, ProxyLookupParams, UpdateProxyParams } from '@mobilerun/mcp-tools';
+import type { CreateProxyParams, ListProxiesOpts, ProxiesBackend, UpdateProxyParams } from '@mobilerun/mcp-tools';
 
 export function createProxiesBackend(client: Mobilerun): ProxiesBackend {
     return {
@@ -17,11 +17,6 @@ export function createProxiesBackend(client: Mobilerun): ProxiesBackend {
         },
         async deleteProxy(proxyId: string) {
             return client.proxies.delete(proxyId);
-        },
-        async lookupProxy(params: ProxyLookupParams) {
-            return client.proxies.lookup({
-                socks5: { host: params.host, port: params.port, user: params.user, password: params.password },
-            });
         },
     };
 }

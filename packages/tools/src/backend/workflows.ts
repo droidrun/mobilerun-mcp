@@ -1,11 +1,12 @@
 // Workflows port — see devices.ts's file header for the DTO philosophy.
 // DTOs mirror @mobilerun/sdk's action-catalog / actions / triggers / flows /
-// executions / appEvents.catalog response shapes (verified against the SDK's
+// executions response shapes (verified against the SDK's
 // shipped .d.ts), trimmed to what the tools surface.
-import { z } from 'zod';
-import type { PageMeta } from './devices.js';
 
-export type WorkflowService = 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks';
+import { z } from 'zod';
+import { type PageMeta } from './devices.js';
+
+export type WorkflowService = 'tasks_api' | 'devices_api' | 'agents_api' | 'webhooks' | 'integrations_api';
 
 export interface ListActionCatalogOpts {
     service?: WorkflowService;
@@ -156,23 +157,6 @@ interface ActionCatalogListDto {
 }
 interface ActionCatalogEntryEnvelopeDto {
     data: ActionCatalogEntryDto;
-}
-
-interface AppEventCatalogItemDto {
-    appName?: string;
-    sourceEventType?: string;
-    packageName?: string | null;
-    eventType: string;
-    label: string;
-    description: string | null;
-    source: string | null;
-    createdAt: string | null;
-    updatedAt: string | null;
-    payloadSchema?: unknown;
-}
-interface AppEventCatalogListDto {
-    items: AppEventCatalogItemDto[];
-    pagination: PageMeta;
 }
 
 interface ActionDto {
@@ -365,9 +349,26 @@ interface EventDryRunResultDto {
     };
 }
 export interface WorkflowsBackend {
+    manageFlowExecutionScreenshot(params: z.infer<typeof manageFlowExecutionScreenshotSchema>): Promise<unknown>;
+    manageFlowUpdate(params: z.infer<typeof manageFlowUpdateSchema>): Promise<unknown>;
+    manageFlowDelete(params: z.infer<typeof manageFlowDeleteSchema>): Promise<unknown>;
+    manageFlowActivate(params: z.infer<typeof manageFlowActivateSchema>): Promise<unknown>;
+    manageFlowRun(params: z.infer<typeof manageFlowRunSchema>): Promise<unknown>;
+    manageFlowValidate(params: z.infer<typeof manageFlowValidateSchema>): Promise<unknown>;
+    manageFlowVerify(params: z.infer<typeof manageFlowVerifySchema>): Promise<unknown>;
+    manageFlowDryRun(params: z.infer<typeof manageFlowDryRunSchema>): Promise<unknown>;
+    manageFlowCapacity(): Promise<unknown>;
+    manageFlowDeliveryOptions(params: z.infer<typeof manageFlowDeliveryOptionsSchema>): Promise<unknown>;
+    manageFlowTemplateContext(params: z.infer<typeof manageFlowTemplateContextSchema>): Promise<unknown>;
+    manageFlowListRepairs(params: z.infer<typeof manageFlowListRepairsSchema>): Promise<unknown>;
+    manageFlowUpdateAction(params: z.infer<typeof manageFlowUpdateActionSchema>): Promise<unknown>;
+    manageFlowDeleteAction(params: z.infer<typeof manageFlowDeleteActionSchema>): Promise<unknown>;
+    manageFlowUpdateTrigger(params: z.infer<typeof manageFlowUpdateTriggerSchema>): Promise<unknown>;
+    manageFlowDeleteTrigger(params: z.infer<typeof manageFlowDeleteTriggerSchema>): Promise<unknown>;
+    manageFlowFireTrigger(params: z.infer<typeof manageFlowFireTriggerSchema>): Promise<unknown>;
+    manageFlowAbortExecution(params: z.infer<typeof manageFlowAbortExecutionSchema>): Promise<unknown>;
     listActionCatalog(opts: ListActionCatalogOpts): Promise<ActionCatalogListDto>;
     getActionCatalogEntry(id: string): Promise<ActionCatalogEntryEnvelopeDto>;
-    listAppEventCatalog(): Promise<AppEventCatalogListDto>;
     listActions(opts: ListActionsOpts): Promise<ActionListDto>;
     getAction(id: string): Promise<ActionEnvelopeDto>;
     createAction(params: CreateActionParams): Promise<ActionEnvelopeDto>;
@@ -394,3 +395,270 @@ export interface WorkflowsBackend {
     ingestEvent(params: IngestEventParams): Promise<EventIngestResultDto>;
     dryRunEvent(params: DryRunEventParams): Promise<EventDryRunResultDto>;
 }
+
+export const manageFlowUpdateSchema = z
+    .object({
+        flowId: z.string(),
+        cooldownScope: z.union([z.literal('flow'), z.literal('device')]).optional(),
+        cooldownSeconds: z.union([z.number(), z.null()]).optional(),
+        delivery: z
+            .union([
+                z
+                    .object({
+                        destination: z.union([
+                            z.literal('mobilerun'),
+                            z.literal('one_drive'),
+                            z.literal('google_drive'),
+                        ]),
+                        folder: z.string().optional(),
+                        recording: z.object({ filename: z.string() }).strict().optional(),
+                        screenshots: z.unknown().optional(),
+                    })
+                    .strict(),
+                z.null(),
+            ])
+            .optional(),
+        description: z.string().optional(),
+        deviceIds: z.array(z.string()).optional(),
+        enabled: z.boolean().optional(),
+        healthMonitoringEnabled: z.boolean().optional(),
+        lifecycleStatus: z.union([z.literal('enabled'), z.literal('disabled')]).optional(),
+        name: z.string().optional(),
+        notifyOnFailure: z.boolean().optional(),
+        notifyOnSuccess: z.boolean().optional(),
+        notifyWebhookId: z.union([z.string(), z.null()]).optional(),
+        recordingEnabled: z.boolean().optional(),
+        recordingPolicy: z
+            .object({ mode: z.union([z.literal('off'), z.literal('flow'), z.literal('selected_steps')]) })
+            .strict()
+            .optional(),
+        selfHealingEnabled: z.boolean().optional(),
+        selfHealingMaxAttempts: z.number().optional(),
+        triggerId: z.string().optional(),
+    })
+    .strict();
+
+export const manageFlowDeleteSchema = z
+    .object({
+        flowId: z.string(),
+    })
+    .strict();
+
+export const manageFlowActivateSchema = z
+    .object({
+        flowId: z.string(),
+        verificationExecutionId: z.string(),
+    })
+    .strict();
+
+export const manageFlowRunSchema = z
+    .object({
+        flowId: z.string(),
+        captureScreenshots: z.boolean().optional(),
+        payload: z.record(z.string(), z.unknown()).optional(),
+    })
+    .strict();
+
+export const manageFlowValidateSchema = z
+    .object({
+        actions: z.array(
+            z.union([
+                z
+                    .object({
+                        actionId: z.string(),
+                        position: z.number(),
+                        children: z
+                            .array(
+                                z
+                                    .object({
+                                        actionId: z.string(),
+                                        position: z.number(),
+                                        continueOnError: z.boolean().optional(),
+                                        key: z.string().optional(),
+                                        nameOverride: z.string().optional(),
+                                        overrides: z
+                                            .union([
+                                                z
+                                                    .object({ params: z.record(z.string(), z.unknown()).optional() })
+                                                    .strict(),
+                                                z.null(),
+                                            ])
+                                            .optional(),
+                                        recordingEnabled: z.boolean().optional(),
+                                    })
+                                    .strict(),
+                            )
+                            .optional(),
+                        continueOnError: z.boolean().optional(),
+                        key: z.string().optional(),
+                        nameOverride: z.string().optional(),
+                        overrides: z
+                            .union([
+                                z.object({ params: z.record(z.string(), z.unknown()).optional() }).strict(),
+                                z.null(),
+                            ])
+                            .optional(),
+                        recordingEnabled: z.boolean().optional(),
+                    })
+                    .strict(),
+                z
+                    .object({
+                        draft: z
+                            .object({
+                                method: z.string(),
+                                name: z.string(),
+                                service: z.string(),
+                                params: z.record(z.string(), z.unknown()).optional(),
+                            })
+                            .strict(),
+                        position: z.number(),
+                        continueOnError: z.boolean().optional(),
+                        key: z.string().optional(),
+                        nameOverride: z.string().optional(),
+                        overrides: z
+                            .union([
+                                z.object({ params: z.record(z.string(), z.unknown()).optional() }).strict(),
+                                z.null(),
+                            ])
+                            .optional(),
+                        recordingEnabled: z.boolean().optional(),
+                    })
+                    .strict(),
+            ]),
+        ),
+        name: z.string(),
+        cooldownScope: z.union([z.literal('flow'), z.literal('device')]).optional(),
+        cooldownSeconds: z.union([z.number(), z.null()]).optional(),
+        delivery: z
+            .object({
+                destination: z.union([z.literal('mobilerun'), z.literal('one_drive'), z.literal('google_drive')]),
+                folder: z.string().optional(),
+                recording: z.object({ filename: z.string() }).strict().optional(),
+                screenshots: z.unknown().optional(),
+            })
+            .strict()
+            .optional(),
+        description: z.string().optional(),
+        deviceIds: z.array(z.string()).optional(),
+        enabled: z.boolean().optional(),
+        healthMonitoringEnabled: z.boolean().optional(),
+        notifyOnFailure: z.boolean().optional(),
+        notifyOnSuccess: z.boolean().optional(),
+        notifyWebhookId: z.union([z.string(), z.null()]).optional(),
+        recordingEnabled: z.boolean().optional(),
+        recordingPolicy: z
+            .object({ mode: z.union([z.literal('off'), z.literal('flow'), z.literal('selected_steps')]) })
+            .strict()
+            .optional(),
+        selfHealingEnabled: z.boolean().optional(),
+        selfHealingMaxAttempts: z.number().optional(),
+        triggerId: z.string().optional(),
+    })
+    .strict();
+
+export const manageFlowVerifySchema = z
+    .object({
+        flowId: z.string(),
+        invocationId: z.string(),
+        deviceId: z.string().optional(),
+        payload: z.record(z.string(), z.unknown()).optional(),
+    })
+    .strict();
+
+export const manageFlowDryRunSchema = z
+    .object({
+        flowId: z.string(),
+        payload: z.record(z.string(), z.unknown()).optional(),
+    })
+    .strict();
+
+export const manageFlowDeliveryOptionsSchema = z
+    .object({
+        flowId: z.string(),
+    })
+    .strict();
+
+export const manageFlowTemplateContextSchema = z
+    .object({
+        templateResolutionVersion: z.number().optional(),
+    })
+    .strict();
+
+export const manageFlowListRepairsSchema = z
+    .object({
+        flowId: z.string(),
+    })
+    .strict();
+
+export const manageFlowUpdateActionSchema = z
+    .object({
+        actionId: z.string(),
+        description: z.string().optional(),
+        name: z.string().optional(),
+        params: z.record(z.string(), z.unknown()).optional(),
+    })
+    .strict();
+
+export const manageFlowDeleteActionSchema = z
+    .object({
+        actionId: z.string(),
+    })
+    .strict();
+
+export const manageFlowUpdateTriggerSchema = z
+    .object({
+        triggerId: z.string(),
+        activation: z.union([z.literal('event'), z.literal('schedule'), z.literal('custom')]).optional(),
+        conditions: z
+            .union([
+                z.object({ all: z.array(z.unknown()).optional(), any: z.array(z.unknown()).optional() }).strict(),
+                z.null(),
+            ])
+            .optional(),
+        customPayloadSchema: z.union([z.record(z.string(), z.unknown()), z.null()]).optional(),
+        description: z.string().optional(),
+        eventType: z.string().optional(),
+        name: z.string().optional(),
+        scheduleRule: z
+            .union([
+                z
+                    .object({
+                        type: z.union([z.literal('once'), z.literal('cron'), z.literal('recurring')]),
+                        dateTime: z.string().optional(),
+                        expression: z.string().optional(),
+                        jitter: z
+                            .object({ afterMinutes: z.number().optional(), beforeMinutes: z.number().optional() })
+                            .strict()
+                            .optional(),
+                        rrule: z.string().optional(),
+                    })
+                    .strict(),
+                z.null(),
+            ])
+            .optional(),
+        timezone: z.union([z.string(), z.null()]).optional(),
+    })
+    .strict();
+
+export const manageFlowDeleteTriggerSchema = z
+    .object({
+        triggerId: z.string(),
+    })
+    .strict();
+
+export const manageFlowFireTriggerSchema = z
+    .object({
+        triggerId: z.string(),
+        payload: z.record(z.string(), z.unknown()),
+    })
+    .strict();
+
+export const manageFlowAbortExecutionSchema = z
+    .object({
+        executionId: z.string(),
+    })
+    .strict();
+
+export const manageFlowExecutionScreenshotSchema = z
+    .object({ executionId: z.string(), screenshotId: z.string() })
+    .strict();

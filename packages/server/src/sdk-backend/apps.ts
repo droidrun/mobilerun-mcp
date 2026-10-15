@@ -1,8 +1,11 @@
-import type Mobilerun from '@mobilerun/sdk';
-import type { AppsBackend, CreateUploadUrlParams, ListAppsOpts } from '@mobilerun/mcp-tools';
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import { type AppsBackend, type CreateUploadUrlParams, type ListAppsOpts } from '@mobilerun/mcp-tools';
 
 export function createAppsBackend(client: Mobilerun): AppsBackend {
     return {
+        async appsStorageUsage() {
+            return client.apps.storageUsage();
+        },
         async listApps(opts: ListAppsOpts) {
             return client.apps.list({
                 query: opts.query,

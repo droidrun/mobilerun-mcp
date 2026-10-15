@@ -1,15 +1,21 @@
-import type Mobilerun from '@mobilerun/sdk';
-import type {
-    BuyConnectProxyParams,
-    ConnectBackend,
-    ListConnectionsOpts,
-    ListConnectProxiesOpts,
-    ListConnectUsersOpts,
-    ListCountriesOpts,
+import { type default as Mobilerun } from '@mobilerun/sdk';
+import {
+    type BuyConnectProxyParams,
+    type ConnectBackend,
+    type ListConnectionsOpts,
+    type ListConnectProxiesOpts,
+    type ListConnectUsersOpts,
+    type ListCountriesOpts,
 } from '@mobilerun/mcp-tools';
 
 export function createConnectBackend(client: Mobilerun): ConnectBackend {
     return {
+        async connectUpdateProxy(params) {
+            return client.connect.proxies.update(params.proxyId, { name: params.name });
+        },
+        async connectEnsureHealthy(params) {
+            return client.connect.proxies.ensureHealthy(params.proxyId);
+        },
         async listCountries(opts: ListCountriesOpts) {
             return client.connect.countries.list({ type: opts.type, page: opts.page, pageSize: opts.pageSize });
         },
