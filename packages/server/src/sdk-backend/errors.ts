@@ -1,5 +1,6 @@
 import { APIError } from '@mobilerun/sdk';
 import { BackendError, type BackendErrorCode } from '@mobilerun/mcp-tools';
+import { fromApiDeviceTypes } from './device-types.js';
 
 function codeForStatus(status: number | undefined): BackendErrorCode {
     switch (status) {
@@ -35,7 +36,8 @@ function toBackendError(err: unknown): BackendError {
  * returned by `createDevicesBackend`) so a thrown SDK/API error becomes a
  * typed `BackendError` before it reaches the tool layer — applied once per
  * domain in sdk-backend/index.ts rather than requiring every method body to
- * catch-and-map individually. */
+ * catch-and-map individually. Successful JSON results also normalize device
+ * types here so nested fields and type-keyed counts cannot bypass the adapter. */
 export function withBackendErrors<T extends object>(impl: T): T {
     return new Proxy(impl, {
         get(target, prop, receiver) {
@@ -43,7 +45,7 @@ export function withBackendErrors<T extends object>(impl: T): T {
             if (typeof value !== 'function') return value;
             return async (...args: unknown[]) => {
                 try {
-                    return await (value as (...a: unknown[]) => unknown).apply(target, args);
+                    return fromApiDeviceTypes(await (value as (...a: unknown[]) => unknown).apply(target, args));
                 } catch (err) {
                     throw toBackendError(err);
                 }

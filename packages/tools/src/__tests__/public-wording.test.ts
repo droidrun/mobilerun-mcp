@@ -7,18 +7,23 @@ import { ALL_TOOL_NAMES, buildMcpServer, fullAccessPolicy } from '../register.js
 
 const BANNED_WORDING = /\bR2\b|orchestrator|harness|internal|droidrun-connect|(?<!no-)\bCOMMERCE\b|fingerprint|appears where|mistake|\bSDK\b|[a-z]+-api\b|spoof|undetect|evad|human-?like|humantouch|stealth/i;
 
-function* schemaDescriptions(value: unknown): Generator<string> {
+function* schemaWording(value: unknown): Generator<string> {
     if (Array.isArray(value)) {
-        for (const item of value) yield* schemaDescriptions(item);
+        for (const item of value) yield* schemaWording(item);
     } else if (value && typeof value === 'object') {
         for (const [key, nested] of Object.entries(value)) {
             if (key === 'description' && typeof nested === 'string') yield nested;
-            else yield* schemaDescriptions(nested);
+            if (key === 'properties' && nested && typeof nested === 'object') yield* Object.keys(nested);
+            if (key === 'enum' && Array.isArray(nested)) {
+                for (const item of nested) if (typeof item === 'string') yield item;
+            }
+            if (key === 'const' && typeof nested === 'string') yield nested;
+            yield* schemaWording(nested);
         }
     }
 }
 
-test('every registered tool and input description uses public product wording', async () => {
+test('every tool description, schema property and enum uses public product wording', async () => {
     // Listing metadata never invokes backend methods. Any unexpected call fails.
     const ctx = {
         backend: {} as Backend,
@@ -37,9 +42,9 @@ test('every registered tool and input description uses public product wording', 
             const result = await client.listTools({ cursor });
             for (const tool of result.tools) {
                 seen.push(tool.name);
-                for (const description of [tool.description ?? '', ...schemaDescriptions(tool.inputSchema)]) {
-                    const match = description.match(BANNED_WORDING);
-                    expect(match, `${tool.name}: banned wording "${match?.[0]}" in description "${description}"`).toBeNull();
+                for (const wording of [tool.description ?? '', ...schemaWording(tool.inputSchema), ...schemaWording(tool.outputSchema)]) {
+                    const match = wording.match(BANNED_WORDING);
+                    expect(match, `${tool.name}: banned wording "${match?.[0]}" in schema or description "${wording}"`).toBeNull();
                 }
             }
             cursor = result.nextCursor;

@@ -1,6 +1,6 @@
 // Device tools delegate lifecycle and billing checks to the platform API.
 // Screenshot results use the shared bounded PNG capture path.
-// Device types are a curated subset of the public SDK's deviceType union.
+// Device types use public identifiers translated by the backend adapter.
 
 // The exact set @mobilerun/sdk's DeviceListParams.state accepts (9 values).
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -21,12 +21,11 @@ const DEVICE_STATES = [
     'unknown',
 ] as const;
 
-// @mobilerun/sdk's DeviceCreateParams.deviceType / DeviceListParams.type union
-// (verified against the SDK's shipped .d.ts).
+// Keep aligned with the backend port's public DeviceType union.
 const DEVICE_TYPES = [
     'android_cloud_phone',
     'android_physical_phone',
-    'ios_stealth_phone',
+    'ios_phone',
     'android_emulator',
     'ios_simulator',
     'device_slot',

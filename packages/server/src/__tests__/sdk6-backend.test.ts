@@ -222,6 +222,46 @@ test('device reads and creation forward canonical type identifiers', async () =>
     expect(requests[1]!.url.searchParams.get('country')).toBe('DE');
 });
 
+test.each([
+    {
+        name: 'list_devices', arguments: { type: 'ios_phone' }, parameter: 'type',
+        api: { items: [{ id: 'd1', type: 'ios_stealth_phone' }, { id: 'd2', type: 'android_cloud_phone' }], pagination: null },
+        expected: { items: [{ id: 'd1', type: 'ios_phone' }, { id: 'd2', type: 'android_cloud_phone' }], pagination: null },
+    },
+    {
+        name: 'create_device', arguments: { deviceType: 'ios_phone' }, parameter: 'deviceType',
+        api: { id: 'd1', type: 'ios_stealth_phone' }, expected: { id: 'd1', type: 'ios_phone' },
+    },
+    {
+        name: 'get_device', arguments: { deviceId: 'd1' }, parameter: undefined,
+        api: { id: 'd1', type: 'ios_stealth_phone' }, expected: { id: 'd1', type: 'ios_phone' },
+    },
+    {
+        name: 'manage_device', arguments: { operation: 'summary' }, parameter: undefined,
+        api: { total: 3, byState: { ready: 3 }, byType: { ios_stealth_phone: 2, android_cloud_phone: 1 } },
+        expected: { total: 3, byState: { ready: 3 }, byType: { ios_phone: 2, android_cloud_phone: 1 } },
+    },
+    {
+        name: 'manage_device', arguments: { operation: 'count' }, parameter: undefined,
+        api: { ios_stealth_phone: 2, android_cloud_phone: 1 }, expected: { ios_phone: 2, android_cloud_phone: 1 },
+    },
+    ...['get_capabilities', 'retrieve_capabilities'].map((operation) => ({
+        name: 'manage_device', arguments: { operation, deviceId: 'd1' }, parameter: undefined,
+        api: { deviceType: 'ios_stealth_phone', capabilities: { apps: true } },
+        expected: { deviceType: 'ios_phone', capabilities: { apps: true } },
+    })),
+])('MCP normalizes API device types in $name with $arguments', async ({ name, arguments: args, parameter, api, expected }) => {
+    const { backend, requests } = setup(api);
+    const { client } = await connect('full', { backend });
+    const result = await client.callTool({ name, arguments: args });
+    expect(result.isError).not.toBe(true);
+    const content = result.content as Array<{ type: string; text?: string }>;
+    expect(JSON.parse(content[0]?.text ?? '{}')).toEqual(expected);
+    expect(JSON.stringify(result)).not.toContain('stealth');
+    expect(requests).toHaveLength(1);
+    if (parameter) expect(requests[0]!.url.searchParams.get(parameter)).toBe('ios_stealth_phone');
+});
+
 test('number billing preferences pass through without a hard-coded default', async () => {
     const { backend, requests } = setup();
     for (const billingPreference of ['included', 'included_only', 'rent'] as const) {

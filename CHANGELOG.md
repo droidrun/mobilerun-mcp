@@ -6,6 +6,8 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Changed
 
+- **Breaking:** the iOS phone device type is `ios_phone` in tool inputs and results.
+
 - **Breaking:** `device_action` and `run_task` input `pacedInput` renamed to `humanize`, matching the API. `get_task` results report `humanize` instead of `stealth`.
 
 - Tool operations are declared in per-tool operation tables; tool schemas and profiles are unchanged.

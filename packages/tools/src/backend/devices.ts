@@ -17,12 +17,11 @@ export type DeviceState =
     | 'maintenance'
     | 'unknown';
 
-// Mirrors @mobilerun/sdk's DeviceCreateParams.deviceType / DeviceListParams.type
-// union exactly (verified against the SDK's shipped .d.ts — see SdkBackend).
+// Public device types; the adapter translates API-specific identifiers.
 export type DeviceType =
     | 'android_cloud_phone'
     | 'android_physical_phone'
-    | 'ios_stealth_phone'
+    | 'ios_phone'
     | 'android_emulator'
     | 'ios_simulator'
     | 'device_slot';

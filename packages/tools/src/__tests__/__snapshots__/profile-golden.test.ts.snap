@@ -840,7 +840,7 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
           "enum": [
             "android_cloud_phone",
             "android_physical_phone",
-            "ios_stealth_phone",
+            "ios_phone",
             "android_emulator",
             "ios_simulator",
             "device_slot",
@@ -1395,7 +1395,7 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
           "enum": [
             "android_cloud_phone",
             "android_physical_phone",
-            "ios_stealth_phone",
+            "ios_phone",
             "android_emulator",
             "ios_simulator",
             "device_slot",
