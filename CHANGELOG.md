@@ -2,6 +2,13 @@
 
 All notable changes to `@mobilerun/mcp-tools` are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- Tool operations are declared in per-tool operation tables; tool schemas and profiles are unchanged.
+- Tool descriptions and field-error messages are regenerated from operation tables; wording may differ slightly.
+
 ## [0.5.0] - 2026-10-14
 
 ### Removed

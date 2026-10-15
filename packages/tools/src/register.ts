@@ -1,9 +1,3 @@
-/** Canonical list of every tool this package registers — the single source
- * of truth `fullAccessPolicy()` and the schema-snapshot test both read from. */
-import { registerFilesTools } from './tools/files.js';
-import { registerMessagesTools } from './tools/messages.js';
-import { registerMailboxesTools } from './tools/mailboxes.js';
-import { registerNumbersTools } from './tools/numbers.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { type RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { type ServerNotification, type ServerRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -12,11 +6,16 @@ import { type AuthContext, type Policy, type ToolCtx } from './ctx.js';
 import { asErrorResult } from './text-result.js';
 import { registerAppsTools } from './tools/apps.js';
 import { registerAssistantTool } from './tools/assistant.js';
+import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
 import { registerConnectTools } from './tools/connect.js';
 import { registerCredentialTools, registerManageCredentialsTool } from './tools/credentials.js';
 import { registerDeviceControlTools } from './tools/device-control.js';
 import { registerDeviceTools } from './tools/devices.js';
+import { registerFilesTools } from './tools/files.js';
+import { registerMailboxesTools } from './tools/mailboxes.js';
 import { registerManageFlowTool } from './tools/manage-flow.js';
+import { registerMessagesTools } from './tools/messages.js';
+import { registerNumbersTools } from './tools/numbers.js';
 import { registerPlatformCatalogTools } from './tools/platform-catalog.js';
 import { registerProxiesTools } from './tools/proxies.js';
 import { registerTaskTools } from './tools/tasks.js';
@@ -24,47 +23,25 @@ import { registerWebhookTools } from './tools/webhooks.js';
 import { registerWorkflowEventsTool } from './tools/workflow-events.js';
 import { registerWorkflowTools } from './tools/workflows.js';
 
-export const ALL_TOOL_NAMES = [
-    'files',
-    'messages',
-    'mailboxes',
-    'numbers',
-    'list_devices',
-    'get_device',
-    'get_device_screenshot',
-    'get_device_ui_state',
-    'list_apps_on_device',
-    'create_device',
-    'terminate_device',
-    'list_workflow_resources',
-    'get_workflow_resource',
-    'create_action',
-    'create_trigger',
-    'create_flow',
-    'manage_flow',
-    'workflow_events',
-    'webhooks',
-    'assistant',
-    'list_credentials',
-    'list_credential_packages',
-    'run_task',
-    'get_task',
-    'list_tasks',
-    'stop_task',
-    'send_task_message',
-    'get_task_media',
-    // Device recordings, screenshots and media sessions are operations of manage_device.
-    'manage_device',
-    'device_action',
-    'manage_device_apps',
-    'manage_device_files',
-    'configure_device',
-    'manage_esim',
-    'apps',
-    'manage_credentials',
-    'proxies',
-    'connect',
-    'platform_catalog',
+const TOOL_REGISTRATIONS = [
+    registerNumbersTools,
+    registerMailboxesTools,
+    registerMessagesTools,
+    registerFilesTools,
+    registerDeviceTools,
+    registerWorkflowTools,
+    registerManageFlowTool,
+    registerWorkflowEventsTool,
+    registerWebhookTools,
+    registerAssistantTool,
+    registerCredentialTools,
+    registerTaskTools,
+    registerDeviceControlTools,
+    registerAppsTools,
+    registerManageCredentialsTool,
+    registerProxiesTools,
+    registerConnectTools,
+    registerPlatformCatalogTools,
 ] as const;
 
 /**
@@ -76,38 +53,6 @@ export const ALL_TOOL_NAMES = [
 export function fullAccessPolicy(): Policy {
     return { toolAllowlist: new Set(ALL_TOOL_NAMES) };
 }
-
-/**
- * Maps a bundle tool name to the input field carrying its operation/resource
- * enum, for `Policy.operationAllowlist` dispatch-time gating. Tools not
- * listed here have no operation-level surface (their tool-level allowlist
- * gate is the only gate).
- */
-const OPERATION_FIELD: Readonly<Record<string, string>> = {
-    files: 'operation',
-    messages: 'operation',
-    mailboxes: 'operation',
-    numbers: 'operation',
-    webhooks: 'operation',
-    assistant: 'operation',
-    list_workflow_resources: 'resource',
-    get_workflow_resource: 'resource',
-    get_task: 'view',
-    get_task_media: 'kind',
-    manage_device: 'operation',
-    device_action: 'operation',
-    manage_device_apps: 'operation',
-    manage_device_files: 'operation',
-    configure_device: 'operation',
-    manage_esim: 'operation',
-    manage_flow: 'operation',
-    workflow_events: 'operation',
-    apps: 'operation',
-    manage_credentials: 'operation',
-    proxies: 'operation',
-    connect: 'operation',
-    platform_catalog: 'catalog',
-};
 
 export type ToolCallOutcome = 'ok' | 'error' | 'denied';
 
@@ -152,7 +97,7 @@ type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
  *   "Tool X not found" protocol error — never reaching this package's
  *   handler.
  * - Operation-level (same fail-closed principle, one level deeper): for a tool present in
- *   `OPERATION_FIELD`, if `policy.operationAllowlist` has an entry for that
+ *   `BUNDLE_TOOLS`, if `policy.operationAllowlist` has an entry for that
  *   tool name, the input field it names is checked before the real handler
  *   runs; a value outside the allowed set is rejected with a typed error
  *   result. (Tool authors additionally narrow the zod enum + description to
@@ -167,7 +112,8 @@ type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: ToolCallEvent) => void): void {
     const original = server.registerTool.bind(server);
     server.registerTool = ((name: string, def: unknown, handler: (...args: unknown[]) => unknown) => {
-        const opField = OPERATION_FIELD[name];
+        const bundle = BUNDLE_TOOLS[name as keyof typeof BUNDLE_TOOLS];
+        const opField = bundle?.field;
         const wrapped = async (...args: unknown[]) => {
             const startedAt = Date.now();
             const extra = args[1] as Extra | undefined;
@@ -188,26 +134,20 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
 
             if (opField) {
                 const allowedOps = ctx.policy.operationAllowlist?.get(name);
-                const enablesFlow =
-                    name === 'manage_flow' &&
-                    operation === 'update' &&
-                    (input?.enabled === true || input?.lifecycleStatus === 'enabled');
+                const entry = bundle?.operations.find((entry) => entry.op === operation);
                 if (
                     allowedOps &&
                     operation !== undefined &&
-                    (!allowedOps.has(operation) || (enablesFlow && !allowedOps.has('activate')))
+                    (!allowedOps.has(operation) || !allowedOps.has(entry?.effectiveOp?.(input ?? {}) ?? operation))
                 ) {
                     report('denied');
-                    return asErrorResult(
-                        `Operation "${operation}" of tool "${name}" is not available for this credential.`,
-                    );
+                    return asErrorResult(`Operation "${operation}" of tool "${name}" is not available for this credential.`);
                 }
             }
 
             try {
                 const result = await handler(...args);
-                const isToolResultError =
-                    !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
+                const isToolResultError = !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
                 report(isToolResultError ? 'error' : 'ok');
                 return result;
             } catch (err) {
@@ -256,24 +196,12 @@ export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): Mcp
     enforcePolicy(server, ctx, opts.onToolCall);
     opts.wrapRegisterTool?.(server);
 
-    registerNumbersTools(server, ctx);
-    registerMailboxesTools(server, ctx);
-    registerMessagesTools(server, ctx);
-    registerFilesTools(server, ctx);
-    registerDeviceTools(server, ctx);
-    registerWorkflowTools(server, ctx);
-    registerManageFlowTool(server, ctx);
-    registerWorkflowEventsTool(server, ctx);
-    registerWebhookTools(server, ctx);
-    registerAssistantTool(server, ctx);
-    registerCredentialTools(server, ctx);
-    registerTaskTools(server, ctx);
-    registerDeviceControlTools(server, ctx);
-    registerAppsTools(server, ctx);
-    registerManageCredentialsTool(server, ctx);
-    registerProxiesTools(server, ctx);
-    registerConnectTools(server, ctx);
-    registerPlatformCatalogTools(server, ctx);
+    for (const register of TOOL_REGISTRATIONS) register(server, ctx);
 
     return server;
 }
+
+type ToolNames<Metadata extends readonly { name: string }[]> = { readonly [K in keyof Metadata]: Metadata[K]['name'] };
+
+/** Canonical const tuple derived from static registration metadata, without constructing a server. */
+export const ALL_TOOL_NAMES = Object.freeze(TOOL_METADATA.map(({ name }) => name)) as ToolNames<typeof TOOL_METADATA>;

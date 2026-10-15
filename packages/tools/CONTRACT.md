@@ -2,8 +2,8 @@
 
 `@mobilerun/mcp-tools`' public contract is its tool surface: tool names,
 input schema shapes, and output shapes (the JSON each tool's `content[0].text`
-deserializes to). `src/__tests__/schema-snapshot.test.ts` pins the names +
-input schemas of the full-access tool surface (`fullAccessPolicy()`) so a
+deserializes to). `src/__tests__/profile-golden.test.ts` pins the allowed operations +
+input schemas of every profile and the full-profile tool descriptions so a
 drift shows up as a diff in review, not silently downstream.
 
 ## SemVer rules
@@ -78,7 +78,7 @@ When a change is intentional, regenerate the snapshot and review the diff
 like any other contract change:
 
 ```bash
-bun test packages/tools/src/__tests__/schema-snapshot.test.ts --update-snapshots
+bun test packages/tools/src/__tests__/profile-golden.test.ts --update-snapshots
 ```
 
 ## Current version and tools
@@ -92,12 +92,30 @@ and the no-commerce profile registers 37. Bundle schemas retain their full
 operation enums; descriptions advertise the credential's allowed subset,
 and dispatch rejects excluded values before invoking a backend.
 
-New tools use flat inputs. Additional operations on existing bundles use
-an operation-specific `params` object; device bundles keep `deviceId` at the
-top level. For example, `manage_flow` update accepts
-`{ "operation": "update", "params": { "flowId": "...", "name": "..." } }`.
+Bundle inputs use flat top-level fields. For example, `manage_flow` update
+accepts `{ "operation": "update", "flowId": "...", "name": "..." }`;
+device bundles also keep `deviceId` at the top level.
+
+Each bundle declares its operations once in a per-tool operation table.
+An entry contains its Zod input fields, dispatch function, doc string and
+`access: 'read' | 'write' | 'commerce' | 'full'`. Assistant writes use
+`full`, preserving their existing full-profile restriction.
+`sdkOp` derives parsing and text results for SDK passthroughs, with an optional
+result hook for image responses, redaction and checkout polling;
+`registerBundle` derives the enum, flat schema, description, field checks
+and dispatch. Shared overrides retain union constraints and custom field
+descriptions. Registration rejects conflicting non-shared field definitions,
+ignoring optional wrappers and description text. Input fields have stable alphabetical traversal for JSON
+Schema reference anchors; field errors follow table order and deduplicate
+names. The flow-update entry maps activation payloads to the activate gate.
+Static metadata in `src/tools/bundle-tools.ts` declares bundle selectors
+and standalone access. It also derives the canonical tool-name tuple
+without constructing a server. Add new bundles or standalone tools there;
+profile golden tests pin allowed operations and description-free input
+shapes for all three profiles, plus full-profile tool descriptions.
+
 Saved media downloads return short-lived signed URLs. Screenshot capture
-returns PNG bytes as base64, capped at 2 MB. Upload bytes are sent
+returns PNG bytes as base64, capped at 256 KB. Upload bytes are sent
 to signed upload URLs outside the tools. Credential retrieval exposes only
 field metadata, using the existing redaction mechanism.
 

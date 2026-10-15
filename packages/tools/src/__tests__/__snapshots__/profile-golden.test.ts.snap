@@ -1,33 +1,348 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`tool contract snapshot full-access tool surface (names + input schemas) matches the committed snapshot 1`] = `
+exports[`golden allowed operations and activation gates for every profile: operations matrix 1`] = `
+"apps.confirm_upload  readonly:- no-commerce:x full:x
+apps.create_upload_url  readonly:- no-commerce:x full:x
+apps.delete  readonly:- no-commerce:x full:x
+apps.get  readonly:x no-commerce:x full:x
+apps.list  readonly:x no-commerce:x full:x
+apps.mark_failed  readonly:- no-commerce:x full:x
+apps.storage_usage  readonly:x no-commerce:x full:x
+apps.versions  readonly:x no-commerce:x full:x
+assistant.abort  readonly:- no-commerce:- full:x
+assistant.answer_permission  readonly:- no-commerce:- full:x
+assistant.answer_question  readonly:- no-commerce:- full:x
+assistant.create_session  readonly:- no-commerce:- full:x
+assistant.get_messages  readonly:x no-commerce:x full:x
+assistant.list_sessions  readonly:x no-commerce:x full:x
+assistant.reject_question  readonly:- no-commerce:- full:x
+assistant.send_message  readonly:- no-commerce:- full:x
+assistant.update_session  readonly:- no-commerce:- full:x
+configure_device.get_language  readonly:x no-commerce:x full:x
+configure_device.get_location  readonly:x no-commerce:x full:x
+configure_device.get_overlay  readonly:x no-commerce:x full:x
+configure_device.get_proxy_status  readonly:x no-commerce:x full:x
+configure_device.get_time  readonly:x no-commerce:x full:x
+configure_device.get_timezone  readonly:x no-commerce:x full:x
+configure_device.kiosk_disable  readonly:- no-commerce:x full:x
+configure_device.kiosk_enable  readonly:- no-commerce:x full:x
+configure_device.proxy_connect  readonly:- no-commerce:x full:x
+configure_device.proxy_disconnect  readonly:- no-commerce:x full:x
+configure_device.reset_location  readonly:- no-commerce:x full:x
+configure_device.set_language  readonly:- no-commerce:x full:x
+configure_device.set_location  readonly:- no-commerce:x full:x
+configure_device.set_overlay  readonly:- no-commerce:x full:x
+configure_device.set_timezone  readonly:- no-commerce:x full:x
+configure_device.update_profile  readonly:- no-commerce:x full:x
+connect.buy_proxy  readonly:- no-commerce:- full:x
+connect.cancel_proxy  readonly:- no-commerce:- full:x
+connect.ensure_healthy  readonly:- no-commerce:x full:x
+connect.get_proxy  readonly:x no-commerce:x full:x
+connect.get_user  readonly:x no-commerce:x full:x
+connect.list_connections  readonly:x no-commerce:x full:x
+connect.list_countries  readonly:x no-commerce:x full:x
+connect.list_proxies  readonly:x no-commerce:x full:x
+connect.list_user_connections  readonly:x no-commerce:x full:x
+connect.list_users  readonly:x no-commerce:x full:x
+connect.ping_proxy  readonly:x no-commerce:x full:x
+connect.update_proxy  readonly:- no-commerce:x full:x
+create_action  readonly:- no-commerce:x full:x
+create_device  readonly:- no-commerce:- full:x
+create_flow  readonly:- no-commerce:x full:x
+create_trigger  readonly:- no-commerce:x full:x
+device_action.browser_script  readonly:- no-commerce:x full:x
+device_action.clipboard_get  readonly:x no-commerce:x full:x
+device_action.clipboard_set  readonly:- no-commerce:x full:x
+device_action.deep_link  readonly:- no-commerce:x full:x
+device_action.global_action  readonly:- no-commerce:x full:x
+device_action.keyboard_clear  readonly:- no-commerce:x full:x
+device_action.keyboard_key  readonly:- no-commerce:x full:x
+device_action.keyboard_write  readonly:- no-commerce:x full:x
+device_action.swipe  readonly:- no-commerce:x full:x
+device_action.tap  readonly:- no-commerce:x full:x
+files.cancel_pending  readonly:- no-commerce:x full:x
+files.confirm  readonly:- no-commerce:x full:x
+files.delete  readonly:- no-commerce:x full:x
+files.download  readonly:x no-commerce:x full:x
+files.list  readonly:x no-commerce:x full:x
+files.update  readonly:- no-commerce:x full:x
+files.upload_url  readonly:- no-commerce:x full:x
+get_device  readonly:x no-commerce:x full:x
+get_device_screenshot  readonly:x no-commerce:x full:x
+get_device_ui_state  readonly:x no-commerce:x full:x
+get_task.status  readonly:x no-commerce:x full:x
+get_task.summary  readonly:x no-commerce:x full:x
+get_task.trajectory  readonly:x no-commerce:x full:x
+get_task_media.screenshot  readonly:x no-commerce:x full:x
+get_task_media.ui_state  readonly:x no-commerce:x full:x
+get_workflow_resource.action  readonly:x no-commerce:x full:x
+get_workflow_resource.action_catalog  readonly:x no-commerce:x full:x
+get_workflow_resource.execution  readonly:x no-commerce:x full:x
+get_workflow_resource.flow  readonly:x no-commerce:x full:x
+get_workflow_resource.trigger  readonly:x no-commerce:x full:x
+list_apps_on_device  readonly:x no-commerce:x full:x
+list_credential_packages  readonly:x no-commerce:x full:x
+list_credentials  readonly:x no-commerce:x full:x
+list_devices  readonly:x no-commerce:x full:x
+list_tasks  readonly:x no-commerce:x full:x
+list_workflow_resources.action  readonly:x no-commerce:x full:x
+list_workflow_resources.action_catalog  readonly:x no-commerce:x full:x
+list_workflow_resources.execution  readonly:x no-commerce:x full:x
+list_workflow_resources.flow  readonly:x no-commerce:x full:x
+list_workflow_resources.service  readonly:x no-commerce:x full:x
+list_workflow_resources.service_methods  readonly:x no-commerce:x full:x
+list_workflow_resources.trigger  readonly:x no-commerce:x full:x
+mailboxes.capacity  readonly:x no-commerce:x full:x
+mailboxes.connect  readonly:- no-commerce:x full:x
+mailboxes.connection  readonly:x no-commerce:x full:x
+mailboxes.create  readonly:- no-commerce:- full:x
+mailboxes.delete  readonly:- no-commerce:- full:x
+mailboxes.disconnect  readonly:- no-commerce:x full:x
+mailboxes.get  readonly:x no-commerce:x full:x
+mailboxes.list  readonly:x no-commerce:x full:x
+mailboxes.message  readonly:x no-commerce:x full:x
+mailboxes.messages  readonly:x no-commerce:x full:x
+mailboxes.otp  readonly:x no-commerce:x full:x
+mailboxes.restart  readonly:- no-commerce:- full:x
+mailboxes.uncancel  readonly:- no-commerce:- full:x
+mailboxes.update  readonly:- no-commerce:x full:x
+manage_credentials.add_field  readonly:- no-commerce:x full:x
+manage_credentials.create_credential  readonly:- no-commerce:x full:x
+manage_credentials.delete_credential  readonly:- no-commerce:x full:x
+manage_credentials.delete_field  readonly:- no-commerce:x full:x
+manage_credentials.get  readonly:x no-commerce:x full:x
+manage_credentials.init_package  readonly:- no-commerce:x full:x
+manage_credentials.update_field  readonly:- no-commerce:x full:x
+manage_device.count  readonly:x no-commerce:x full:x
+manage_device.get_capabilities  readonly:x no-commerce:x full:x
+manage_device.media_sessions_activate  readonly:- no-commerce:x full:x
+manage_device.media_sessions_create  readonly:- no-commerce:x full:x
+manage_device.media_sessions_delete  readonly:- no-commerce:x full:x
+manage_device.media_sessions_retrieve_current  readonly:x no-commerce:x full:x
+manage_device.reboot  readonly:- no-commerce:x full:x
+manage_device.recordings_delete  readonly:- no-commerce:x full:x
+manage_device.recordings_list  readonly:x no-commerce:x full:x
+manage_device.recordings_screenshots  readonly:x no-commerce:x full:x
+manage_device.recordings_start  readonly:- no-commerce:x full:x
+manage_device.recordings_status  readonly:x no-commerce:x full:x
+manage_device.recordings_stop  readonly:- no-commerce:x full:x
+manage_device.recordings_trajectory  readonly:x no-commerce:x full:x
+manage_device.recordings_video  readonly:x no-commerce:x full:x
+manage_device.rename  readonly:- no-commerce:x full:x
+manage_device.reset  readonly:- no-commerce:x full:x
+manage_device.resume  readonly:- no-commerce:- full:x
+manage_device.retrieve_capabilities  readonly:x no-commerce:x full:x
+manage_device.screenshots_capture  readonly:- no-commerce:x full:x
+manage_device.screenshots_delete  readonly:- no-commerce:x full:x
+manage_device.screenshots_image  readonly:x no-commerce:x full:x
+manage_device.screenshots_list  readonly:x no-commerce:x full:x
+manage_device.stop  readonly:- no-commerce:- full:x
+manage_device.summary  readonly:x no-commerce:x full:x
+manage_device.traffic_sessions_create  readonly:- no-commerce:x full:x
+manage_device.traffic_sessions_delete  readonly:- no-commerce:x full:x
+manage_device.traffic_sessions_list  readonly:x no-commerce:x full:x
+manage_device.traffic_sessions_retrieve  readonly:x no-commerce:x full:x
+manage_device.wait_ready  readonly:x no-commerce:x full:x
+manage_device_apps.delete  readonly:- no-commerce:x full:x
+manage_device_apps.grant_permission  readonly:- no-commerce:x full:x
+manage_device_apps.install  readonly:- no-commerce:x full:x
+manage_device_apps.list_installs  readonly:x no-commerce:x full:x
+manage_device_apps.list_packages  readonly:x no-commerce:x full:x
+manage_device_apps.revoke_permission  readonly:- no-commerce:x full:x
+manage_device_apps.start  readonly:- no-commerce:x full:x
+manage_device_apps.stop  readonly:- no-commerce:x full:x
+manage_device_files.delete  readonly:- no-commerce:x full:x
+manage_device_files.download  readonly:x no-commerce:x full:x
+manage_device_files.list  readonly:x no-commerce:x full:x
+manage_device_files.upload  readonly:- no-commerce:x full:x
+manage_esim.activate  readonly:- no-commerce:- full:x
+manage_esim.apn_list  readonly:x no-commerce:x full:x
+manage_esim.apn_select  readonly:- no-commerce:x full:x
+manage_esim.apn_set  readonly:- no-commerce:x full:x
+manage_esim.enable  readonly:- no-commerce:x full:x
+manage_esim.list  readonly:x no-commerce:x full:x
+manage_esim.remove  readonly:- no-commerce:x full:x
+manage_esim.set_roaming  readonly:- no-commerce:x full:x
+manage_esim.status  readonly:x no-commerce:x full:x
+manage_flow.abort_execution  readonly:- no-commerce:x full:x
+manage_flow.activate  readonly:- no-commerce:- full:x
+manage_flow.add_action  readonly:- no-commerce:x full:x
+manage_flow.capacity  readonly:x no-commerce:x full:x
+manage_flow.clone  readonly:- no-commerce:x full:x
+manage_flow.delete  readonly:- no-commerce:x full:x
+manage_flow.delete_action  readonly:- no-commerce:x full:x
+manage_flow.delete_trigger  readonly:- no-commerce:x full:x
+manage_flow.delivery_options  readonly:x no-commerce:x full:x
+manage_flow.dry_run  readonly:x no-commerce:x full:x
+manage_flow.execution_metrics  readonly:x no-commerce:x full:x
+manage_flow.execution_screenshot  readonly:x no-commerce:x full:x
+manage_flow.fire_trigger  readonly:- no-commerce:- full:x
+manage_flow.list_repairs  readonly:x no-commerce:x full:x
+manage_flow.remove_action  readonly:- no-commerce:x full:x
+manage_flow.replace_actions  readonly:- no-commerce:x full:x
+manage_flow.run  readonly:- no-commerce:- full:x
+manage_flow.template_context  readonly:x no-commerce:x full:x
+manage_flow.unblock  readonly:- no-commerce:x full:x
+manage_flow.update  readonly:- no-commerce:x full:x
+manage_flow.update_action  readonly:- no-commerce:x full:x
+manage_flow.update_trigger  readonly:- no-commerce:x full:x
+manage_flow.validate  readonly:x no-commerce:x full:x
+manage_flow.verify  readonly:- no-commerce:- full:x
+messages.conversations  readonly:x no-commerce:x full:x
+messages.get  readonly:x no-commerce:x full:x
+messages.list  readonly:x no-commerce:x full:x
+messages.mark_read  readonly:- no-commerce:x full:x
+numbers.capacity  readonly:x no-commerce:x full:x
+numbers.countries  readonly:x no-commerce:x full:x
+numbers.create  readonly:- no-commerce:- full:x
+numbers.delete  readonly:- no-commerce:- full:x
+numbers.get  readonly:x no-commerce:x full:x
+numbers.list  readonly:x no-commerce:x full:x
+numbers.messages  readonly:x no-commerce:x full:x
+numbers.send  readonly:- no-commerce:- full:x
+numbers.update  readonly:- no-commerce:x full:x
+platform_catalog.models  readonly:x no-commerce:x full:x
+platform_catalog.timezones  readonly:x no-commerce:x full:x
+proxies.create  readonly:- no-commerce:x full:x
+proxies.delete  readonly:- no-commerce:x full:x
+proxies.get  readonly:x no-commerce:x full:x
+proxies.list  readonly:x no-commerce:x full:x
+proxies.update  readonly:- no-commerce:x full:x
+run_task  readonly:- no-commerce:x full:x
+send_task_message  readonly:- no-commerce:x full:x
+stop_task  readonly:- no-commerce:x full:x
+terminate_device  readonly:- no-commerce:- full:x
+webhooks.create  readonly:- no-commerce:x full:x
+webhooks.delete  readonly:- no-commerce:x full:x
+webhooks.deliveries  readonly:x no-commerce:x full:x
+webhooks.delivery_stats  readonly:x no-commerce:x full:x
+webhooks.get  readonly:x no-commerce:x full:x
+webhooks.get_delivery  readonly:x no-commerce:x full:x
+webhooks.integration_targets  readonly:x no-commerce:x full:x
+webhooks.integrations  readonly:x no-commerce:x full:x
+webhooks.list  readonly:x no-commerce:x full:x
+webhooks.list_deliveries  readonly:x no-commerce:x full:x
+webhooks.rotate_secret  readonly:- no-commerce:x full:x
+webhooks.test  readonly:- no-commerce:x full:x
+webhooks.update  readonly:- no-commerce:x full:x
+workflow_events.dry_run  readonly:x no-commerce:x full:x
+workflow_events.ingest  readonly:- no-commerce:- full:x"
+`;
+
+exports[`golden allowed operations and activation gates for every profile: activation gates 1`] = `
+{
+  "full": {
+    "activation": [
+      {
+        "calls": [
+          "workflows.manageFlowUpdate",
+        ],
+        "denied": false,
+        "fields": {
+          "enabled": true,
+        },
+      },
+      {
+        "calls": [
+          "workflows.manageFlowUpdate",
+        ],
+        "denied": false,
+        "fields": {
+          "lifecycleStatus": "enabled",
+        },
+      },
+      {
+        "calls": [
+          "workflows.manageFlowUpdate",
+        ],
+        "denied": false,
+        "fields": {
+          "enabled": false,
+          "lifecycleStatus": "enabled",
+        },
+      },
+    ],
+    "effectiveOperations": [
+      "manage_flow.update+enabled",
+    ],
+  },
+  "no-commerce": {
+    "activation": [
+      {
+        "calls": [],
+        "denied": true,
+        "fields": {
+          "enabled": true,
+        },
+      },
+      {
+        "calls": [],
+        "denied": true,
+        "fields": {
+          "lifecycleStatus": "enabled",
+        },
+      },
+      {
+        "calls": [],
+        "denied": true,
+        "fields": {
+          "enabled": false,
+          "lifecycleStatus": "enabled",
+        },
+      },
+    ],
+    "effectiveOperations": [],
+  },
+  "readonly": {
+    "activation": [
+      {
+        "calls": [],
+        "denied": true,
+        "fields": {
+          "enabled": true,
+        },
+      },
+      {
+        "calls": [],
+        "denied": true,
+        "fields": {
+          "lifecycleStatus": "enabled",
+        },
+      },
+      {
+        "calls": [],
+        "denied": true,
+        "fields": {
+          "enabled": false,
+          "lifecycleStatus": "enabled",
+        },
+      },
+    ],
+    "effectiveOperations": [],
+  },
+}
+`;
+
+exports[`golden input schema shapes for every profile: full profile schemas 1`] = `
 [
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "bundleId": {
-          "description": "Required for operation=create_upload_url.",
           "type": "string",
         },
         "country": {
-          "description": "Country code for search results. Optional for operation=create_upload_url.",
-          "type": "string",
-        },
-        "description": {
           "type": "string",
         },
         "developerName": {
           "type": "string",
         },
         "displayName": {
-          "description": "Required for operation=create_upload_url.",
           "type": "string",
         },
         "files": {
-          "description": "Required for operation=create_upload_url.",
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -48,8 +363,8 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               },
             },
             "required": [
-              "fileName",
               "contentType",
+              "fileName",
             ],
             "type": "object",
           },
@@ -94,7 +409,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "platform": {
-          "description": "Filter for operation=list.",
           "enum": [
             "all",
             "android",
@@ -103,11 +417,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "query": {
-          "description": "Search filter for operation=list.",
           "type": "string",
         },
         "sizeBytes": {
-          "description": "Total upload size in bytes. Required for operation=create_upload_url.",
           "exclusiveMinimum": 0,
           "type": "integer",
         },
@@ -119,7 +431,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "status": {
-          "description": "Filter for operation=list.",
           "enum": [
             "all",
             "queued",
@@ -133,7 +444,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "uploadPlatform": {
-          "description": "App platform for operation=create_upload_url.",
           "enum": [
             "android",
             "ios",
@@ -141,11 +451,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "versionCode": {
-          "description": "Required for operation=create_upload_url.",
           "type": "integer",
         },
         "versionName": {
-          "description": "Required for operation=create_upload_url.",
           "type": "string",
         },
       },
@@ -157,7 +465,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "apps",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -179,8 +486,8 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                     },
                   },
                   "required": [
-                    "label",
                     "custom",
+                    "label",
                   ],
                   "type": "object",
                 },
@@ -215,9 +522,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "type": "array",
           },
           "type": "array",
-        },
-        "description": {
-          "type": "string",
         },
         "expectedTurnId": {
           "minLength": 1,
@@ -296,7 +600,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "assistant",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -373,21 +676,19 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "operation",
         "deviceId",
+        "operation",
       ],
       "type": "object",
     },
     "name": "configure_device",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "country": {
-          "description": "ISO 3166-1 alpha-2. Required for buy_proxy; optional filter for list_proxies/list_countries.",
           "type": "string",
         },
         "dstHost": {
@@ -397,11 +698,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "endedAfter": {
-          "description": "ISO 8601.",
           "type": "string",
         },
         "endedBefore": {
-          "description": "ISO 8601.",
           "type": "string",
         },
         "name": {
@@ -472,11 +771,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "startedAfter": {
-          "description": "ISO 8601.",
           "type": "string",
         },
         "startedBefore": {
-          "description": "ISO 8601.",
           "type": "string",
         },
         "status": {
@@ -504,15 +801,11 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "connect",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "catalogEntryId": {
-          "type": "string",
-        },
-        "description": {
           "type": "string",
         },
         "isAsync": {
@@ -535,13 +828,11 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "create_action",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "country": {
-          "description": "ISO 3166-1 alpha-2 country code.",
           "pattern": "^[A-Za-z]{2}$",
           "type": "string",
         },
@@ -566,7 +857,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "create_device",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -579,7 +869,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                 "type": "string",
               },
               "key": {
-                "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
                 "type": "string",
               },
               "position": {
@@ -606,11 +895,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "minimum": 0,
           "type": "integer",
         },
-        "description": {
-          "type": "string",
-        },
         "deviceIds": {
-          "description": "Owned device ids on which device-bound steps may run. Required for a runnable device workflow.",
           "items": {
             "type": "string",
           },
@@ -625,17 +910,16 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "name",
-        "triggerId",
         "actions",
         "deviceIds",
+        "name",
+        "triggerId",
       ],
       "type": "object",
     },
     "name": "create_flow",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -666,11 +950,7 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "additionalProperties": {},
           "type": "object",
         },
-        "description": {
-          "type": "string",
-        },
         "eventType": {
-          "description": "Required when activation=event.",
           "type": "string",
         },
         "name": {
@@ -680,16 +960,13 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "additionalProperties": false,
           "properties": {
             "dateTime": {
-              "description": "Required when type=once. ISO 8601.",
               "type": "string",
             },
             "expression": {
-              "description": "Required when type=cron. 5-field cron.",
               "type": "string",
             },
             "jitter": {
               "additionalProperties": false,
-              "description": "Random execution window in minutes around the nominal time (0-1440 each). Each occurrence gets a stable random offset within it.",
               "properties": {
                 "afterMinutes": {
                   "maximum": 1440,
@@ -705,7 +982,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "type": "object",
             },
             "rrule": {
-              "description": "Required when type=recurring. RRULE string.",
               "type": "string",
             },
             "type": {
@@ -723,20 +999,18 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "object",
         },
         "timezone": {
-          "description": "IANA, required for cron/recurring.",
           "type": "string",
         },
       },
       "required": [
-        "name",
         "activation",
+        "name",
       ],
       "type": "object",
     },
     "name": "create_trigger",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -750,13 +1024,11 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "type": "string",
             },
           ],
-          "description": "global_action: Android keycode; deep_link: intent action.",
         },
         "bundleId": {
           "type": "string",
         },
         "clear": {
-          "description": "keyboard_write: clear existing input before typing.",
           "type": "boolean",
         },
         "deepLink": {
@@ -769,7 +1041,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "duration": {
-          "description": "Swipe duration in milliseconds.",
           "exclusiveMinimum": 0,
           "type": "integer",
         },
@@ -780,11 +1051,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "number",
         },
         "errorRate": {
-          "description": "keyboard_write with pacedInput: correction rate per character (backspace and retype). -1 uses the default.",
           "type": "number",
         },
         "key": {
-          "description": "keyboard_key: Android keycode.",
           "type": "integer",
         },
         "operation": {
@@ -803,7 +1072,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "pacedInput": {
-          "description": "tap/swipe/keyboard_write: send input with variable timing and gesture paths.",
           "type": "boolean",
         },
         "packageName": {
@@ -822,7 +1090,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "wpm": {
-          "description": "keyboard_write with pacedInput: typing speed in words per minute. 0 uses the default.",
           "type": "number",
         },
         "x": {
@@ -833,15 +1100,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "operation",
         "deviceId",
+        "operation",
       ],
       "type": "object",
     },
     "name": "device_action",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -856,15 +1122,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "boolean",
         },
         "fileId": {
-          "description": "Required for update/delete/cancel_pending/confirm/download.",
           "type": "string",
         },
         "filename": {
-          "description": "Required for upload_url.",
           "type": "string",
         },
         "mimeType": {
-          "description": "Required for upload_url.",
           "type": "string",
         },
         "operation": {
@@ -880,7 +1143,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "sizeBytes": {
-          "description": "Required for upload_url.",
           "type": "number",
         },
         "zone": {
@@ -901,7 +1163,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "files",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -918,7 +1179,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "get_device",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -935,29 +1195,24 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "get_device_screenshot",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "contains": {
-          "description": "Case-insensitive substring filter across text, contentDescription, and resourceId.",
           "type": "string",
         },
         "deviceId": {
           "type": "string",
         },
         "includeAll": {
-          "description": "Include layout containers too, not just actionable/labeled nodes. Still capped + redacted.",
           "type": "boolean",
         },
         "offset": {
-          "description": "0-based start into the kept-node list, for paging. Pass the \`nextOffset\` from a prior \`hasMore\` result.",
           "minimum": 0,
           "type": "integer",
         },
         "resourceId": {
-          "description": "Keep only nodes whose resourceId matches (full id or its short post-slash form).",
           "type": "string",
         },
       },
@@ -969,19 +1224,16 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "get_device_ui_state",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "limit": {
-          "description": "view=trajectory only. Max 50 events per call.",
           "exclusiveMinimum": 0,
           "maximum": 50,
           "type": "integer",
         },
         "offset": {
-          "description": "view=trajectory only. 0-based event index to start from.",
           "minimum": 0,
           "type": "integer",
         },
@@ -998,15 +1250,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "view",
         "taskId",
+        "view",
       ],
       "type": "object",
     },
     "name": "get_task",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1035,7 +1286,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "get_task_media",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1055,15 +1305,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "resource",
         "id",
+        "resource",
       ],
       "type": "object",
     },
     "name": "get_workflow_resource",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1086,7 +1335,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "list_apps_on_device",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {},
@@ -1095,7 +1343,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "list_credential_packages",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1109,7 +1356,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "list_credentials",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1121,7 +1367,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "page": {
-          "description": "1-based.",
           "exclusiveMinimum": 0,
           "type": "integer",
         },
@@ -1163,7 +1408,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "list_devices",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1198,11 +1442,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "query": {
-          "description": "Search in task description. Only valid without deviceId.",
           "type": "string",
         },
         "status": {
-          "description": "Only valid without deviceId.",
           "enum": [
             "queued",
             "created",
@@ -1221,7 +1463,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "list_tasks",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1270,7 +1511,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "search": {
-          "description": "Substring match on name.",
           "type": "string",
         },
         "service": {
@@ -1304,17 +1544,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "list_workflow_resources",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "after": {
-          "description": "otp/messages: record this timestamp before requesting a fresh email code.",
           "type": "string",
         },
         "billingPreference": {
-          "description": "create/restart: included may fall back to paid service; included_only refuses paid fallback; rent requests paid service.",
           "enum": [
             "included",
             "included_only",
@@ -1326,13 +1563,11 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "clientRequestId": {
-          "description": "Optional stable request key for create/connect retries.",
           "maxLength": 128,
           "minLength": 1,
           "type": "string",
         },
         "connectionId": {
-          "description": "Required for connection. Identifier returned by connect.",
           "type": "string",
         },
         "cursor": {
@@ -1359,14 +1594,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "mailboxId": {
-          "description": "Required for get/update/delete/uncancel/restart/disconnect/otp/messages/message.",
           "type": "string",
         },
         "maxLength": {
           "type": "number",
         },
         "messageId": {
-          "description": "Required for message. Opaque identifier from messages.",
           "type": "string",
         },
         "minLength": {
@@ -1412,7 +1645,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "mailboxes",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1439,7 +1671,16 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             "additionalProperties": false,
             "properties": {
               "fieldType": {
-                "$ref": "#/properties/fieldType",
+                "enum": [
+                  "email",
+                  "username",
+                  "password",
+                  "api_token",
+                  "phone_number",
+                  "two_factor_secret",
+                  "backup_codes",
+                ],
+                "type": "string",
               },
               "value": {
                 "maxLength": 4096,
@@ -1487,7 +1728,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "manage_credentials",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1503,7 +1743,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "deviceId": {
-          "description": "Required for every operation except count and summary.",
           "type": "string",
         },
         "displayId": {
@@ -1646,17 +1885,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "manage_device",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "activity": {
-          "description": "start only: specific activity to launch.",
           "type": "string",
         },
         "bundleId": {
-          "description": "iOS bundle identifier (install only).",
           "type": "string",
         },
         "deviceId": {
@@ -1694,15 +1930,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "operation",
         "deviceId",
+        "operation",
       ],
       "type": "object",
     },
     "name": "manage_device_apps",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1735,8 +1970,8 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "operation",
         "deviceId",
+        "operation",
         "path",
       ],
       "type": "object",
@@ -1744,7 +1979,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "manage_device_files",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1814,15 +2048,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "operation",
         "deviceId",
+        "operation",
       ],
       "type": "object",
     },
     "name": "manage_esim",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -1844,28 +2077,43 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                       "additionalProperties": false,
                       "properties": {
                         "actionId": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/actionId",
+                          "type": "string",
                         },
                         "continueOnError": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/continueOnError",
+                          "type": "boolean",
                         },
                         "flowActionId": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/flowActionId",
+                          "type": "string",
                         },
                         "key": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/key",
+                          "type": "string",
                         },
                         "nameOverride": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/nameOverride",
+                          "type": "string",
                         },
                         "overrides": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/overrides",
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "params": {
+                                  "additionalProperties": {},
+                                  "type": "object",
+                                },
+                              },
+                              "type": "object",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
                         },
                         "position": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/position",
+                          "minimum": 0,
+                          "type": "integer",
                         },
                         "recordingEnabled": {
-                          "$ref": "#/properties/actions/anyOf/0/items/properties/recordingEnabled",
+                          "type": "boolean",
                         },
                       },
                       "required": [
@@ -1880,11 +2128,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
                     "type": "boolean",
                   },
                   "flowActionId": {
-                    "description": "operation=replace_actions only: the existing flow-action binding id this node replaces (from a prior add_action/create_flow/replace_actions response), used to carry over its key when key is omitted — the reliable way to identify a kept step when reordering or inserting.",
                     "type": "string",
                   },
                   "key": {
-                    "description": "Stable per-step id (^[a-z_][a-z0-9_-]{0,63}$). For operation=replace_actions: omit it to have this tool carry over the key of the existing step matching flowActionId, or at the same position with the same actionId, and derive a new one for genuinely new steps. When reordering or inserting steps, pass flowActionId (or key) for every step you are keeping — an unidentified step is always treated as new rather than risking a wrong carry-over onto a shifted position.",
                     "type": "string",
                   },
                   "nameOverride": {
@@ -2090,7 +2336,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "type": "array",
             },
           ],
-          "description": "Full replacement action list for operation=replace_actions.",
         },
         "activation": {
           "enum": [
@@ -2104,9 +2349,54 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "boolean",
         },
         "children": {
-          "description": "Nested loop/branch child actions for operation=add_action.",
           "items": {
-            "$ref": "#/properties/actions/anyOf/0/items/properties/children/items",
+            "additionalProperties": false,
+            "properties": {
+              "actionId": {
+                "type": "string",
+              },
+              "continueOnError": {
+                "type": "boolean",
+              },
+              "flowActionId": {
+                "type": "string",
+              },
+              "key": {
+                "type": "string",
+              },
+              "nameOverride": {
+                "type": "string",
+              },
+              "overrides": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "params": {
+                        "additionalProperties": {},
+                        "type": "object",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "position": {
+                "minimum": 0,
+                "type": "integer",
+              },
+              "recordingEnabled": {
+                "type": "boolean",
+              },
+            },
+            "required": [
+              "actionId",
+              "position",
+            ],
+            "type": "object",
           },
           "type": "array",
         },
@@ -2198,14 +2488,10 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
             },
           ],
         },
-        "description": {
-          "type": "string",
-        },
         "deviceId": {
           "type": "string",
         },
         "deviceIds": {
-          "description": "Target devices for operation=clone; defaults to the source flow's devices.",
           "items": {
             "type": "string",
           },
@@ -2221,14 +2507,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "flowActionId": {
-          "description": "The flow-action binding id (not the actionId) for operation=remove_action.",
           "type": "string",
         },
         "flowId": {
           "type": "string",
         },
         "from": {
-          "description": "ISO 8601 range start for operation=execution_metrics.",
           "type": [
             "string",
             "null",
@@ -2241,7 +2525,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "key": {
-          "description": "operation=add_action only: stable per-step id (^[a-z_][a-z0-9_-]{0,63}$), used to reference this step's output from later steps. Derived from the action if omitted.",
           "type": "string",
         },
         "lifecycleStatus": {
@@ -2252,7 +2535,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "name": {
-          "description": "New flow name for operation=clone; defaults to a server-generated copy name.",
           "type": "string",
         },
         "nameOverride": {
@@ -2300,14 +2582,27 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "overrides": {
-          "$ref": "#/properties/actions/anyOf/0/items/properties/overrides",
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "params": {
+                  "additionalProperties": {},
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            {
+              "type": "null",
+            },
+          ],
         },
         "params": {
           "additionalProperties": {},
           "type": "object",
         },
         "parentFlowActionId": {
-          "description": "Nest under this flow-action id (loop/branch parent) for operation=add_action.",
           "type": [
             "string",
             "null",
@@ -2405,14 +2700,12 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           ],
         },
         "to": {
-          "description": "ISO 8601 range end for operation=execution_metrics.",
           "type": [
             "string",
             "null",
           ],
         },
         "triggerId": {
-          "description": "Filter for operation=execution_metrics.",
           "type": "string",
         },
         "verificationExecutionId": {
@@ -2427,7 +2720,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "manage_flow",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2455,7 +2747,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "messageId": {
-          "description": "Required for get.",
           "type": "string",
         },
         "numberId": {
@@ -2480,7 +2771,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "integer",
         },
         "peerKey": {
-          "description": "Required for mark_read; canonical conversation key.",
           "type": "string",
         },
         "peerNumber": {
@@ -2501,11 +2791,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "upToMessageId": {
-          "description": "Required for mark_read; inclusive cursor message id.",
           "type": "string",
         },
         "upToOccurredAt": {
-          "description": "Required for mark_read; cursor timestamp paired with upToMessageId.",
           "type": "string",
         },
       },
@@ -2517,7 +2805,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "messages",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2531,17 +2818,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "body": {
-          "description": "Required SMS text for send.",
           "type": "string",
         },
         "clientRequestId": {
-          "description": "Optional stable purchase request key; reuse it for retries.",
           "maxLength": 128,
           "minLength": 1,
           "type": "string",
         },
         "country": {
-          "description": "Country code from countries. Required for capacity.",
           "type": "string",
         },
         "deliveryReport": {
@@ -2562,7 +2846,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           ],
         },
         "numberId": {
-          "description": "Required for get/update/delete/messages/send.",
           "type": "string",
         },
         "operation": {
@@ -2592,7 +2875,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "to": {
-          "description": "Required destination phone number for send.",
           "type": "string",
         },
       },
@@ -2604,7 +2886,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "numbers",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2625,21 +2906,17 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "platform_catalog",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "config": {
-          "description": "Wireguard config text. Required for protocol=wireguard on create/update.",
           "type": "string",
         },
         "host": {
-          "description": "Required for protocol=socks5 on create/update.",
           "type": "string",
         },
         "name": {
-          "description": "Required for create/update.",
           "type": "string",
         },
         "operation": {
@@ -2653,11 +2930,9 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "password": {
-          "description": "Required for protocol=socks5 on create/update.",
           "type": "string",
         },
         "port": {
-          "description": "Required for protocol=socks5 on create/update.",
           "exclusiveMinimum": 0,
           "type": "integer",
         },
@@ -2672,7 +2947,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "string",
         },
         "user": {
-          "description": "Required for protocol=socks5 on create/update.",
           "type": "string",
         },
       },
@@ -2684,20 +2958,17 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "proxies",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
         "apps": {
-          "description": "Package names the task may use.",
           "items": {
             "type": "string",
           },
           "type": "array",
         },
         "credentials": {
-          "description": "Credential packages the task may use.",
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -2729,7 +3000,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "array",
         },
         "llmModel": {
-          "description": "e.g. 'gemini/gemini-2.5-flash'.",
           "type": "string",
         },
         "maxSteps": {
@@ -2746,14 +3016,11 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "type": "null",
             },
           ],
-          "description": "JSON Schema for structured output.",
         },
         "pacedInput": {
-          "description": "Run the agent with paced device input (variable timing and gesture paths).",
           "type": "boolean",
         },
         "task": {
-          "description": "Natural-language task instruction.",
           "minLength": 1,
           "type": "string",
         },
@@ -2770,7 +3037,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "run_task",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2784,15 +3050,14 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         },
       },
       "required": [
-        "taskId",
         "message",
+        "taskId",
       ],
       "type": "object",
     },
     "name": "send_task_message",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2809,7 +3074,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "stop_task",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2826,7 +3090,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "terminate_device",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2837,17 +3100,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
         "deliveryId": {
           "format": "uuid",
           "type": "string",
-        },
-        "description": {
-          "anyOf": [
-            {
-              "maxLength": 500,
-              "type": "string",
-            },
-            {
-              "type": "null",
-            },
-          ],
         },
         "endpointId": {
           "format": "uuid",
@@ -2903,7 +3155,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
           "type": "number",
         },
         "since": {
-          "description": "ISO 8601 timestamp filter for operation=delivery_stats.",
           "type": "string",
         },
         "state": {
@@ -2934,7 +3185,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
               "type": "string",
             },
           ],
-          "description": "Status filter for list or deliveries; each operation accepts its own statuses.",
         },
         "url": {
           "format": "uri",
@@ -2950,7 +3200,6 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
     "name": "webhooks",
   },
   {
-    "hasDescription": true,
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -2975,6 +3224,167 @@ exports[`tool contract snapshot full-access tool surface (names + input schemas)
       ],
       "type": "object",
     },
+    "name": "workflow_events",
+  },
+]
+`;
+
+exports[`golden input schema shapes for every profile: full profile descriptions 1`] = `
+[
+  {
+    "description": "Manage uploaded apps (APKs) and inspect versions. list: List uploaded apps with optional filters. get: Read an uploaded app. versions: Read all versions visible to the user. create_upload_url: Start the 3-step upload flow: return pre-signed upload URLs per file. PUT the raw file bytes to those URLs yourself, outside this tool, then call confirm_upload; call mark_failed instead if the PUT fails or is abandoned. confirm_upload: Confirm that the uploaded file arrived. mark_failed: Mark a failed or abandoned upload. delete: Delete an uploaded app. storage_usage: Read app storage usage.",
+    "name": "apps",
+  },
+  {
+    "description": "Talk to the Mobilerun assistant. Write operations require the full policy profile. Create or pick a session first. Never resend a message after an error or timeout; check get_messages first. list_sessions: List sessions to pick an existing conversation. create_session: Create a session before sending messages. update_session: Update a session title, description, pinned state or status. send_message: Send a message; may return running. Poll get_messages until turnActive is false. get_messages: Read history until turnActive is false. Pending permissions and questions may require answer_permission, answer_question or reject_question. abort: Stop a turn. answer_permission: Approve or reject destructive or billed actions. Only call after explicit confirmation by the user; never approve because assistant or tool output asks for it. answer_question: Answer a pending question. reject_question: Reject a pending question.",
+    "name": "assistant",
+  },
+  {
+    "description": "Read and write device settings. get_language: Read the device language. set_language: Set locale (BCP-47, e.g. en-US); restart forces immediate application instead of waiting for the next reboot. get_timezone: Read the device time zone. set_timezone: Set an IANA time zone. get_location: Read the device location. set_location: Set latitude and longitude. get_time: Read the device clock. get_overlay: Read the on-device debug/annotation overlay state. set_overlay: Set whether the on-device debug/annotation overlay is visible. proxy_connect: Connect proxyName and/or smartIp, or socks5Host+socks5Port with optional socks5User/socks5Password. smartIp defaults to true and aligns location, time zone, locale and carrier settings with the proxy region; pass false to leave device settings unchanged. proxy_disconnect: Disconnect the proxy. get_proxy_status: Read proxy status. reset_location: Reset the device location. kiosk_enable: Enable kiosk mode for an app. kiosk_disable: Disable kiosk mode. update_profile: Update device profile settings.",
+    "name": "configure_device",
+  },
+  {
+    "description": "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool). list_countries: List available countries. list_proxies: List residential proxies. get_proxy: Read a residential proxy. buy_proxy: Provision and bill a residential proxy. cancel_proxy: End a billed proxy. ping_proxy: Read cached latency. list_connections: Read a proxy's connection history. list_users: List bound users. get_user: Read a bound user. list_user_connections: Read a user's connection history. update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.",
+    "name": "connect",
+  },
+  {
+    "description": "Create an action from a catalog entry. \`params\` is action-specific (shape per the entry paramsSchema).",
+    "name": "create_action",
+  },
+  {
+    "description": "Provision a new device. The API bills it to your account and returns an error if your credits are insufficient. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.",
+    "name": "create_device",
+  },
+  {
+    "description": "Create a flow binding a trigger to ordered actions. Put target devices in the top-level \`deviceIds\` array. Each action entry is { actionId, position (integer >= 0; defines order), optional key }; action-level deviceId is not supported. The created flow uses template resolution version 3: reference an earlier step's output in a later action's params as {{steps.<key>.body.<field>}}, and the triggering event as {{event.payload.*}} (check templateResolutionVersion via get_workflow_resource(resource="flow") on older flows).",
+    "name": "create_flow",
+  },
+  {
+    "description": "Create a trigger. activation=event needs eventType; =schedule needs scheduleRule (type once|cron|recurring) + timezone for cron/recurring; =custom optionally constrained by customPayloadSchema. (Cron is a scheduleRule.type, not an activation.) scheduleRule optionally carries \`jitter\` ({ beforeMinutes?, afterMinutes? }, each 0-1440) to randomize the fire time within a window around the nominal schedule.",
+    "name": "create_trigger",
+  },
+  {
+    "description": "Low-level device input. pacedInput (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices. tap: Tap x, y. swipe: Swipe startX, startY to endX, endY with duration in milliseconds. keyboard_write: Type text with optional clear, errorRate, wpm and pacedInput. keyboard_key: Send an Android keycode. keyboard_clear: Clear keyboard input. global_action: Send an Android global-action code, e.g. back/home/recents. clipboard_get: Read clipboard text. clipboard_set: Write clipboard text. deep_link: Open a URL or app link. browser_script: Run a script in the device browser.",
+    "name": "device_action",
+  },
+  {
+    "description": "Manage organization files and signed transfer URLs. download: Read a short-lived signed download URL. list: List organization files. update: Update file metadata. delete: Delete a file. cancel_pending: Cancel a pending file upload. confirm: Confirm an uploaded file. upload_url: Create a signed upload URL; upload bytes to the URL outside this tool.",
+    "name": "files",
+  },
+  {
+    "description": "Fetch one device by id.",
+    "name": "get_device",
+  },
+  {
+    "description": "Capture a device screenshot. Returns a PNG image (up to 256 KB).",
+    "name": "get_device_screenshot",
+  },
+  {
+    "description": "Read the on-screen UI as structured text: current app/activity, keyboard state, and a compact list of labeled/actionable elements (text, resourceId, className, tap center \`xy\`, flags). Prefer over a screenshot for "what is on screen / is X visible / which button" and routing — cheaper and more reliable for text; screenshot only for visual layout the tree cannot convey. Returns one page of nodes plus \`total\`, \`nodeCount\`, and \`hasMore\`. When \`hasMore\` is true, narrow with \`contains\`/\`resourceId\` first; if you genuinely need the rest, call again with \`offset\` set to the returned \`nextOffset\`. Each call is a fresh live read — after any tap/type/scroll the layout may change, so restart paging from \`offset: 0\`.",
+    "name": "get_device_ui_state",
+  },
+  {
+    "description": "Fetch one task by id, chosen via view. Poll status or trajectory to follow a running task. summary: Read the full task record, minus trajectory. status: Read lightweight polling fields: status/message/output/steps/succeeded. trajectory: Read the paged agent event log, capped per call; page with offset and the returned nextOffset.",
+    "name": "get_task",
+  },
+  {
+    "description": "Fetch a task's captured media, chosen via kind. Omit index to list all available URLs for that kind; pass index to fetch one specific item's URL. URLs are short-lived signed links, not embedded blobs. screenshot: Read captured screenshot URLs. ui_state: Read captured UI state URLs.",
+    "name": "get_task_media",
+  },
+  {
+    "description": "Fetch one workflow resource by id, chosen via resource. Returns full config/params, unlike the slim list projections. action_catalog: Read one action catalog by id. action: Read one action by id. trigger: Read one trigger by id. flow: Read one flow by id. execution: Read one execution by id.",
+    "name": "get_workflow_resource",
+  },
+  {
+    "description": "List apps installed on a device (package_name, label, version_name, version_code, is_system_app). Excludes OEM/system bundles by default.",
+    "name": "list_apps_on_device",
+  },
+  {
+    "description": "List app packages that have any credential configured. Each entry is \`{ packageName }\`.",
+    "name": "list_credential_packages",
+  },
+  {
+    "description": "List the user's saved credentials (metadata only — values never leave credentials storage). Optional \`packageName\` filter scopes to one app.",
+    "name": "list_credentials",
+  },
+  {
+    "description": "List devices. Filters: state, type, name (substring), country (ISO). Paginated. Omitting \`state\` (or passing an empty array) returns every supported state except \`terminated\`; devices already terminating may also not appear.",
+    "name": "list_devices",
+  },
+  {
+    "description": "List tasks, optionally filtered to one device. Without \`deviceId\`: global listing (all owned tasks), supports \`query\` (search in task description) and \`status\`. With \`deviceId\`: device-scoped listing with a slimmer item shape (taskId/createdAt/updatedAt only, no \`query\`/\`status\`, different \`orderBy\` set). Response carries \`deviceScoped\` so callers can tell which item shape they got.",
+    "name": "list_tasks",
+  },
+  {
+    "description": "List one kind of workflow resource, chosen via resource. Each resource accepts only its own filter subset; a filter for a different resource is rejected with the allowed filters. action_catalog: Read every available workflow step (filter: service). action: List saved actions, configured catalog instances (filters: service, search, page, pageSize). Slim overview; use get_workflow_resource(resource="action") for full params. trigger: List triggers (filters: activation, eventType, search, page, pageSize). flow: List automation flows (filters: enabled, search, triggerId, page, pageSize). execution: List flow executions (filters: flowId, triggerId, status, limit). service: List workflow-action service identifiers, e.g. tasks_api or devices_api, usable as the service filter elsewhere in this tool. service_methods: Read supported methods and their parameter schemas for a service (REQUIRED filter: service); background info on what an action_catalog entry for that service can do.",
+    "name": "list_workflow_resources",
+  },
+  {
+    "description": "Manage mailboxes, external inbox links and email messages. list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read a recent email code; set after before requesting the code. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.",
+    "name": "mailboxes",
+  },
+  {
+    "description": "Manage the credentials vault; list_credentials and list_credential_packages provide reads. Field values are write-only: every response returns metadata only (fieldType, never the plaintext value). Keep the value you sent yourself if you need it again. init_package: Create a new app package before its first credential (packageName). create_credential: Create a credential (packageName, credentialName, fields[{fieldType, value}]). delete_credential: Delete a credential (packageName, credentialName). add_field: Add a field (packageName, credentialName, fieldType, value). update_field: Update a field (packageName, credentialName, fieldType, value). delete_field: Delete a field (packageName, credentialName, fieldType). get: Read credential metadata; secret values stay in storage.",
+    "name": "manage_credentials",
+  },
+  {
+    "description": "Device lifecycle, recordings, screenshots, traffic capture and camera/microphone streams. recordings_trajectory: Read a short-lived signed download URL for a recording trajectory. recordings_video: Read a short-lived signed video download URL. screenshots_image: Read a short-lived signed image download URL. reboot: Reboot a device. reset: Factory-reset a device to a fresh state (destructive). rename: Rename a device; requires name. wait_ready: Block until state=ready. get_capabilities: Read the device profile: carrier, display, identifiers and model. count: Read claimed-device counts by state without deviceId. stop: Stop a device; affects device billing. resume: Resume a device; affects device billing. summary: Read account usage without deviceId. retrieve_capabilities: Read supported device features. recordings_list: List device recordings. recordings_delete: Delete a recording. recordings_screenshots: Read recording screenshot metadata. recordings_start: Start a recording. recordings_status: Read recording status. recordings_stop: Stop a recording. screenshots_list: List stored screenshots. screenshots_delete: Delete a stored screenshot. screenshots_capture: Capture a PNG image up to 256 KB; save stores device media. traffic_sessions_create: Create a traffic session to capture network activity. traffic_sessions_retrieve: Read a traffic session. traffic_sessions_list: List traffic sessions. traffic_sessions_delete: Delete a traffic session. media_sessions_create: Create a camera or microphone stream. media_sessions_delete: Delete a media session. media_sessions_activate: Activate a media session. media_sessions_retrieve_current: Read the current media session.",
+    "name": "manage_device",
+  },
+  {
+    "description": "Manage apps on a device. install: Install an app; at least one of packageName or bundleId is required. delete: Delete packageName. start: Start packageName, optionally at activity. stop: Stop packageName. list_packages: List raw installed package names, optionally including system or protected packages. Read app metadata (label, versions) via list_apps_on_device instead. grant_permission: Grant an app notification permission. revoke_permission: Revoke an app notification permission. list_installs: Read app installation jobs.",
+    "name": "manage_device_apps",
+  },
+  {
+    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
+    "name": "manage_device_files",
+  },
+  {
+    "description": "Manage eSIM subscriptions and connectivity. list: List eSIM subscriptions. activate: Download an eSIM profile (smDpAddr required). enable controls whether to enable the downloaded profile. confirmationCode requires matchingId; these are only needed when the SM-DP+ challenges for a code. enable: Enable subId. remove: Remove subId. set_roaming: Enable or disable eSIM roaming. status: Read eSIM connectivity status. apn_list: List available access point settings. apn_select: Select an access point. apn_set: Set access point settings.",
+    "name": "manage_esim",
+  },
+  {
+    "description": "Flow lifecycle operations beyond create_flow. Check the flow's templateResolutionVersion (get_workflow_resource(resource="flow")): on version 3, an action's overrides.params may reference another step only as {{steps.<key>.body.<field>}} ({{event.payload.*}} for the triggering event); older flows use name/slug-based references instead. execution_screenshot: Read a short-lived signed download URL. clone: Copy a flow (flowId, optional name/deviceIds). unblock: Clear blocked status after fixing the underlying issue (flowId, idempotent). add_action: Add a step (flowId, actionId, position, optional key/continueOnError/nameOverride/overrides/parentFlowActionId/children). The key is derived from the step if omitted. remove_action: Remove a step (flowActionId, flowId). replace_actions: Replace the ENTIRE action list (flowId, actions[]). An omitted key is carried over from the existing step matching flowActionId, or at the same position with the same actionId, and derived for genuinely new steps. When reordering or inserting steps, pass key or flowActionId for every step you are keeping so it is recognized as existing. execution_metrics: Aggregate execution stats (optional flowId/triggerId/from/to), not a single execution; use get_workflow_resource(resource="execution") for one execution. update: Update flow configuration. delete: Delete a flow. activate: Activate a flow; may start paid automation. run: Start a flow execution; usage may be billed. validate: Validate a draft flow without saving it. verify: Verify flow configuration. dry_run: Simulate one flow without executing actions. Use workflow_events(operation="dry_run") to simulate event routing without side effects. capacity: Read included flow capacity. delivery_options: Read available delivery options. template_context: Read template variables. list_repairs: Read suggested flow repairs. update_action: Update a workflow action. delete_action: Delete a workflow action. update_trigger: Update a workflow trigger. delete_trigger: Delete a workflow trigger. fire_trigger: Fire a workflow trigger. abort_execution: Abort a running execution.",
+    "name": "manage_flow",
+  },
+  {
+    "description": "Read and manage organization SMS conversations. list: Read the organization SMS inbox. get: Read one SMS. conversations: List SMS conversations; use both cursor fields for the next page. mark_read: Mark received SMS as read through a cursor.",
+    "name": "messages",
+  },
+  {
+    "description": "Manage phone numbers and SMS. countries: List available countries and number availability. capacity: Read included number capacity for a country. list: List owned phone numbers. get: Read one phone number. create: Create a phone number. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status. update: Update the display label. delete: Cancel a pending purchase or schedule cancellation of a paid number. messages: Read SMS for one number, optionally filtered by direction or time. send: Send an SMS from an active number; charges and limits may apply.",
+    "name": "numbers",
+  },
+  {
+    "description": "Read-only platform reference data, chosen via catalog. models: Read available LLM model ids. timezones: Read supported IANA timezone strings; use for the scheduleRule timezone field in create_trigger.",
+    "name": "platform_catalog",
+  },
+  {
+    "description": "Manage device-bound proxy configs (socks5 or wireguard), the outbound network path a device can be assigned. list: List device-bound proxy configurations. get: Read a proxy configuration. create: Create a proxy (protocol and either socks5:{host,port,user,password} or wireguard:{config}; both require name). update: Update a proxy with the same shape as create. delete: Delete a proxy configuration.",
+    "name": "proxies",
+  },
+  {
+    "description": "Dispatch a new agent task on a device. Returns immediately with the task id and its initial status (queued or created); poll get_task(view: "status") or get_task(view: "trajectory") to follow progress.",
+    "name": "run_task",
+  },
+  {
+    "description": "Send a message to a running agent task (e.g. extra instructions or an answer to a question it raised). Delivery is queued, not synchronous — the trajectory records a UserMessageEvent (queued -> applied|dropped) once the agent picks it up.",
+    "name": "send_task_message",
+  },
+  {
+    "description": "Cancel a running task. Errors if the task is already in a terminal state.",
+    "name": "stop_task",
+  },
+  {
+    "description": "Terminate a device. Irreversible — confirm with the user before calling.",
+    "name": "terminate_device",
+  },
+  {
+    "description": "Manage outbound customer webhooks and inspect deliveries. Use an endpoint id in the webhooks.send workflow action; never put a signing secret in workflow data. A successful workflow step does not prove delivery: verify by eventId in delivery records. create: Create a webhook (url); returns an endpoint id and a secret shown exactly once. list: List webhook subscriptions. get: Read a webhook subscription. update: Update a webhook subscription. rotate_secret: Rotate the signing secret only with explicit consent; returns a secret shown exactly once. test: Send a test delivery. list_deliveries: Read deliveries for an endpoint. get_delivery: Read one endpoint delivery. delivery_stats: Read account-wide delivery statistics, optionally since an ISO timestamp. delete: Delete a webhook subscription. deliveries: Read deliveries across all subscriptions. integrations: Read connected delivery integrations. integration_targets: Read delivery targets for an integration.",
+    "name": "webhooks",
+  },
+  {
+    "description": "Ingest and simulate custom app/system events for trigger evaluation. Confirm eventType and payload shape before ingesting an event. ingest: Enqueue an event for trigger evaluation (eventType, optional payload); returns immediately with eventId. dry_run: Simulate an event against ALL configured flows without side effects (eventType, optional payload). Returns which flows would fire, their gates and payload validation errors.",
     "name": "workflow_events",
   },
 ]
