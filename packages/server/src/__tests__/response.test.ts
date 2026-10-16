@@ -38,3 +38,16 @@ describe('bounded device downloads', () => {
         expect(cancelled).toBe(true);
     });
 });
+
+
+test('declared oversized bodies are cancelled before any read', async () => {
+    let pulls = 0;
+    let cancelled = false;
+    const response = new Response(new ReadableStream({
+        pull() { pulls++; },
+        cancel() { cancelled = true; },
+    }, { highWaterMark: 0 }), { headers: { 'content-length': String(MAX_INLINE_FILE_BYTES + 1) } });
+    await expect(readBoundedBody(response, 'Device file')).rejects.toThrow('inline limit');
+    expect(pulls).toBe(0);
+    expect(cancelled).toBe(true);
+});

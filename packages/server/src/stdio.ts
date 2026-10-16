@@ -1,10 +1,9 @@
 import { buildMcpServer, createAuthContext, policyForProfile, type ToolCtx } from '@mobilerun/mcp-tools';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import Mobilerun from '@mobilerun/sdk';
 import { logToolCall } from './audit-log.js';
 import { env } from './env.js';
 import { log, sanitizeError } from './log.js';
-import { wrapSdkToolCalls } from './sdk-backend/request-options.js';
+import { SdkClient, wrapSdkToolCalls } from './sdk-backend/request-options.js';
 import { createSdkBackend } from './sdk-backend/index.js';
 
 async function main() {
@@ -14,7 +13,7 @@ async function main() {
         process.exit(1);
     }
 
-    const client = new Mobilerun({ apiKey, baseURL: env.MOBILERUN_BASE_URL });
+    const client = new SdkClient({ apiKey, baseURL: env.MOBILERUN_BASE_URL });
     const backend = createSdkBackend(client);
     const auth = createAuthContext({ kind: 'api_key', subject: 'api-key' });
     const ctx: ToolCtx = { backend, auth, policy: policyForProfile(env.MCP_POLICY_PROFILE) };

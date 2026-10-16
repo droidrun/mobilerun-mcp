@@ -1,4 +1,4 @@
-import { idempotencyOpts } from './request-options.js';
+import { purchaseResult } from './response.js';
 import { type default as Mobilerun } from '@mobilerun/sdk';
 import { type MailboxesBackend } from '@mobilerun/mcp-tools';
 
@@ -11,15 +11,14 @@ export function createMailboxesBackend(client: Mobilerun): MailboxesBackend {
             return client.mailboxes.capacity();
         },
         async mailboxesCreate(params) {
-            return client.mailboxes.create(
+            return purchaseResult(client.mailboxes.create(
                 {
                     billingPreference: params.billingPreference,
                     domainId: params.domainId,
                     label: params.label ?? undefined,
                     localPart: params.localPart,
                 },
-                idempotencyOpts(params.clientRequestId),
-            );
+            ));
         },
         async mailboxesGet(params) {
             return client.mailboxes.retrieve(params.mailboxId);
@@ -62,7 +61,6 @@ export function createMailboxesBackend(client: Mobilerun): MailboxesBackend {
         async mailboxesConnect(params) {
             return client.mailboxes.connections.create(
                 { provider: 'gmail', bindingHash: params.bindingHash, label: params.label },
-                idempotencyOpts(params.clientRequestId),
             );
         },
         async mailboxesConnection(params) {

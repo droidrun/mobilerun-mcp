@@ -1,6 +1,8 @@
 import { APIError, type default as Mobilerun } from '@mobilerun/sdk';
 import { BackendError, MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
 
+const BODY_READ_TIMEOUT_MS = 5000;
+
 export const signedDownloadOpts = { fetchOptions: { redirect: 'manual' as const }, maxRetries: 0 };
 
 /** Manual redirects avoid starting an object download just to read its URL.
@@ -43,19 +45,25 @@ export function headerOpts(displayId: number | undefined) {
 /** Bound both decoded size and body-read time after the client returns headers. */
 export async function capturedImage(
     request: { asResponse(): Promise<Response> },
-    timeoutMs = 5000,
+    timeoutMs = BODY_READ_TIMEOUT_MS,
 ): Promise<{ mimeType: 'image/png'; contentBase64: string }> {
     const response = await request.asResponse();
     if (response.headers.get('content-type')?.split(';')[0] !== 'image/png') {
         void response.body?.cancel().catch(() => {});
         throw new BackendError('upstream_error', 'Screenshot capture did not return a PNG image.');
     }
-    const content = await readBoundedBody(response, 'Screenshot', timeoutMs);
+    const content = await readBoundedBody(response, 'Screenshot', timeoutMs, ' use saved screenshot download URLs.');
     return { mimeType: 'image/png', contentBase64: content.toString('base64') };
 }
 
 /** Bound decoded bytes and time without buffering an unbounded response. */
-export async function readBoundedBody(response: Response, label: string, timeoutMs = 5000): Promise<Buffer> {
+export async function readBoundedBody(response: Response, label: string, timeoutMs = BODY_READ_TIMEOUT_MS, oversizeHint = ''): Promise<Buffer> {
+    const oversizeError = new BackendError('upstream_error', `${label} exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit.${oversizeHint}`);
+    const length = response.headers.get('content-length');
+    if (length && /^\d+$/.test(length) && Number(length) > MAX_INLINE_FILE_BYTES) {
+        void response.body?.cancel().catch(() => {});
+        throw oversizeError;
+    }
     const reader = response.body?.getReader();
     if (!reader) throw new BackendError('upstream_error', `${label} returned an empty body.`);
     const chunks: Uint8Array[] = [];
@@ -74,10 +82,7 @@ export async function readBoundedBody(response: Response, label: string, timeout
             size += value.byteLength;
             if (size > MAX_INLINE_FILE_BYTES) {
                 void reader.cancel().catch(() => {});
-                throw new BackendError(
-                    'upstream_error',
-                    `${label} exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit.`,
-                );
+                throw oversizeError;
             }
             chunks.push(value);
         }
@@ -86,4 +91,12 @@ export async function readBoundedBody(response: Response, label: string, timeout
         reader.releaseLock();
     }
     return Buffer.concat(chunks);
+}
+
+/** Surface a replay marker without a separate request or parsing the response twice. */
+export async function purchaseResult<Value extends object>(request: {
+    withResponse(): Promise<{ data: Value; response: Response }>;
+}): Promise<Value & { replayed?: true }> {
+    const { data, response } = await request.withResponse();
+    return response.headers.get('Idempotent-Replayed')?.toLowerCase() === 'true' ? { ...data, replayed: true } : data;
 }

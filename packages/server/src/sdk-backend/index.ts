@@ -1,4 +1,3 @@
-import { withRequestOptions, type BackendRequestContext } from './request-options.js';
 import { createFilesBackend } from './files.js';
 import { createMessagesBackend } from './messages.js';
 import { createMailboxesBackend } from './mailboxes.js';
@@ -28,8 +27,7 @@ import { createWorkflowsBackend } from './workflows.js';
  * thrown SDK error becomes a typed `BackendError` before it reaches the
  * tool layer.
  */
-export function createSdkBackend(client: Mobilerun, context: BackendRequestContext = {}): Backend {
-    client = withRequestOptions(client, context);
+export function createSdkBackend(client: Mobilerun): Backend {
     return {
         files: withBackendErrors(createFilesBackend(client)),
         messages: withBackendErrors(createMessagesBackend(client)),

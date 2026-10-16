@@ -1,3 +1,4 @@
+import { purchaseResult } from './response.js';
 /**
  * DevicesBackend over @mobilerun/sdk's `client.devices.*`. Every mapping
  * here was verified against the SDK's shipped .d.ts (not guessed) — see the
@@ -45,12 +46,12 @@ export function createDevicesBackend(client: Mobilerun): DevicesBackend {
             });
         },
         async createDevice(opts: CreateDeviceOpts) {
-            return client.devices.create({
+            return purchaseResult(client.devices.create({
                 deviceType: toApiDeviceType(opts.deviceType),
                 name: opts.name,
                 // SDK's query param is `query_country`, not `country`.
                 query_country: opts.country?.toUpperCase(),
-            });
+            }));
         },
         async terminateDevice(deviceId: string) {
             await client.devices.terminate(deviceId, {});

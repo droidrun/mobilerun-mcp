@@ -1,5 +1,4 @@
 /** Device-control mappings over the typed public client. */
-import { readBoundedBody, captureDeviceScreenshot, headerOpts, signedDownload, signedDownloadOpts } from './response.js';
 import { default as Mobilerun, toFile } from '@mobilerun/sdk';
 import {
     type AppInstallOpts,
@@ -15,6 +14,8 @@ import {
     type ProxyConnectOpts,
     type SetLanguageOpts,
 } from '@mobilerun/mcp-tools';
+
+import { captureDeviceScreenshot, headerOpts, readBoundedBody, signedDownload, signedDownloadOpts } from './response.js';
 
 export function createDeviceControlBackend(client: Mobilerun): DeviceControlBackend {
     return {

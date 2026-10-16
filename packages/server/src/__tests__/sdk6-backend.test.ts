@@ -25,12 +25,11 @@ function setup(result: unknown = { data: { ok: true }, items: [] }) {
 }
 
 describe('SDK 6 domain requests', () => {
-    test('numbers purchase respects API billing defaults and retry keys; SMS uses the number messages endpoint', async () => {
+    test('numbers purchase respects API billing defaults; SMS uses the number messages endpoint', async () => {
         const { backend, requests } = setup();
-        await backend.numbers.numbersCreate({ country: 'de', label: 'Signup', clientRequestId: 'purchase-1' });
+        await backend.numbers.numbersCreate({ country: 'de', label: 'Signup' });
         expect(requests[0]!.url.pathname).toBe('/numbers/phones');
         expect(requests[0]!.body).toEqual({ country: 'de', label: 'Signup' });
-        expect(requests[0]!.headers.get('Idempotency-Key')).toBe('purchase-1');
         await backend.numbers.numbersMessages({ numberId: 'n1', direction: 'inbound' });
         expect(requests[1]!.url.pathname).toBe('/numbers/phones/n1/messages');
         expect(requests[1]!.url.searchParams.get('direction')).toBe('inbound');
@@ -42,9 +41,8 @@ describe('SDK 6 domain requests', () => {
 
     test('mailbox lifecycle, email filters, opaque ids and consent use distinct routes', async () => {
         const { backend, requests } = setup();
-        await backend.mailboxes.mailboxesCreate({ label: 'Signup', clientRequestId: 'mailbox-1' });
+        await backend.mailboxes.mailboxesCreate({ label: 'Signup' });
         expect(requests[0]!.url.pathname).toBe('/mailboxes');
-        expect(requests[0]!.headers.get('Idempotency-Key')).toBe('mailbox-1');
         await backend.mailboxes.mailboxesUpdate({ mailboxId: 'mb1', label: null });
         expect(requests[1]!.body).toEqual({ label: null });
         await backend.mailboxes.mailboxesMessages({ mailboxId: 'mb1', cursor: 'next', hasOtp: false });
@@ -53,9 +51,8 @@ describe('SDK 6 domain requests', () => {
         expect(requests[2]!.url.searchParams.get('cursor')).toBe('next');
         await backend.mailboxes.mailboxesMessage({ mailboxId: 'mb1', messageId: 'opaque-message' });
         expect(requests[3]!.url.pathname).toBe('/mailboxes/mb1/messages/opaque-message');
-        await backend.mailboxes.mailboxesConnect({ label: 'Personal', clientRequestId: 'connection-1' });
+        await backend.mailboxes.mailboxesConnect({ label: 'Personal' });
         expect(requests[4]!.url.pathname).toBe('/mailboxes/connections');
-        expect(requests[4]!.headers.get('Idempotency-Key')).toBe('connection-1');
         await backend.mailboxes.mailboxesRestart({ mailboxId: 'mb1', billingPreference: 'rent' });
         expect(requests[5]!.url.pathname).toBe('/mailboxes/mb1/restart');
         expect(requests[5]!.body).toEqual({ billingPreference: 'rent' });
