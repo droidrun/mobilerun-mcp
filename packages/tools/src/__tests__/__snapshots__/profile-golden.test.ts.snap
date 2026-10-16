@@ -688,6 +688,12 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "clientRequestId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[\\x21-\\x7E]+$",
+          "type": "string",
+        },
         "country": {
           "type": "string",
         },
@@ -832,6 +838,12 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "clientRequestId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[\\x21-\\x7E]+$",
+          "type": "string",
+        },
         "country": {
           "pattern": "^[A-Za-z]{2}$",
           "type": "string",
@@ -1565,6 +1577,7 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
         "clientRequestId": {
           "maxLength": 128,
           "minLength": 1,
+          "pattern": "^[\\x21-\\x7E]+$",
           "type": "string",
         },
         "connectionId": {
@@ -2823,6 +2836,7 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
         "clientRequestId": {
           "maxLength": 128,
           "minLength": 1,
+          "pattern": "^[\\x21-\\x7E]+$",
           "type": "string",
         },
         "country": {
@@ -3244,7 +3258,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "configure_device",
   },
   {
-    "description": "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool). list_countries: List available countries. list_proxies: List residential proxies. get_proxy: Read a residential proxy. buy_proxy: Provision and bill a residential proxy. cancel_proxy: End a billed proxy. ping_proxy: Read cached latency. list_connections: Read a proxy's connection history. list_users: List bound users. get_user: Read a bound user. list_user_connections: Read a user's connection history. update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.",
+    "description": "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool). list_countries: List available countries. list_proxies: List residential proxies. get_proxy: Read a residential proxy. buy_proxy: Provision and bill a residential proxy. Retry with the returned clientRequestId to avoid a second purchase. cancel_proxy: End a billed proxy. ping_proxy: Read cached latency. list_connections: Read a proxy's connection history. list_users: List bound users. get_user: Read a bound user. list_user_connections: Read a user's connection history. update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.",
     "name": "connect",
   },
   {
@@ -3252,7 +3266,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "create_action",
   },
   {
-    "description": "Provision a new device. The API bills it to your account and returns an error if your credits are insufficient. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.",
+    "description": "Provision a new device. The API bills it to your account and returns an error if your credits are insufficient. Retry with the returned clientRequestId to avoid a second purchase. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.",
     "name": "create_device",
   },
   {
@@ -3320,7 +3334,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "list_workflow_resources",
   },
   {
-    "description": "Manage mailboxes, external inbox links and email messages. list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read a recent email code; set after before requesting the code. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.",
+    "description": "Manage mailboxes, external inbox links and email messages. list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. Retry with the returned clientRequestId to avoid a second purchase. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read a recent email code; set after before requesting the code. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.",
     "name": "mailboxes",
   },
   {
@@ -3336,7 +3350,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "manage_device_apps",
   },
   {
-    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
+    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path as base64 content; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
     "name": "manage_device_files",
   },
   {
@@ -3352,7 +3366,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "messages",
   },
   {
-    "description": "Manage phone numbers and SMS. countries: List available countries and number availability. capacity: Read included number capacity for a country. list: List owned phone numbers. get: Read one phone number. create: Create a phone number. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status. update: Update the display label. delete: Cancel a pending purchase or schedule cancellation of a paid number. messages: Read SMS for one number, optionally filtered by direction or time. send: Send an SMS from an active number; charges and limits may apply.",
+    "description": "Manage phone numbers and SMS. countries: List available countries and number availability. capacity: Read included number capacity for a country. list: List owned phone numbers. get: Read one phone number. create: Create a phone number. Retry with the returned clientRequestId to avoid a second purchase. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status. update: Update the display label. delete: Cancel a pending purchase or schedule cancellation of a paid number. messages: Read SMS for one number, optionally filtered by direction or time. send: Send an SMS from an active number; charges and limits may apply.",
     "name": "numbers",
   },
   {
@@ -3385,6 +3399,332 @@ exports[`golden input schema shapes for every profile: full profile descriptions
   },
   {
     "description": "Ingest and simulate custom app/system events for trigger evaluation. Confirm eventType and payload shape before ingesting an event. ingest: Enqueue an event for trigger evaluation (eventType, optional payload); returns immediately with eventId. dry_run: Simulate an event against ALL configured flows without side effects (eventType, optional payload). Returns which flows would fire, their gates and payload validation errors.",
+    "name": "workflow_events",
+  },
+]
+`;
+
+exports[`golden tool annotations: full profile annotations 1`] = `
+[
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "apps",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "assistant",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "configure_device",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "connect",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "create_action",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "create_device",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "create_flow",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "create_trigger",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "device_action",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "files",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "get_device",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "get_device_screenshot",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "get_device_ui_state",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "get_task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "get_task_media",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "get_workflow_resource",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "list_apps_on_device",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "list_credential_packages",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "list_credentials",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "list_devices",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "list_tasks",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "list_workflow_resources",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "mailboxes",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "manage_credentials",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "manage_device",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "manage_device_apps",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "manage_device_files",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "manage_esim",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "manage_flow",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "messages",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "numbers",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": true,
+    },
+    "name": "platform_catalog",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "proxies",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "run_task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "send_task_message",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "stop_task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "terminate_device",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
+    "name": "webhooks",
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+    },
     "name": "workflow_events",
   },
 ]

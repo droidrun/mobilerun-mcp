@@ -1,3 +1,4 @@
+import { purchaseResult } from './response.js';
 import { type default as Mobilerun } from '@mobilerun/sdk';
 import {
     type BuyConnectProxyParams,
@@ -26,7 +27,7 @@ export function createConnectBackend(client: Mobilerun): ConnectBackend {
             return client.connect.proxies.retrieve(id);
         },
         async buyConnectProxy(params: BuyConnectProxyParams) {
-            return client.connect.proxies.buy({ country: params.country, type: params.type ?? 'residential' });
+            return purchaseResult(client.connect.proxies.buy({ country: params.country, type: params.type ?? 'residential' }));
         },
         async cancelConnectProxy(id: string) {
             await client.connect.proxies.cancel(id);

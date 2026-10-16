@@ -57,7 +57,7 @@ export const MANAGE_FILES_TABLE = [
         op: 'download',
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         access: 'read',
-        doc: 'Read path; oversized results are rejected with the same inline transfer limit.',
+        doc: 'Read path as base64 content; oversized results are rejected with the same inline transfer limit.',
         run: async (ctx, input) => {
             const { deviceId, path } = input;
 

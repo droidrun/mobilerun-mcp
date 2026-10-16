@@ -2,15 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import type Mobilerun from '@mobilerun/sdk';
 import { APIConnectionError, APIConnectionTimeoutError, APIError } from '@mobilerun/sdk';
 import { BackendError } from '@mobilerun/mcp-tools';
+import { SdkClient } from '../sdk-backend/request-options.js';
 import { createAssistantBackend } from '../sdk-backend/assistant.js';
 import { withBackendErrors } from '../sdk-backend/errors.js';
 
 function clientWithSend(send: (...args: unknown[]) => Promise<unknown>): Mobilerun {
     return { assistant: { conversations: { send } } } as unknown as Mobilerun;
-}
-
-function clientWithCreate(create: (...args: unknown[]) => Promise<unknown>): Mobilerun {
-    return { assistant: { conversations: { create } } } as unknown as Mobilerun;
 }
 
 describe('assistant send mapping', () => {
@@ -86,20 +83,23 @@ describe('assistant send mapping', () => {
 });
 
 describe('assistant session creation', () => {
-    test('sends a unique idempotency key', async () => {
-        const calls: unknown[][] = [];
+    test('uses fresh client keys for each session', async () => {
+        const requests: Array<{ body: unknown; key: string | null }> = [];
         const session = {
             id: 's1', title: 'Chat', description: null, status: 'active', pinned: false,
             turnActive: false, lastActiveAt: '2026-01-01T00:00:00Z', createdAt: '2026-01-01T00:00:00Z', costUsd: 0,
         };
-        const backend = createAssistantBackend(clientWithCreate(async (...args) => {
-            calls.push(args);
-            return { session };
+        const backend = createAssistantBackend(new SdkClient({
+            apiKey: 'test-key', baseURL: 'https://example.com',
+            fetch: async (_input, init) => {
+                requests.push({ body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined, key: new Headers(init?.headers).get('Idempotency-Key') });
+                return Response.json({ session });
+            },
         }));
         await backend.createSession('Chat', 'Description');
-        const params = calls[0]?.[0] as Record<string, unknown>;
-        expect(params.title).toBe('Chat');
-        expect(params.description).toBe('Description');
-        expect((calls[0]?.[1] as { headers: Record<string, string> }).headers['Idempotency-Key']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+        await backend.createSession('Chat', 'Description');
+        expect(requests[0]?.body).toEqual({ title: 'Chat', description: 'Description' });
+        expect(requests[0]?.key).toBeTruthy();
+        expect(requests[1]?.key).not.toBe(requests[0]?.key);
     });
 });

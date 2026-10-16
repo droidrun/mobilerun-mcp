@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { smsDirectionSchema, billingPreferenceSchema } from './communication.js';
+import { smsDirectionSchema, billingPreferenceSchema, clientRequestIdSchema } from './communication.js';
 
 export const numbersCapacitySchema = z
     .object({
@@ -25,7 +25,7 @@ export const numbersCreateSchema = z
         billingPreference: billingPreferenceSchema.optional(),
         country: z.string().optional(),
         label: z.union([z.string(), z.null()]).optional(),
-        clientRequestId: z.string().min(1).max(128).optional(),
+        clientRequestId: clientRequestIdSchema,
     })
     .strict();
 

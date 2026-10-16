@@ -1,5 +1,8 @@
 import { APIError, type default as Mobilerun } from '@mobilerun/sdk';
 import { BackendError, MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
+import { purchaseRequestId } from './request-options.js';
+
+const BODY_READ_TIMEOUT_MS = 5000;
 
 export const signedDownloadOpts = { fetchOptions: { redirect: 'manual' as const }, maxRetries: 0 };
 
@@ -32,7 +35,7 @@ export function captureDeviceScreenshot(
             hideOverlay: params.hideOverlay,
             save: params.save,
             ...headerOpts(params.displayId),
-        }),
+        }, { headers: { 'Accept-Encoding': 'identity' } }),
     );
 }
 
@@ -43,21 +46,33 @@ export function headerOpts(displayId: number | undefined) {
 /** Bound both decoded size and body-read time after the client returns headers. */
 export async function capturedImage(
     request: { asResponse(): Promise<Response> },
-    timeoutMs = 5000,
+    timeoutMs = BODY_READ_TIMEOUT_MS,
 ): Promise<{ mimeType: 'image/png'; contentBase64: string }> {
     const response = await request.asResponse();
     if (response.headers.get('content-type')?.split(';')[0] !== 'image/png') {
         void response.body?.cancel().catch(() => {});
         throw new BackendError('upstream_error', 'Screenshot capture did not return a PNG image.');
     }
+    const content = await readBoundedBody(response, 'Screenshot', timeoutMs, ' use saved screenshot download URLs.');
+    return { mimeType: 'image/png', contentBase64: content.toString('base64') };
+}
+
+/** Bound decoded bytes and time without buffering an unbounded response. */
+export async function readBoundedBody(response: Response, label: string, timeoutMs = BODY_READ_TIMEOUT_MS, oversizeHint = ''): Promise<Buffer> {
+    const oversizeError = new BackendError('upstream_error', `${label} exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit.${oversizeHint}`);
+    const length = response.headers.get('content-length');
+    if (length && /^\d+$/.test(length) && Number(length) > MAX_INLINE_FILE_BYTES) {
+        void response.body?.cancel().catch(() => {});
+        throw oversizeError;
+    }
     const reader = response.body?.getReader();
-    if (!reader) throw new BackendError('upstream_error', 'Screenshot capture returned an empty body.');
+    if (!reader) throw new BackendError('upstream_error', `${label} returned an empty body.`);
     const chunks: Uint8Array[] = [];
     let size = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
-            reject(new BackendError('upstream_error', 'Screenshot body read timed out.'));
+            reject(new BackendError('upstream_error', `${label} body read timed out.`));
             void reader.cancel().catch(() => {});
         }, timeoutMs);
     });
@@ -68,10 +83,7 @@ export async function capturedImage(
             size += value.byteLength;
             if (size > MAX_INLINE_FILE_BYTES) {
                 void reader.cancel().catch(() => {});
-                throw new BackendError(
-                    'upstream_error',
-                    `Screenshot exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit; use saved screenshot download URLs.`,
-                );
+                throw oversizeError;
             }
             chunks.push(value);
         }
@@ -79,5 +91,18 @@ export async function capturedImage(
         clearTimeout(timer);
         reader.releaseLock();
     }
-    return { mimeType: 'image/png', contentBase64: Buffer.concat(chunks).toString('base64') };
+    return Buffer.concat(chunks);
+}
+
+/** Return the dispatched purchase key and replay marker without another request. */
+export async function purchaseResult<Value extends object>(request: {
+    withResponse(): Promise<{ data: Value; response: Response }>;
+}): Promise<Value & { replayed?: true; clientRequestId?: string }> {
+    const { data, response } = await request.withResponse();
+    const clientRequestId = purchaseRequestId();
+    return {
+        ...data,
+        ...(clientRequestId ? { clientRequestId } : {}),
+        ...(response.headers.get('Idempotent-Replayed')?.toLowerCase() === 'true' ? { replayed: true as const } : {}),
+    };
 }

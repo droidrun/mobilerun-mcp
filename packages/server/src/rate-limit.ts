@@ -9,6 +9,8 @@ export interface RateLimitConfig {
     capacity: number;
     /** Tokens added per second. */
     refillPerSec: number;
+    /** Maximum retained buckets; defaults to 10,000 per limiter. */
+    maxBuckets?: number;
 }
 
 interface Bucket {
@@ -26,13 +28,20 @@ export interface RateLimitResult {
 // Buckets idle longer than this are swept out on a probabilistic pass so
 // the map doesn't grow unbounded with one-shot callers (e.g. random IPs).
 const BUCKET_IDLE_TTL_MS = 60 * 60 * 1000; // 1h
+const DEFAULT_MAX_BUCKETS = 10_000;
 const SWEEP_EVERY_N_CALLS = 500;
 
 export class TokenBucketLimiter {
     private readonly buckets = new Map<string, Bucket>();
     private callCount = 0;
+    private readonly maxBuckets: number;
 
-    constructor(private readonly config: RateLimitConfig) {}
+    constructor(private readonly config: RateLimitConfig) {
+        this.maxBuckets = config.maxBuckets ?? DEFAULT_MAX_BUCKETS;
+        if (!Number.isInteger(this.maxBuckets) || this.maxBuckets < 1) {
+            throw new Error('maxBuckets must be a positive integer');
+        }
+    }
 
     consume(key: string, now = Date.now()): RateLimitResult {
         this.callCount++;
@@ -41,9 +50,14 @@ export class TokenBucketLimiter {
         let bucket = this.buckets.get(key);
         if (!bucket) {
             bucket = { tokens: this.config.capacity, lastRefillMs: now, lastSeenMs: now };
-            this.buckets.set(key, bucket);
+            if (this.buckets.size >= this.maxBuckets) {
+                this.buckets.delete(this.buckets.keys().next().value!);
+            }
         }
 
+        // Map insertion order tracks least recently used keys, including denials.
+        this.buckets.delete(key);
+        this.buckets.set(key, bucket);
         const elapsedSec = Math.max(0, (now - bucket.lastRefillMs) / 1000);
         bucket.tokens = Math.min(this.config.capacity, bucket.tokens + elapsedSec * this.config.refillPerSec);
         bucket.lastRefillMs = now;
@@ -65,9 +79,9 @@ export class TokenBucketLimiter {
     }
 }
 
-/** Stable, non-reversible bucket key for a credential — never store/log the raw key. */
-export function hashCredential(credential: string): string {
-    return createHash('sha256').update(credential).digest('hex').slice(0, 32);
+/** Stable truncated hash for credential buckets and request keys. */
+export function stableHash(value: string): string {
+    return createHash('sha256').update(value).digest('hex').slice(0, 32);
 }
 
 export function rateLimitConfigFromPerMinute(limitPerMinute: number): RateLimitConfig {

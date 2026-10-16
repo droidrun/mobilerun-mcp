@@ -110,7 +110,7 @@ HTTP envelope) — local-only fallback, not used by the HTTP transport.
 | `MCP_REQUEST_TIMEOUT_MS` | `60000` | Hard per-request timeout around the MCP request handler; must stay above 50 s because assistant `send_message` waits up to 50 s |
 | `MCP_RATE_LIMIT_PER_KEY_PER_MIN` | `60` | Token-bucket capacity+refill per API-key hash |
 | `MCP_RATE_LIMIT_PER_IP_PER_MIN` | `120` | Token-bucket capacity+refill per client IP |
-| `MCP_TRUST_PROXY` | `false` | Whether to trust `X-Forwarded-For`/`X-Real-IP` for IP rate limiting. Unguarded, those headers are caller-spoofable (bypass the IP limiter, or frame another IP's bucket) — only set `true` behind a proxy/LB that overwrites (never appends-to) them. When `false` (default), the IP limiter uses only the actual socket peer address (`Bun.serve`'s `server.requestIP`, wired via `index.ts`); if that's unavailable for a request, the IP limiter is skipped for it (never a shared `"unknown"` bucket) and per-key limiting still applies. |
+| `MCP_TRUST_PROXY` | `false` | Trust valid single-IP `X-Mobilerun-Client-Ip`, then `CF-Connecting-IP`, then the socket peer for IP rate limiting. Enable only behind an edge that strips caller-supplied client IP headers and trusted services that set them. Forwarded chains are ignored. When false, only the socket peer is used; if unavailable, IP limiting is skipped and per-key limiting still applies. IPv6 addresses share a /64 bucket. |
 
 Validated with `zod` + `safeParse` at startup (`env.ts`) — an invalid config
 fails fast (`process.exit(1)`) rather than serving with a bad default.

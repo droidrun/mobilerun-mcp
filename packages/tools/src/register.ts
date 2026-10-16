@@ -6,7 +6,8 @@ import { type AuthContext, type Policy, type ToolCtx } from './ctx.js';
 import { asErrorResult } from './text-result.js';
 import { registerAppsTools } from './tools/apps.js';
 import { registerAssistantTool } from './tools/assistant.js';
-import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
+import { operationAnnotations } from './tools/operation-table.js';
+import { resolveOperationAccess, TOOL_METADATA } from './tools/bundle-tools.js';
 import { registerConnectTools } from './tools/connect.js';
 import { registerCredentialTools, registerManageCredentialsTool } from './tools/credentials.js';
 import { registerDeviceControlTools } from './tools/device-control.js';
@@ -112,14 +113,13 @@ type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: ToolCallEvent) => void): void {
     const original = server.registerTool.bind(server);
     server.registerTool = ((name: string, def: unknown, handler: (...args: unknown[]) => unknown) => {
-        const bundle = BUNDLE_TOOLS[name as keyof typeof BUNDLE_TOOLS];
-        const opField = bundle?.field;
         const wrapped = async (...args: unknown[]) => {
             const startedAt = Date.now();
             const extra = args[1] as Extra | undefined;
             const requestId = extra?.requestId !== undefined ? String(extra.requestId) : undefined;
             const input = args[0] as Record<string, unknown> | undefined;
-            const operation = opField && typeof input?.[opField] === 'string' ? (input[opField] as string) : undefined;
+            const resolved = resolveOperationAccess(name, input);
+            const operation = resolved?.operation;
 
             const report = (outcome: ToolCallOutcome) => {
                 onToolCall?.({
@@ -132,13 +132,12 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
                 });
             };
 
-            if (opField) {
+            if (operation !== undefined) {
                 const allowedOps = ctx.policy.operationAllowlist?.get(name);
-                const entry = bundle?.operations.find((entry) => entry.op === operation);
                 if (
                     allowedOps &&
                     operation !== undefined &&
-                    (!allowedOps.has(operation) || !allowedOps.has(entry?.effectiveOp?.(input ?? {}) ?? operation))
+                    (!allowedOps.has(operation) || !allowedOps.has(resolved?.effectiveOperation ?? operation))
                 ) {
                     report('denied');
                     return asErrorResult(`Operation "${operation}" of tool "${name}" is not available for this credential.`);
@@ -156,8 +155,13 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
                 throw err;
             }
         };
+        const resolved = resolveOperationAccess(name);
+        const definition = {
+            ...(def as object),
+            ...(resolved ? { annotations: operationAnnotations(resolved.accesses) } : {}),
+        };
         // @ts-expect-error — passing through the SDK's variadic registerTool signature.
-        const registered = original(name, def, wrapped);
+        const registered = original(name, definition, wrapped);
         if (!ctx.policy.toolAllowlist.has(name)) {
             registered.remove();
         }

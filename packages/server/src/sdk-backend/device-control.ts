@@ -1,5 +1,4 @@
 /** Device-control mappings over the typed public client. */
-import { captureDeviceScreenshot, headerOpts, signedDownload, signedDownloadOpts } from './response.js';
 import { default as Mobilerun, toFile } from '@mobilerun/sdk';
 import {
     type AppInstallOpts,
@@ -15,6 +14,8 @@ import {
     type ProxyConnectOpts,
     type SetLanguageOpts,
 } from '@mobilerun/mcp-tools';
+
+import { captureDeviceScreenshot, headerOpts, readBoundedBody, signedDownload, signedDownloadOpts } from './response.js';
 
 export function createDeviceControlBackend(client: Mobilerun): DeviceControlBackend {
     return {
@@ -340,8 +341,9 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.files.upload(deviceId, { path: opts.path, file });
         },
         async downloadFile(deviceId, path) {
-            const content = await client.devices.files.download(deviceId, { path });
-            return { content };
+            const response = await client.devices.files.download(deviceId, { path }, { headers: { 'Accept-Encoding': 'identity' } }).asResponse();
+            const content = await readBoundedBody(response, 'Device file');
+            return { content: content.toString('base64') };
         },
         async deleteFile(deviceId, path) {
             await client.devices.files.delete(deviceId, { path });

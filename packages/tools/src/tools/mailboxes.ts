@@ -1,6 +1,6 @@
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { billingPreferenceSchema } from '../backend/communication.js';
+import { billingPreferenceSchema, clientRequestIdSchema } from '../backend/communication.js';
 import {
     mailboxesConnectSchema,
     mailboxesConnectionSchema,
@@ -27,7 +27,7 @@ const MAILBOXES_SHARED_FIELDS = {
             'create/restart: included may fall back to paid service; included_only refuses paid fallback; rent requests paid service.',
         ),
     label: z.string().nullable().optional(),
-    clientRequestId: z.string().min(1).max(128).optional().describe('Optional stable request key for create/connect retries.'),
+    clientRequestId: clientRequestIdSchema.describe('Optional stable request key for create/connect retries.'),
     mailboxId: z.string().optional().describe('Required for get/update/delete/uncancel/restart/disconnect/otp/messages/message.'),
     after: z.string().optional().describe('otp/messages: record this timestamp before requesting a fresh email code.'),
     messageId: z.string().optional().describe('Required for message. Opaque identifier from messages.'),
@@ -43,7 +43,7 @@ export const MAILBOXES_TABLE = [
         doc: 'Read included mailbox capacity.',
     }),
     sdkOp('create', mailboxesCreateSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesCreate(params), 'commerce', {
-        doc: 'Create a mailbox; may start paid service.',
+        doc: 'Create a mailbox; may start paid service. Retry with the returned clientRequestId to avoid a second purchase.',
         result: async (ctx, value) => asTextResult(await awaitCheckoutUrl(
             value,
             'id',

@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'bun:test';
-import { app } from '../http.js';
+import { describe, expect, spyOn, test } from 'bun:test';
+import { Context } from 'hono';
+import { app, clientIp, ipBucketKey } from '../http.js';
 import { env } from '../env.js';
 
 describe('POST /mcp — auth error taxonomy', () => {
@@ -130,4 +131,79 @@ describe('POST /mcp tools/list — default policy profile', () => {
         expect(names).not.toContain('terminate_device');
         expect(names.length).toBe(37);
     });
+});
+
+
+test.each([{ body: [] }, { body: [{ jsonrpc: '2.0', id: 1, method: 'tools/list' }] }])('JSON-RPC arrays are rejected', async ({ body }) => {
+    for (const path of ['/', '/mcp']) {
+        const res = await app.request(path, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: 'Bearer dr_sk_batch' },
+            body: JSON.stringify(body),
+        });
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'batch requests are not supported' } });
+    }
+});
+
+test('trusted client IP precedence accepts only single valid addresses', () => {
+    const previous = env.MCP_TRUST_PROXY;
+    const peer = '192.0.2.1';
+    const ip = (headers: Record<string, string>) => clientIp(new Context(new Request('http://localhost/mcp', { headers }), { env: { ip: peer } }));
+    try {
+        env.MCP_TRUST_PROXY = true;
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toBe('203.0.113.2');
+        expect(ip({ 'x-mobilerun-client-ip': 'invalid', 'cf-connecting-ip': '2001:db8::1' })).toBe('2001:db8::1');
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.1, 203.0.113.2', 'cf-connecting-ip': 'invalid' })).toBe(peer);
+        expect(ip({ 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe(peer);
+        expect(ip({ 'x-real-ip': '198.51.100.1' })).toBe(peer);
+        expect(ip({})).toBe(peer);
+        env.MCP_TRUST_PROXY = false;
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '203.0.113.1' })).toBe(peer);
+    } finally {
+        env.MCP_TRUST_PROXY = previous;
+    }
+});
+
+test('IPv6 buckets share a canonical /64 while IPv4 addresses stay distinct', () => {
+    expect(ipBucketKey('2001:db8::1')).toBe(ipBucketKey('2001:0DB8:0:0:ffff:ffff:ffff:ffff'));
+    expect(ipBucketKey('2001:db8:0:1::1')).not.toBe(ipBucketKey('2001:db8::1'));
+    expect(ipBucketKey('::ffff:192.0.2.1')).toBe(ipBucketKey('::ffff:c000:201'));
+    expect(ipBucketKey('::ffff:192.0.2.1')).toBe('192.0.2.1');
+    expect(ipBucketKey('::ffff:192.0.2.1')).not.toBe(ipBucketKey('::ffff:192.0.2.2'));
+    expect(ipBucketKey('::ffff:127.0.0.1')).toBe('127.0.0.1');
+    expect(ipBucketKey('::ffff:7f00:1')).toBe('127.0.0.1');
+    expect(ipBucketKey('::ffff:a00:5')).toBe('10.0.0.5');
+    expect(ipBucketKey('::1')).toBe('::1');
+    expect(ipBucketKey('::')).toBe('::');
+    expect(ipBucketKey('0:0:0:0:0:0:0:1')).toBe('::1');
+    expect(ipBucketKey('0:0:0:0:0:0:0:0')).toBe('::');
+    expect(ipBucketKey('::1')).not.toBe(ipBucketKey('::2'));
+    expect(ipBucketKey('::')).not.toBe(ipBucketKey('::2'));
+    expect(ipBucketKey('192.0.2.1')).toBe('192.0.2.1');
+    expect(ipBucketKey('192.0.2.1')).not.toBe(ipBucketKey('192.0.2.2'));
+});
+
+test('HTTP timeout returns 504 and aborts the dispatched upstream call', async () => {
+    const previous = env.MCP_REQUEST_TIMEOUT_MS;
+    let upstreamSignal: AbortSignal | null | undefined;
+    const fetch = spyOn(globalThis, 'fetch').mockImplementation(Object.assign(async (_input: string | URL | Request, init?: RequestInit) => {
+        upstreamSignal = init?.signal;
+        return new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(new Error('cancelled')), { once: true });
+        });
+    }, { preconnect: globalThis.fetch.preconnect }));
+    try {
+        env.MCP_REQUEST_TIMEOUT_MS = 30;
+        const res = await app.request('/mcp', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: 'Bearer dr_sk_timeout' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'numbers', arguments: { operation: 'countries' } } }),
+        });
+        expect(res.status).toBe(504);
+        expect(upstreamSignal?.aborted).toBe(true);
+    } finally {
+        env.MCP_REQUEST_TIMEOUT_MS = previous;
+        fetch.mockRestore();
+    }
 });

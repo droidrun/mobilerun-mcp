@@ -1,4 +1,4 @@
-import { idempotencyOpts } from './request-options.js';
+import { purchaseResult } from './response.js';
 import { type default as Mobilerun } from '@mobilerun/sdk';
 import { type NumbersBackend } from '@mobilerun/mcp-tools';
 
@@ -17,10 +17,9 @@ export function createNumbersBackend(client: Mobilerun): NumbersBackend {
             return client.numbers.retrieve(params.numberId);
         },
         async numbersCreate(params) {
-            return client.numbers.create(
+            return purchaseResult(client.numbers.create(
                 { country: params.country, label: params.label, billingPreference: params.billingPreference },
-                idempotencyOpts(params.clientRequestId),
-            );
+            ));
         },
         async numbersUpdate(params) {
             return client.numbers.update(params.numberId, { label: params.label });

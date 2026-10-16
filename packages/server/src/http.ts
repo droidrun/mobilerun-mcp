@@ -1,6 +1,6 @@
+import { isIP } from 'node:net';
 import { buildMcpServer, createAuthContext, policyForProfile, type ToolCtx } from '@mobilerun/mcp-tools';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import Mobilerun from '@mobilerun/sdk';
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -10,14 +10,15 @@ import { logToolCall } from './audit-log.js';
 import { badRequestResponse, methodNotAllowedResponse, resolveCredential, tooManyRequestsResponse, unauthorizedResponse, type CredentialResult } from './auth.js';
 import { env } from './env.js';
 import { log, sanitizeError } from './log.js';
-import { hashCredential, rateLimitConfigFromPerMinute, TokenBucketLimiter } from './rate-limit.js';
+import { stableHash, rateLimitConfigFromPerMinute, TokenBucketLimiter } from './rate-limit.js';
 import { createSdkBackend } from './sdk-backend/index.js';
+import { SdkClient, wrapSdkToolCalls } from './sdk-backend/request-options.js';
 
-type Variables = { credential: CredentialResult };
+type Variables = { credential: CredentialResult; signal: AbortSignal };
 // `ip` is populated by index.ts's Bun.serve fetch handler from
 // `server.requestIP(request)` (the actual socket peer address) — see
 // clientIp()'s header for why this is preferred over trusting
-// X-Forwarded-For/X-Real-IP by default. Hono's `app.request(...)` test
+// proxy headers by default. Hono's `app.request(...)` test
 // helper never sets Bindings, so `c.env` is undefined in tests — every
 // read of it below is optional-chained.
 type Bindings = { ip?: string };
@@ -67,53 +68,66 @@ app.delete('/', deleteNotAllowed);
 const keyLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_KEY_PER_MIN));
 const ipLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_IP_PER_MIN));
 
-// X-Forwarded-For/X-Real-IP are caller-
-// controlled — unguarded, a client can put ANY value there, spoofing a
-// fresh IP per request (bypassing the IP limiter entirely) or framing a
-// victim's real IP (exhausting their bucket instead of the attacker's).
-// So: only honor those headers when MCP_TRUST_PROXY=true (an operator
-// asserting this deployment sits behind a proxy that overwrites, never
-// appends-to, them). Otherwise the actual socket peer address — set by
-// index.ts's Bun.serve fetch handler via `server.requestIP(request)`,
-// never client-supplied — is the only source trusted for this bucket key.
-if (!env.MCP_TRUST_PROXY) {
-    log('info', 'ip_rate_limit_source', {
-        message: 'MCP_TRUST_PROXY is false (default): X-Forwarded-For/X-Real-IP are ignored for IP rate limiting. ' +
-            'The socket peer address is used when available; requests where it is not (e.g. no Bindings.ip wired ' +
-            'by the host) skip the IP limiter and fall back to per-key limiting only — they are never lumped into ' +
-            'one shared "unknown" bucket.',
-    });
-}
+// Trusted proxies set a single client IP header; forwarded chains are never used.
+log('info', 'ip_rate_limit_source', {
+    message: env.MCP_TRUST_PROXY
+        ? 'MCP_TRUST_PROXY is true: valid X-Mobilerun-Client-Ip, then CF-Connecting-IP, then socket peer. IPv6 peers share a /64 bucket.'
+        : 'MCP_TRUST_PROXY is false (default): client IP headers are ignored; the socket peer is used. Missing socket peers skip IP limiting; per-key limiting still applies. IPv6 peers share a /64 bucket.',
+});
 
-function clientIp(c: AppContext): string | undefined {
+export function clientIp(c: AppContext): string | undefined {
     if (env.MCP_TRUST_PROXY) {
-        const forwardedFor = c.req.header('x-forwarded-for');
-        const forwardedIp = forwardedFor?.split(',')[0]?.trim();
-        if (forwardedIp) return forwardedIp;
-        const realIp = c.req.header('x-real-ip')?.trim();
-        if (realIp) return realIp;
+        for (const name of ['x-mobilerun-client-ip', 'cf-connecting-ip']) {
+            const ip = c.req.header(name)?.trim();
+            if (ip && isIP(ip)) return ip;
+        }
     }
     return c.env?.ip;
+}
+
+/** Canonical IPv6 /64 keys group changing interface addresses into one bucket. */
+export function ipBucketKey(ip: string): string {
+    if (isIP(ip) !== 6) return ip;
+    // The native IPv6 parser canonicalizes compressed, mixed and uppercase forms.
+    const address = new URL(`http://[${ip.split('%')[0]}]/`).hostname.slice(1, -1);
+    const [left, right] = address.split('::');
+    const head = left ? left.split(':') : [];
+    const tail = right ? right.split(':') : [];
+    const groups = right === undefined ? head : [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail];
+    if (groups.slice(0, 5).every((part) => part === '0') && groups[5] === 'ffff') {
+        return groups.slice(6).flatMap((part) => {
+            const value = parseInt(part, 16);
+            return [value >> 8, value & 255];
+        }).join('.');
+    }
+    if (address === '::' || address === '::1') return address;
+    return groups.slice(0, 4).map((part) => part.padStart(4, '0')).join(':') + '::/64';
 }
 
 const mcpBodyLimit = bodyLimit({
     maxSize: env.MCP_BODY_LIMIT_BYTES,
     onError: (c) => c.json({ error: { message: `Request body exceeds the ${env.MCP_BODY_LIMIT_BYTES}-byte limit.` } }, 413),
 });
-const mcpTimeout = timeout(
-    env.MCP_REQUEST_TIMEOUT_MS,
-    () => new HTTPException(504, { res: Response.json({ error: { message: 'MCP request timed out' } }, { status: 504 }) }),
-);
+async function mcpTimeout(c: AppContext, next: () => Promise<void>) {
+    const deadline = AbortSignal.timeout(env.MCP_REQUEST_TIMEOUT_MS);
+    c.set('signal', AbortSignal.any([c.req.raw.signal, deadline]));
+    const onTimeout = () => new HTTPException(504, {
+        res: Response.json({ error: { message: 'MCP request timed out' } }, { status: 504 }),
+    });
+    await timeout(env.MCP_REQUEST_TIMEOUT_MS, onTimeout)(c, next);
+    // Read cancellation can finish the handler before the response timer fires.
+    if (deadline.aborted) throw onTimeout();
+}
 async function rateLimitAndAuth(c: AppContext, next: () => Promise<void>) {
     const ip = clientIp(c);
     if (ip) {
-        const ipResult = ipLimiter.consume(ip);
+        const ipResult = ipLimiter.consume(ipBucketKey(ip));
         if (!ipResult.allowed) return tooManyRequestsResponse(c, ipResult.retryAfterSeconds);
     }
 
     const credential: CredentialResult = resolveCredential(c);
     if (credential.status === 'ok') {
-        const keyResult = keyLimiter.consume(hashCredential(credential.apiKey));
+        const keyResult = keyLimiter.consume(stableHash(credential.apiKey));
         if (!keyResult.allowed) return tooManyRequestsResponse(c, keyResult.retryAfterSeconds);
     }
     c.set('credential', credential);
@@ -131,7 +145,13 @@ async function handleMcp(c: AppContext): Promise<Response> {
     if (credential.status === 'missing') return unauthorizedResponse(c);
     if (credential.status === 'invalid') return badRequestResponse(c, credential.message);
 
-    const client = new Mobilerun({ apiKey: credential.apiKey, baseURL: env.MOBILERUN_BASE_URL });
+    // Preserve transport parsing for invalid JSON, but never dispatch a batch.
+    const body: unknown = await c.req.raw.clone().json().catch(() => undefined);
+    if (Array.isArray(body)) {
+        return c.json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'batch requests are not supported' } }, 400);
+    }
+
+    const client = new SdkClient({ apiKey: credential.apiKey, baseURL: env.MOBILERUN_BASE_URL }, { signal: c.get('signal') });
     const backend = createSdkBackend(client);
     // kind: 'api_key' — the public API itself enforces tenancy via key
     // scoping; this resource server never learns the org (see ctx.ts's
@@ -140,7 +160,7 @@ async function handleMcp(c: AppContext): Promise<Response> {
     // endpoint (planned as part of future OAuth support — see the roadmap).
     const auth = createAuthContext({ kind: 'api_key', subject: 'api-key' });
     const ctx: ToolCtx = { backend, auth, policy: policyForProfile(env.MCP_POLICY_PROFILE) };
-    const server = buildMcpServer(ctx, { onToolCall: logToolCall });
+    const server = buildMcpServer(ctx, { onToolCall: logToolCall, wrapRegisterTool: wrapSdkToolCalls });
 
     const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined,

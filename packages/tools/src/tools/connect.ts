@@ -1,3 +1,4 @@
+import { clientRequestIdSchema } from '../backend/communication.js';
 import { operation, registerBundle, requireValue, sdkOp } from './operation-table.js';
 // connect bundle — residential SOCKS5 proxies + bound users (distinct from
 // the device-bound `proxies` tool). Operations: list_countries,
@@ -97,14 +98,15 @@ export const CONNECT_TABLE = [
     }),
     operation({
         op: 'buy_proxy',
-        input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type },
+        input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type, clientRequestId: clientRequestIdSchema.describe('Reuse to retry safely; use a new value to deliberately repeat the purchase.') },
         access: 'commerce',
-        doc: 'Provision and bill a residential proxy.',
+        doc: 'Provision and bill a residential proxy. Retry with the returned clientRequestId to avoid a second purchase.',
         run: async (ctx, input) =>
             asTextResult(
                 await ctx.backend.connect.buyConnectProxy({
                     country: requireValue(input.country, 'country', input.operation, 'connect'),
                     type: input.type,
+                    clientRequestId: input.clientRequestId,
                 }),
             ),
     }),

@@ -3,7 +3,6 @@ name: Deploy Docker-MCP to GCloud
 # Branch -> environment mapping:
 #   next -> develop
 #   main -> staging + prod
-#   PR closed against main -> staging + prod (post-merge deploy)
 #
 # Required GitHub Environment vars (per environment: develop/staging/prod):
 #   IMAGE_REGION, IMAGE_PROJECT_ID, IMAGE_NAME, CLUSTER, REGION, PROJECT_ID,
@@ -14,10 +13,6 @@ on:
   push:
     branches:
       - next
-      - main
-  pull_request:
-    types: [closed]
-    branches:
       - main
 
 jobs:

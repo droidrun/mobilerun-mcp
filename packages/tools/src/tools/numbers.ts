@@ -1,3 +1,4 @@
+import { clientRequestIdSchema } from '../backend/communication.js';
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
@@ -17,7 +18,7 @@ import { registerBundle, sdkOp } from './operation-table.js';
 const NUMBERS_SHARED_FIELDS = {
     country: z.string().optional().describe('Country code from countries. Required for capacity.'),
     numberId: z.string().optional().describe('Required for get/update/delete/messages/send.'),
-    clientRequestId: z.string().min(1).max(128).optional().describe('Optional stable purchase request key; reuse it for retries.'),
+    clientRequestId: clientRequestIdSchema.describe('Optional stable purchase request key; reuse it for retries.'),
     body: z.string().optional().describe('Required SMS text for send.'),
     to: z.string().optional().describe('Required destination phone number for send.'),
 };
@@ -37,7 +38,7 @@ export const NUMBERS_TABLE = [
         doc: 'Read one phone number.',
     }),
     sdkOp('create', numbersCreateSchema, (ctx, params) => ctx.backend.numbers.numbersCreate(params), 'commerce', {
-        doc: 'Create a phone number. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status.',
+        doc: 'Create a phone number. Retry with the returned clientRequestId to avoid a second purchase. billingPreference: included uses included capacity then falls back to rent; included_only fails when included capacity is exhausted; rent always starts paid service. Omit it for the API default. Poll get for status.',
         result: async (ctx, value) => asTextResult(await awaitCheckoutUrl(
             value,
             'numberId',

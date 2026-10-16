@@ -41,6 +41,7 @@ export interface ListAppsOnDeviceOpts {
 }
 
 export interface CreateDeviceOpts {
+    clientRequestId?: string;
     deviceType?: DeviceType;
     name?: string;
     country?: string;
