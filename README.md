@@ -110,7 +110,8 @@ HTTP envelope) — local-only fallback, not used by the HTTP transport.
 | `MCP_REQUEST_TIMEOUT_MS` | `60000` | Hard per-request timeout around the MCP request handler; must stay above 50 s because assistant `send_message` waits up to 50 s |
 | `MCP_RATE_LIMIT_PER_KEY_PER_MIN` | `60` | Token-bucket capacity+refill per API-key hash |
 | `MCP_RATE_LIMIT_PER_IP_PER_MIN` | `120` | Token-bucket capacity+refill per client IP |
-| `MCP_TRUST_PROXY` | `false` | Trust valid single-IP `X-Mobilerun-Client-Ip`, then `CF-Connecting-IP`, then the socket peer for IP rate limiting. Enable only behind an edge that strips caller-supplied client IP headers and trusted services that set them. Forwarded chains are ignored. When false, only the socket peer is used; if unavailable, IP limiting is skipped and per-key limiting still applies. IPv6 addresses share a /64 bucket. |
+| `MCP_CLIENT_IP_HEADERS` | empty | Ordered, comma-separated client-IP header names (case-insensitive, at most five distinct names). Only list headers that your proxy reliably **overwrites or strips**. For Cloudflare: `cf-connecting-ip`; for a proxy that sets `X-Mobilerun-Client-Ip`: `x-mobilerun-client-ip`. Each must contain one valid IP; invalid values and forwarded chains fall through to the next header, then the socket peer. An empty list uses only the socket peer. If no IP is available, IP limiting is skipped and per-key limiting still applies. IPv6 addresses share a /64 bucket. |
+| `MCP_TRUST_PROXY` | `false` | Legacy switch. `true` requires a non-empty `MCP_CLIENT_IP_HEADERS` list or startup fails. The explicit list decides which headers are read, including when this switch is false or unset. |
 
 Validated with `zod` + `safeParse` at startup (`env.ts`) — an invalid config
 fails fast (`process.exit(1)`) rather than serving with a bad default.

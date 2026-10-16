@@ -68,21 +68,27 @@ app.delete('/', deleteNotAllowed);
 const keyLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_KEY_PER_MIN));
 const ipLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_IP_PER_MIN));
 
+// Bounded by the configured header names plus socket/none, never by IPs.
+const clientIpSourceCounts = new Map<string, number>();
+setInterval(() => {
+    if (clientIpSourceCounts.size === 0) return;
+    log('info', 'client_ip_sources', { window_seconds: 300, counts: Object.fromEntries(clientIpSourceCounts) });
+    clientIpSourceCounts.clear();
+}, 300_000).unref();
+
 // Trusted proxies set a single client IP header; forwarded chains are never used.
 log('info', 'ip_rate_limit_source', {
-    message: env.MCP_TRUST_PROXY
-        ? 'MCP_TRUST_PROXY is true: valid X-Mobilerun-Client-Ip, then CF-Connecting-IP, then socket peer. IPv6 peers share a /64 bucket.'
-        : 'MCP_TRUST_PROXY is false (default): client IP headers are ignored; the socket peer is used. Missing socket peers skip IP limiting; per-key limiting still applies. IPv6 peers share a /64 bucket.',
+    headers: env.MCP_CLIENT_IP_HEADERS,
+    message: 'Configured single-IP headers are tried in order, then the socket peer. An empty list uses only the socket peer. Missing peers skip IP limiting; per-key limiting still applies. IPv6 peers share a /64 bucket.',
 });
 
-export function clientIp(c: AppContext): string | undefined {
-    if (env.MCP_TRUST_PROXY) {
-        for (const name of ['x-mobilerun-client-ip', 'cf-connecting-ip']) {
-            const ip = c.req.header(name)?.trim();
-            if (ip && isIP(ip)) return ip;
-        }
+export function clientIp(c: AppContext): { ip: string; source: string } | undefined {
+    for (const name of env.MCP_CLIENT_IP_HEADERS) {
+        const ip = c.req.header(name)?.trim();
+        if (ip && isIP(ip)) return { ip, source: name };
     }
-    return c.env?.ip;
+    const ip = c.env?.ip;
+    return ip ? { ip, source: 'socket' } : undefined;
 }
 
 /** Canonical IPv6 /64 keys group changing interface addresses into one bucket. */
@@ -119,9 +125,11 @@ async function mcpTimeout(c: AppContext, next: () => Promise<void>) {
     if (deadline.aborted) throw onTimeout();
 }
 async function rateLimitAndAuth(c: AppContext, next: () => Promise<void>) {
-    const ip = clientIp(c);
-    if (ip) {
-        const ipResult = ipLimiter.consume(ipBucketKey(ip));
+    const client = clientIp(c);
+    const source = client?.source ?? 'none';
+    clientIpSourceCounts.set(source, (clientIpSourceCounts.get(source) ?? 0) + 1);
+    if (client) {
+        const ipResult = ipLimiter.consume(ipBucketKey(client.ip));
         if (!ipResult.allowed) return tooManyRequestsResponse(c, ipResult.retryAfterSeconds);
     }
 
