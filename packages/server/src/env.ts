@@ -44,15 +44,25 @@ const envSchema = z.object({
     MCP_RATE_LIMIT_PER_KEY_PER_MIN: z.coerce.number().int().positive().default(60),
     MCP_RATE_LIMIT_PER_IP_PER_MIN: z.coerce.number().int().positive().default(120),
 
-    // Trust valid single-IP X-Mobilerun-Client-Ip, then CF-Connecting-IP,
-    // only behind an edge that strips caller-supplied client IP headers and
-    // trusted services that set them. Otherwise use the socket peer only.
-    // Forwarded chains are ignored. IPv6 addresses share a /64 rate bucket.
+    // Ordered single-IP headers reliably overwritten/stripped by your proxy.
+    // Default: socket peer only. Forwarded chains are ignored; IPv6 /64
+    // rate buckets are unchanged. Never list a caller-controlled header.
+    MCP_CLIENT_IP_HEADERS: z
+        .string()
+        .default('')
+        .transform((value) => value.trim() === '' ? [] : [...new Set(value.split(',').map((name) => name.trim().toLowerCase()))])
+        .pipe(z.array(z.string().regex(/^[a-z0-9-]+$/, 'Use non-empty header names containing only a-z, 0-9 and hyphens')).max(5)),
+
+    // Legacy switch: true requires an explicit header list. The list alone
+    // decides which headers are trusted, even when this is false/unset.
     // Do not use z.coerce.boolean(): the nonempty string "false" becomes true.
     MCP_TRUST_PROXY: z
         .string()
         .optional()
         .transform((v) => v === 'true'),
+}).refine((value) => !value.MCP_TRUST_PROXY || value.MCP_CLIENT_IP_HEADERS.length > 0, {
+    path: ['MCP_TRUST_PROXY'],
+    message: 'set MCP_CLIENT_IP_HEADERS to the headers your proxy overwrites',
 });
 
 function loadEnv() {

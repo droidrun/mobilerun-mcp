@@ -96,8 +96,9 @@ describe('/health', () => {
 });
 
 describe('IP rate-limit source', () => {
-    test('MCP_TRUST_PROXY defaults false — X-Forwarded-For/X-Real-IP are not trusted for IP rate limiting', () => {
+    test('client-IP headers default to an empty list — only the socket peer is trusted', () => {
         expect(env.MCP_TRUST_PROXY).toBe(false);
+        expect(env.MCP_CLIENT_IP_HEADERS).toEqual([]);
     });
 
     test('a spoofed X-Forwarded-For does not change request handling (no Bindings.ip wired in tests, so the IP limiter is skipped, not fooled)', async () => {
@@ -146,22 +147,32 @@ test.each([{ body: [] }, { body: [{ jsonrpc: '2.0', id: 1, method: 'tools/list' 
     }
 });
 
-test('trusted client IP precedence accepts only single valid addresses', () => {
-    const previous = env.MCP_TRUST_PROXY;
+test('configured header order accepts only single valid addresses regardless of the legacy switch', () => {
+    const previous = env.MCP_CLIENT_IP_HEADERS;
     const peer = '192.0.2.1';
     const ip = (headers: Record<string, string>) => clientIp(new Context(new Request('http://localhost/mcp', { headers }), { env: { ip: peer } }));
     try {
-        env.MCP_TRUST_PROXY = true;
-        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toBe('203.0.113.2');
-        expect(ip({ 'x-mobilerun-client-ip': 'invalid', 'cf-connecting-ip': '2001:db8::1' })).toBe('2001:db8::1');
-        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.1, 203.0.113.2', 'cf-connecting-ip': 'invalid' })).toBe(peer);
-        expect(ip({ 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe(peer);
-        expect(ip({ 'x-real-ip': '198.51.100.1' })).toBe(peer);
-        expect(ip({})).toBe(peer);
-        env.MCP_TRUST_PROXY = false;
-        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '203.0.113.1' })).toBe(peer);
+        env.MCP_CLIENT_IP_HEADERS = ['x-mobilerun-client-ip', 'cf-connecting-ip'];
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toEqual({ ip: '203.0.113.2', source: 'x-mobilerun-client-ip' });
+        expect(ip({ 'x-mobilerun-client-ip': 'invalid', 'cf-connecting-ip': '2001:db8::1' })).toEqual({ ip: '2001:db8::1', source: 'cf-connecting-ip' });
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.1, 203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toEqual({ ip: '2001:db8::1', source: 'cf-connecting-ip' });
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.1, 203.0.113.2', 'cf-connecting-ip': 'invalid' })).toEqual({ ip: peer, source: 'socket' });
+        expect(ip({ 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toEqual({ ip: peer, source: 'socket' });
+        expect(ip({ 'x-real-ip': '198.51.100.1' })).toEqual({ ip: peer, source: 'socket' });
+        expect(ip({})).toEqual({ ip: peer, source: 'socket' });
+
+        env.MCP_CLIENT_IP_HEADERS = ['cf-connecting-ip', 'x-mobilerun-client-ip'];
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toEqual({ ip: '2001:db8::1', source: 'cf-connecting-ip' });
+
+        env.MCP_CLIENT_IP_HEADERS = ['cf-connecting-ip'];
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toEqual({ ip: '2001:db8::1', source: 'cf-connecting-ip' });
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2' })).toEqual({ ip: peer, source: 'socket' });
+
+        env.MCP_CLIENT_IP_HEADERS = [];
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '203.0.113.1' })).toEqual({ ip: peer, source: 'socket' });
+        expect(clientIp(new Context(new Request('http://localhost/mcp')))).toBeUndefined();
     } finally {
-        env.MCP_TRUST_PROXY = previous;
+        env.MCP_CLIENT_IP_HEADERS = previous;
     }
 });
 
