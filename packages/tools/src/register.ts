@@ -6,6 +6,7 @@ import { type AuthContext, type Policy, type ToolCtx } from './ctx.js';
 import { asErrorResult } from './text-result.js';
 import { registerAppsTools } from './tools/apps.js';
 import { registerAssistantTool } from './tools/assistant.js';
+import { operationAnnotations } from './tools/operation-table.js';
 import { BUNDLE_TOOLS, TOOL_METADATA } from './tools/bundle-tools.js';
 import { registerConnectTools } from './tools/connect.js';
 import { registerCredentialTools, registerManageCredentialsTool } from './tools/credentials.js';
@@ -156,8 +157,14 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
                 throw err;
             }
         };
+        const metadata = TOOL_METADATA.find((tool) => tool.name === name);
+        const operations = metadata && ('operations' in metadata ? metadata.operations : [metadata]);
+        const definition = {
+            ...(def as object),
+            ...(operations ? { annotations: operationAnnotations(operations) } : {}),
+        };
         // @ts-expect-error — passing through the SDK's variadic registerTool signature.
-        const registered = original(name, def, wrapped);
+        const registered = original(name, definition, wrapped);
         if (!ctx.policy.toolAllowlist.has(name)) {
             registered.remove();
         }

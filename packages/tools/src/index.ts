@@ -151,3 +151,5 @@ export type { FilesBackend } from './backend/files.js';
 export { registerFilesTools } from './tools/files.js';
 
 export { MAX_INLINE_FILE_BYTES } from './inline-limits.js';
+
+export { TOOL_METADATA } from './tools/bundle-tools.js';

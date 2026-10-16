@@ -78,3 +78,16 @@ test('golden input schema shapes for every profile', async () => {
     expect(profiles.get('full')).toMatchSnapshot('full profile schemas');
     expect(descriptions).toMatchSnapshot('full profile descriptions');
 });
+
+
+test('golden tool annotations', async () => {
+    const { client, close } = await connect('full');
+    try {
+        const { tools } = await client.listTools();
+        expect(tools.every((tool) => tool.annotations !== undefined)).toBe(true);
+        expect(tools.sort((a, b) => a.name.localeCompare(b.name))
+            .map(({ name, annotations }) => ({ name, annotations }))).toMatchSnapshot('full profile annotations');
+    } finally {
+        await close();
+    }
+});

@@ -199,3 +199,15 @@ function allowedValuesNote(narrowed: readonly string[], all: readonly string[]):
     if (narrowed.length === all.length) return '';
     return ` Available for this credential: ${narrowed.join(', ')}.`;
 }
+
+/** Conservative hints derived from the same access classifications as profiles. */
+export function operationAnnotations(operations: readonly { access: Operation<never>['access'] }[]) {
+    const readOnly = operations.every(({ access }) => access === 'read');
+    return {
+        readOnlyHint: readOnly,
+        destructiveHint: !readOnly,
+        idempotentHint: readOnly,
+        // Writes and full access may send data externally; commerce starts billed services.
+        openWorldHint: !readOnly,
+    };
+}
