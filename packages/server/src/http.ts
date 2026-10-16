@@ -5,7 +5,8 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { HTTPException } from 'hono/http-exception';
-import { timeout } from 'hono/timeout';
+import { isIP } from 'node:net';
+import { wrapSdkToolCalls } from './sdk-backend/request-options.js';
 import { logToolCall } from './audit-log.js';
 import { badRequestResponse, methodNotAllowedResponse, resolveCredential, tooManyRequestsResponse, unauthorizedResponse, type CredentialResult } from './auth.js';
 import { env } from './env.js';
@@ -13,7 +14,7 @@ import { log, sanitizeError } from './log.js';
 import { hashCredential, rateLimitConfigFromPerMinute, TokenBucketLimiter } from './rate-limit.js';
 import { createSdkBackend } from './sdk-backend/index.js';
 
-type Variables = { credential: CredentialResult };
+type Variables = { credential: CredentialResult; signal: AbortSignal };
 // `ip` is populated by index.ts's Bun.serve fetch handler from
 // `server.requestIP(request)` (the actual socket peer address) — see
 // clientIp()'s header for why this is preferred over trusting
@@ -67,15 +68,8 @@ app.delete('/', deleteNotAllowed);
 const keyLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_KEY_PER_MIN));
 const ipLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_IP_PER_MIN));
 
-// X-Forwarded-For/X-Real-IP are caller-
-// controlled — unguarded, a client can put ANY value there, spoofing a
-// fresh IP per request (bypassing the IP limiter entirely) or framing a
-// victim's real IP (exhausting their bucket instead of the attacker's).
-// So: only honor those headers when MCP_TRUST_PROXY=true (an operator
-// asserting this deployment sits behind a proxy that overwrites, never
-// appends-to, them). Otherwise the actual socket peer address — set by
-// index.ts's Bun.serve fetch handler via `server.requestIP(request)`,
-// never client-supplied — is the only source trusted for this bucket key.
+// Trusted proxies supply CF-Connecting-IP or append the nearest peer to XFF.
+// Without proxy trust, only the socket peer identifies the client.
 if (!env.MCP_TRUST_PROXY) {
     log('info', 'ip_rate_limit_source', {
         message: 'MCP_TRUST_PROXY is false (default): X-Forwarded-For/X-Real-IP are ignored for IP rate limiting. ' +
@@ -85,13 +79,12 @@ if (!env.MCP_TRUST_PROXY) {
     });
 }
 
-function clientIp(c: AppContext): string | undefined {
+export function clientIp(c: AppContext): string | undefined {
     if (env.MCP_TRUST_PROXY) {
-        const forwardedFor = c.req.header('x-forwarded-for');
-        const forwardedIp = forwardedFor?.split(',')[0]?.trim();
-        if (forwardedIp) return forwardedIp;
-        const realIp = c.req.header('x-real-ip')?.trim();
-        if (realIp) return realIp;
+        const cloudflareIp = c.req.header('cf-connecting-ip')?.trim();
+        if (cloudflareIp && isIP(cloudflareIp)) return cloudflareIp;
+        const forwardedIp = c.req.header('x-forwarded-for')?.split(',').at(-1)?.trim();
+        if (forwardedIp && isIP(forwardedIp)) return forwardedIp;
     }
     return c.env?.ip;
 }
@@ -100,10 +93,24 @@ const mcpBodyLimit = bodyLimit({
     maxSize: env.MCP_BODY_LIMIT_BYTES,
     onError: (c) => c.json({ error: { message: `Request body exceeds the ${env.MCP_BODY_LIMIT_BYTES}-byte limit.` } }, 413),
 });
-const mcpTimeout = timeout(
-    env.MCP_REQUEST_TIMEOUT_MS,
-    () => new HTTPException(504, { res: Response.json({ error: { message: 'MCP request timed out' } }, { status: 504 }) }),
-);
+async function mcpTimeout(c: AppContext, next: () => Promise<void>) {
+    const controller = new AbortController();
+    c.set('signal', AbortSignal.any([c.req.raw.signal, controller.signal]));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        await Promise.race([
+            next(),
+            new Promise<never>((_, reject) => {
+                timer = setTimeout(() => {
+                    reject(new HTTPException(504, { res: Response.json({ error: { message: 'MCP request timed out' } }, { status: 504 }) }));
+                    controller.abort();
+                }, env.MCP_REQUEST_TIMEOUT_MS);
+            }),
+        ]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
 async function rateLimitAndAuth(c: AppContext, next: () => Promise<void>) {
     const ip = clientIp(c);
     if (ip) {
@@ -131,8 +138,14 @@ async function handleMcp(c: AppContext): Promise<Response> {
     if (credential.status === 'missing') return unauthorizedResponse(c);
     if (credential.status === 'invalid') return badRequestResponse(c, credential.message);
 
+    // Preserve transport parsing for invalid JSON, but never dispatch a batch.
+    const body: unknown = await c.req.raw.clone().json().catch(() => undefined);
+    if (Array.isArray(body)) {
+        return c.json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'batch requests are not supported' } }, 400);
+    }
+
     const client = new Mobilerun({ apiKey: credential.apiKey, baseURL: env.MOBILERUN_BASE_URL });
-    const backend = createSdkBackend(client);
+    const backend = createSdkBackend(client, { signal: c.get('signal') });
     // kind: 'api_key' — the public API itself enforces tenancy via key
     // scoping; this resource server never learns the org (see ctx.ts's
     // AuthContext doc). `subject` is deliberately generic (not the raw key)
@@ -140,7 +153,7 @@ async function handleMcp(c: AppContext): Promise<Response> {
     // endpoint (planned as part of future OAuth support — see the roadmap).
     const auth = createAuthContext({ kind: 'api_key', subject: 'api-key' });
     const ctx: ToolCtx = { backend, auth, policy: policyForProfile(env.MCP_POLICY_PROFILE) };
-    const server = buildMcpServer(ctx, { onToolCall: logToolCall });
+    const server = buildMcpServer(ctx, { onToolCall: logToolCall, wrapRegisterTool: wrapSdkToolCalls });
 
     const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined,

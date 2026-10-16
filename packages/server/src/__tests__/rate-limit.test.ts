@@ -48,3 +48,13 @@ describe('rateLimitConfigFromPerMinute', () => {
         expect(rateLimitConfigFromPerMinute(60)).toEqual({ capacity: 60, refillPerSec: 1 });
     });
 });
+
+test('bucket cardinality is capped and the least recently used key is evicted', () => {
+    const limiter = new TokenBucketLimiter({ capacity: 1, refillPerSec: 0, maxBuckets: 2 });
+    expect(limiter.consume('a', 0).allowed).toBe(true);
+    expect(limiter.consume('b', 0).allowed).toBe(true);
+    expect(limiter.consume('a', 0).allowed).toBe(false); // refresh recency
+    expect(limiter.consume('c', 0).allowed).toBe(true); // evicts b
+    expect(limiter.consume('a', 0).allowed).toBe(false);
+    expect(limiter.consume('b', 0).allowed).toBe(true);
+});

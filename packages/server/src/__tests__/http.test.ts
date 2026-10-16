@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'bun:test';
-import { app } from '../http.js';
+import { describe, expect, spyOn, test } from 'bun:test';
+import { Context } from 'hono';
+import { app, clientIp } from '../http.js';
 import { env } from '../env.js';
 
 describe('POST /mcp — auth error taxonomy', () => {
@@ -130,4 +131,61 @@ describe('POST /mcp tools/list — default policy profile', () => {
         expect(names).not.toContain('terminate_device');
         expect(names.length).toBe(37);
     });
+});
+
+
+test.each([{ body: [] }, { body: [{ jsonrpc: '2.0', id: 1, method: 'tools/list' }] }])('JSON-RPC arrays are rejected', async ({ body }) => {
+    for (const path of ['/', '/mcp']) {
+        const res = await app.request(path, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: 'Bearer dr_sk_batch' },
+            body: JSON.stringify(body),
+        });
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'batch requests are not supported' } });
+    }
+});
+
+test('trusted client IP selection validates headers and uses the nearest proxy entry', () => {
+    const previous = env.MCP_TRUST_PROXY;
+    const peer = '192.0.2.1';
+    const ip = (headers: Record<string, string>) => clientIp(new Context(new Request('http://localhost/mcp', { headers }), { env: { ip: peer } }));
+    try {
+        env.MCP_TRUST_PROXY = true;
+        expect(ip({ 'cf-connecting-ip': '2001:db8::1', 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe('2001:db8::1');
+        expect(ip({ 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe('203.0.113.1');
+        expect(ip({ 'cf-connecting-ip': 'invalid', 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe('203.0.113.1');
+        expect(ip({ 'x-forwarded-for': '198.51.100.1, invalid' })).toBe(peer);
+        expect(ip({ 'x-real-ip': '198.51.100.1' })).toBe(peer);
+        expect(ip({})).toBe(peer);
+        env.MCP_TRUST_PROXY = false;
+        expect(ip({ 'cf-connecting-ip': '203.0.113.1', 'x-forwarded-for': '198.51.100.1' })).toBe(peer);
+    } finally {
+        env.MCP_TRUST_PROXY = previous;
+    }
+});
+
+
+test('HTTP timeout returns 504 and aborts the dispatched upstream call', async () => {
+    const previous = env.MCP_REQUEST_TIMEOUT_MS;
+    let upstreamSignal: AbortSignal | null | undefined;
+    const fetch = spyOn(globalThis, 'fetch').mockImplementation(Object.assign(async (_input: string | URL | Request, init?: RequestInit) => {
+        upstreamSignal = init?.signal;
+        return new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(new Error('cancelled')), { once: true });
+        });
+    }, { preconnect: globalThis.fetch.preconnect }));
+    try {
+        env.MCP_REQUEST_TIMEOUT_MS = 30;
+        const res = await app.request('/mcp', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: 'Bearer dr_sk_timeout' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'numbers', arguments: { operation: 'countries' } } }),
+        });
+        expect(res.status).toBe(504);
+        expect(upstreamSignal?.aborted).toBe(true);
+    } finally {
+        env.MCP_REQUEST_TIMEOUT_MS = previous;
+        fetch.mockRestore();
+    }
 });
