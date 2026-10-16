@@ -169,6 +169,17 @@ test('IPv6 buckets share a canonical /64 while IPv4 addresses stay distinct', ()
     expect(ipBucketKey('2001:db8::1')).toBe(ipBucketKey('2001:0DB8:0:0:ffff:ffff:ffff:ffff'));
     expect(ipBucketKey('2001:db8:0:1::1')).not.toBe(ipBucketKey('2001:db8::1'));
     expect(ipBucketKey('::ffff:192.0.2.1')).toBe(ipBucketKey('::ffff:c000:201'));
+    expect(ipBucketKey('::ffff:192.0.2.1')).toBe('192.0.2.1');
+    expect(ipBucketKey('::ffff:192.0.2.1')).not.toBe(ipBucketKey('::ffff:192.0.2.2'));
+    expect(ipBucketKey('::ffff:127.0.0.1')).toBe('127.0.0.1');
+    expect(ipBucketKey('::ffff:7f00:1')).toBe('127.0.0.1');
+    expect(ipBucketKey('::ffff:a00:5')).toBe('10.0.0.5');
+    expect(ipBucketKey('::1')).toBe('::1');
+    expect(ipBucketKey('::')).toBe('::');
+    expect(ipBucketKey('0:0:0:0:0:0:0:1')).toBe('::1');
+    expect(ipBucketKey('0:0:0:0:0:0:0:0')).toBe('::');
+    expect(ipBucketKey('::1')).not.toBe(ipBucketKey('::2'));
+    expect(ipBucketKey('::')).not.toBe(ipBucketKey('::2'));
     expect(ipBucketKey('192.0.2.1')).toBe('192.0.2.1');
     expect(ipBucketKey('192.0.2.1')).not.toBe(ipBucketKey('192.0.2.2'));
 });

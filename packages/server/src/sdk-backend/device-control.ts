@@ -341,7 +341,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.files.upload(deviceId, { path: opts.path, file });
         },
         async downloadFile(deviceId, path) {
-            const response = await client.devices.files.download(deviceId, { path }).asResponse();
+            const response = await client.devices.files.download(deviceId, { path }, { headers: { 'Accept-Encoding': 'identity' } }).asResponse();
             const content = await readBoundedBody(response, 'Device file');
             return { content: content.toString('base64') };
         },

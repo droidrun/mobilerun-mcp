@@ -7,12 +7,17 @@ import { stableHash } from '../rate-limit.js';
 
 type FinalRequestOptions = Awaited<Parameters<Mobilerun['request']>[0]>;
 export type BackendRequestContext = { signal?: AbortSignal };
-type ToolRequest = { tool: string; operation: string; args: Record<string, unknown>; purchase: boolean };
+type ToolRequest = { tool: string; operation: string; args: Record<string, unknown>; purchase: boolean; clientRequestId?: string };
 const toolRequests = new AsyncLocalStorage<ToolRequest>();
 const PURCHASE_WINDOW_MS = 600_000;
 const READ_METHODS = new Set(['get', 'head', 'options']);
 // eSIM activation downloads an existing profile; no eSIM purchase operation is exposed.
-const PURCHASE_OPERATIONS = new Set(['create_device', 'numbers.create', 'mailboxes.create', 'connect.buy_proxy']);
+const PURCHASE_OPERATIONS = new Set(['create_device', 'numbers.create', 'mailboxes.create', 'mailboxes.restart', 'mailboxes.uncancel', 'connect.buy_proxy']);
+
+/** The dispatched purchase header, scoped to the current tool invocation. */
+export function purchaseRequestId(): string | undefined {
+    return toolRequests.getStore()?.clientRequestId;
+}
 
 /** Purchase retries share a key within a bounded window, independent of JSON-RPC ids. */
 function defaultIdempotencyKey(credential: string, request: ToolRequest): string {
@@ -63,6 +68,8 @@ export class SdkClient extends Mobilerun {
     protected override async prepareRequest(request: RequestInit, { options }: { options: FinalRequestOptions }): Promise<void> {
         if (READ_METHODS.has(options.method)) return;
         options.signal?.throwIfAborted();
+        const tool = toolRequests.getStore();
+        if (tool?.purchase) tool.clientRequestId = new Headers(request.headers).get('Idempotency-Key') ?? undefined;
         // Once sent, writes finish under the SDK timeout; caller cancellation cannot undo them.
         delete request.signal;
         delete options.signal;

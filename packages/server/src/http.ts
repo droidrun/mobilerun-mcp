@@ -94,6 +94,13 @@ export function ipBucketKey(ip: string): string {
     const head = left ? left.split(':') : [];
     const tail = right ? right.split(':') : [];
     const groups = right === undefined ? head : [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail];
+    if (groups.slice(0, 5).every((part) => part === '0') && groups[5] === 'ffff') {
+        return groups.slice(6).flatMap((part) => {
+            const value = parseInt(part, 16);
+            return [value >> 8, value & 255];
+        }).join('.');
+    }
+    if (address === '::' || address === '::1') return address;
     return groups.slice(0, 4).map((part) => part.padStart(4, '0')).join(':') + '::/64';
 }
 

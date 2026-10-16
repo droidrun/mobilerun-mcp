@@ -6,6 +6,11 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Server
 
+- IPv4-mapped IPv6 clients keep separate IPv4 rate-limit buckets; IPv6 loopback and unspecified addresses use exact keys.
+- Purchase request IDs accept printable ASCII. Purchase results include the effective `clientRequestId` for explicit retries across time windows.
+- Mailbox restart and uncancel calls share purchase retry keys.
+- Device file downloads and screenshot captures request uncompressed responses.
+
 - JSON-RPC batch requests are rejected.
 - Client IP limits use validated trusted client headers or the socket peer, group IPv6 addresses by /64, and bound per-key buckets.
 - Read calls are aborted on timeout. Sent writes finish under the API client's timeout and are not retried automatically.

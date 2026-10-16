@@ -30,10 +30,10 @@ export function createMailboxesBackend(client: Mobilerun): MailboxesBackend {
             return client.mailboxes.delete(params.mailboxId);
         },
         async mailboxesUncancel(params) {
-            return client.mailboxes.uncancel(params.mailboxId);
+            return purchaseResult(client.mailboxes.uncancel(params.mailboxId));
         },
         async mailboxesRestart(params) {
-            return client.mailboxes.restart(params.mailboxId, { billingPreference: params.billingPreference });
+            return purchaseResult(client.mailboxes.restart(params.mailboxId, { billingPreference: params.billingPreference }));
         },
         async mailboxesDisconnect(params) {
             return client.mailboxes.disconnect(params.mailboxId);

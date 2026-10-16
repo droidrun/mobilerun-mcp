@@ -9,6 +9,20 @@ function setup(fetch: NonNullable<ConstructorParameters<typeof Mobilerun>[0]>['f
 }
 
 describe('bounded device downloads', () => {
+    test('downloads and both screenshot paths request uncompressed responses', async () => {
+        const headers: Array<string | null> = [];
+        const backend = setup(async (input, init) => {
+            headers.push(new Headers(init?.headers).get('Accept-Encoding'));
+            return new Response(new Uint8Array([0, 1]), {
+                headers: { 'content-type': String(input).includes('screenshots') ? 'image/png' : 'application/octet-stream' },
+            });
+        });
+        await backend.deviceControl.downloadFile('d1', '/file');
+        await backend.deviceControl.manageDeviceScreenshotsCapture('d1', {});
+        await backend.devices.getDeviceScreenshot('d1');
+        expect(headers).toEqual(['identity', 'identity', 'identity']);
+    });
+
     test('raw bytes are returned as base64, including non-text bytes', async () => {
         const bytes = new Uint8Array([0, 255, 128, 65]);
         const backend = setup(async () => new Response(bytes));

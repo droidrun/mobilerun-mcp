@@ -1,5 +1,6 @@
 import { APIError, type default as Mobilerun } from '@mobilerun/sdk';
 import { BackendError, MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
+import { purchaseRequestId } from './request-options.js';
 
 const BODY_READ_TIMEOUT_MS = 5000;
 
@@ -34,7 +35,7 @@ export function captureDeviceScreenshot(
             hideOverlay: params.hideOverlay,
             save: params.save,
             ...headerOpts(params.displayId),
-        }),
+        }, { headers: { 'Accept-Encoding': 'identity' } }),
     );
 }
 
@@ -93,10 +94,15 @@ export async function readBoundedBody(response: Response, label: string, timeout
     return Buffer.concat(chunks);
 }
 
-/** Surface a replay marker without a separate request or parsing the response twice. */
+/** Return the dispatched purchase key and replay marker without another request. */
 export async function purchaseResult<Value extends object>(request: {
     withResponse(): Promise<{ data: Value; response: Response }>;
-}): Promise<Value & { replayed?: true }> {
+}): Promise<Value & { replayed?: true; clientRequestId?: string }> {
     const { data, response } = await request.withResponse();
-    return response.headers.get('Idempotent-Replayed')?.toLowerCase() === 'true' ? { ...data, replayed: true } : data;
+    const clientRequestId = purchaseRequestId();
+    return {
+        ...data,
+        ...(clientRequestId ? { clientRequestId } : {}),
+        ...(response.headers.get('Idempotent-Replayed')?.toLowerCase() === 'true' ? { replayed: true as const } : {}),
+    };
 }

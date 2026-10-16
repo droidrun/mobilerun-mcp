@@ -88,7 +88,6 @@ describe('SDK request options', () => {
 
     test.each([
         { name: 'numbers', args: { operation: 'send', numberId: 'n1', to: '+49123456789', body: 'Hello' } },
-        { name: 'mailboxes', args: { operation: 'restart', mailboxId: 'm1' } },
         { name: 'manage_device', args: { operation: 'stop', deviceId: 'd1' } },
         { name: 'manage_flow', args: { operation: 'run', flowId: 'f1' } },
         { name: 'manage_esim', args: { operation: 'activate', deviceId: 'd1', enable: true, smDpAddr: 'example.com' } },
@@ -105,6 +104,40 @@ describe('SDK request options', () => {
             expect(keys[0]).toBeTruthy();
             expect(keys[1]).not.toBe(keys[0]);
         } finally { await close(); }
+    });
+
+    test.each([
+        { name: 'create_device', args: { deviceType: 'android_cloud_phone' } },
+        { name: 'connect', args: { operation: 'buy_proxy', country: 'de' } },
+        { name: 'numbers', args: { operation: 'create', country: 'de' } },
+        { name: 'mailboxes', args: { operation: 'create', label: 'Inbox' } },
+        { name: 'mailboxes', args: { operation: 'restart', mailboxId: 'm1' } },
+        { name: 'mailboxes', args: { operation: 'uncancel', mailboxId: 'm1' } },
+    ])('purchase results return the dispatched key for retries across windows', async ({ name, args }) => {
+        const now = spyOn(Date, 'now').mockReturnValue(1_200_001);
+        const keys: Array<string | null> = [];
+        const { client, close } = await withTools(async (_input, init) => {
+            keys.push(new Headers(init?.headers).get('Idempotency-Key'));
+            // A response cannot supply or replace the effective request key.
+            return Response.json({ id: 'p1', clientRequestId: 'upstream-value' });
+        });
+        try {
+            for (let i = 0; i < 2; i++) {
+                const result = await client.callTool({ name, arguments: args });
+                expect(result.isError).not.toBe(true);
+                expect(result.content).toEqual(expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining(`"clientRequestId":"${keys[i]}"`) })]));
+            }
+            expect(keys[0]).toMatch(/^[a-f0-9]{32}$/);
+            expect(keys[1]).toBe(keys[0]);
+            now.mockReturnValue(1_800_001);
+            const result = await client.callTool({ name, arguments: { ...args, clientRequestId: keys[0] } });
+            expect(result.isError).not.toBe(true);
+            expect(keys[2]).toBe(keys[0]);
+            expect(result.content).toEqual(expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining(`"clientRequestId":"${keys[0]}"`) })]));
+        } finally {
+            now.mockRestore();
+            await close();
+        }
     });
 
     test('POST is sent once on a retryable failure; GET keeps retries and has no key', async () => {
