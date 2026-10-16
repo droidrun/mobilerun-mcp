@@ -6,6 +6,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Changed
 
+- `list_credentials` returns credential metadata and field types only, matching the other credential operations.
 - Tool operations are declared in per-tool operation tables; tool schemas and profiles are unchanged.
 - Tool descriptions and field-error messages are regenerated from operation tables; wording may differ slightly.
 

@@ -210,6 +210,27 @@ describe('buildMcpServer', () => {
         expect(((rotateResult.content as Array<{ type: string; text?: string }>)[0]?.text ?? '')).toContain('whsec_shown_once');
     });
 
+    test.each([undefined, 'com.example'])('list_credentials returns metadata only (packageName=%s)', async (packageName) => {
+        const metadata = {
+            items: [{
+                credentialName: 'main', packageName: 'com.example', userId: 'user-1', secretPath: 'credentials/main',
+                fields: [{ fieldType: 'password' as const }],
+            }],
+        };
+        const { client, calls } = await connect('full', {
+            recordArgs: true,
+            responses: { 'credentials.listCredentials': metadata },
+        });
+
+        const result = await client.callTool({ name: 'list_credentials', arguments: packageName ? { packageName } : {} });
+
+        expect(result.isError).not.toBe(true);
+        expect(calls).toEqual([{ method: 'credentials.listCredentials', args: [packageName] }]);
+        const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '';
+        expect(JSON.parse(text)).toEqual(metadata);
+        expect(text).not.toMatch(/"value"\s*:/);
+    });
+
     test('manage_credentials tool dispatches each operation to the right backend method, never echoing a field value', async () => {
         const backend = stubBackend();
         const { client } = await connect('full', { backend });

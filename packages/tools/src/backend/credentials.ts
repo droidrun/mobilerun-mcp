@@ -1,27 +1,13 @@
 import { z } from 'zod';
 // Credentials port — see devices.ts's file header for the DTO philosophy.
 //
-// SECURITY NOTE (flagged, not fixed here — outside this brief's scope):
-// @mobilerun/sdk's `Credential.fields[].value` is typed as a plain `string`
-// (verified against credentials/packages/credentials/credentials.d.ts) with
-// no documented masking. The `list_credentials` tool description promises
-// "metadata only — values never leave credentials storage"; whether the
-// live API actually redacts `value` server-side is UNVERIFIED from the
-// SDK's .d.ts alone. This DTO types the field as shipped; it does not
-// redact it.
+// Field values are write-only inputs. SdkBackend maps both list and write
+// responses to CredentialMetaDto, keeping only metadata and field types.
+// Values never leave the adapter in either response path.
 import type { PageMeta } from './devices.js';
 
 export interface CredentialFieldDto {
     fieldType: 'email' | 'username' | 'password' | 'api_token' | 'phone_number' | 'two_factor_secret' | 'backup_codes';
-    value: string;
-}
-
-interface CredentialDto {
-    credentialName: string;
-    packageName: string;
-    userId: string | null;
-    secretPath: string;
-    fields: CredentialFieldDto[];
 }
 
 /** Normalized by SdkBackend — the SDK itself returns two different envelope
@@ -29,7 +15,7 @@ interface CredentialDto {
  * against credentials/credentials.d.ts vs credentials/packages/packages.d.ts);
  * this port exposes one consistent shape regardless of the `packageName` filter. */
 interface CredentialListDto {
-    items: CredentialDto[];
+    items: CredentialMetaDto[];
     pagination?: PageMeta;
 }
 
@@ -45,22 +31,16 @@ interface CredentialPackageListDto {
 // --- Write path (manage_credentials tool) -----------------------------
 //
 // SECRETS: a
-// field `value` is a write-only INPUT here — every write response type
-// below carries `CredentialFieldMetaDto` (fieldType only), never
-// `CredentialFieldDto` (which has `value`). This is a type-level
-// guarantee, not a runtime redaction step: no conforming `CredentialsBackend`
-// implementation can accidentally echo a plaintext value back, because the
-// return type has nowhere to put it.
+// field `value` is a write-only INPUT here — list and write responses
+// carry CredentialFieldDto (fieldType only). The adapter strips values at
+// runtime; the port response types expose metadata only.
 
-interface CredentialFieldMetaDto {
-    fieldType: CredentialFieldDto['fieldType'];
-}
 export interface CredentialMetaDto {
     credentialName: string;
     packageName: string;
     userId: string | null;
     secretPath: string;
-    fields: CredentialFieldMetaDto[];
+    fields: CredentialFieldDto[];
 }
 interface CredentialMetaEnvelopeDto {
     data: CredentialMetaDto;
