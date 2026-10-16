@@ -840,7 +840,7 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
           "enum": [
             "android_cloud_phone",
             "android_physical_phone",
-            "ios_stealth_phone",
+            "ios_phone",
             "android_emulator",
             "ios_simulator",
             "device_slot",
@@ -1053,6 +1053,9 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
         "errorRate": {
           "type": "number",
         },
+        "humanize": {
+          "type": "boolean",
+        },
         "key": {
           "type": "integer",
         },
@@ -1070,9 +1073,6 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
             "browser_script",
           ],
           "type": "string",
-        },
-        "pacedInput": {
-          "type": "boolean",
         },
         "packageName": {
           "type": "string",
@@ -1395,7 +1395,7 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
           "enum": [
             "android_cloud_phone",
             "android_physical_phone",
-            "ios_stealth_phone",
+            "ios_phone",
             "android_emulator",
             "ios_simulator",
             "device_slot",
@@ -2999,6 +2999,9 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
           },
           "type": "array",
         },
+        "humanize": {
+          "type": "boolean",
+        },
         "llmModel": {
           "type": "string",
         },
@@ -3016,9 +3019,6 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
               "type": "null",
             },
           ],
-        },
-        "pacedInput": {
-          "type": "boolean",
         },
         "task": {
           "minLength": 1,
@@ -3264,7 +3264,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "create_trigger",
   },
   {
-    "description": "Low-level device input. pacedInput (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices. tap: Tap x, y. swipe: Swipe startX, startY to endX, endY with duration in milliseconds. keyboard_write: Type text with optional clear, errorRate, wpm and pacedInput. keyboard_key: Send an Android keycode. keyboard_clear: Clear keyboard input. global_action: Send an Android global-action code, e.g. back/home/recents. clipboard_get: Read clipboard text. clipboard_set: Write clipboard text. deep_link: Open a URL or app link. browser_script: Run a script in the device browser.",
+    "description": "Low-level device input. humanize (tap/swipe/keyboard_write) sends input with variable timing and gesture paths instead of instant events, where supported. Per-call displayId targets a specific display on multi-display devices. tap: Tap x, y. swipe: Swipe startX, startY to endX, endY with duration in milliseconds. keyboard_write: Type text with optional clear, errorRate, wpm and humanize. keyboard_key: Send an Android keycode. keyboard_clear: Clear keyboard input. global_action: Send an Android global-action code, e.g. back/home/recents. clipboard_get: Read clipboard text. clipboard_set: Write clipboard text. deep_link: Open a URL or app link. browser_script: Run a script in the device browser.",
     "name": "device_action",
   },
   {

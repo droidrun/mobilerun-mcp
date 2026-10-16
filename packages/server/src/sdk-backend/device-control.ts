@@ -265,7 +265,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.actions.tap(params.deviceId, {
                 x: params.x!,
                 y: params.y!,
-                humanize: params.stealth,
+                humanize: params.humanize,
                 ...headerOpts(params.displayId),
             });
         },
@@ -276,7 +276,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
                 endX: params.endX!,
                 endY: params.endY!,
                 duration: params.duration!,
-                humanize: params.stealth,
+                humanize: params.humanize,
                 ...headerOpts(params.displayId),
             });
         },
@@ -286,7 +286,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
                 clear: params.clear,
                 errorRate: params.errorRate,
                 wpm: params.wpm,
-                humanize: params.stealth,
+                humanize: params.humanize,
                 ...headerOpts(params.displayId),
             });
         },

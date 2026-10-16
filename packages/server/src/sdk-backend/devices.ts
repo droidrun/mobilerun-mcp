@@ -5,6 +5,7 @@
  * surface has rough edges.
  */
 import { captureDeviceScreenshot } from './response.js';
+import { toApiDeviceType } from './device-types.js';
 import { type default as Mobilerun } from '@mobilerun/sdk';
 import {
     type CreateDeviceOpts,
@@ -18,7 +19,7 @@ export function createDevicesBackend(client: Mobilerun): DevicesBackend {
         async listDevices(opts: ListDevicesOpts) {
             return client.devices.list({
                 state: opts.state ? [...opts.state] : undefined,
-                type: opts.type,
+                type: toApiDeviceType(opts.type),
                 name: opts.name,
                 country: opts.country,
                 page: opts.page,
@@ -45,7 +46,7 @@ export function createDevicesBackend(client: Mobilerun): DevicesBackend {
         },
         async createDevice(opts: CreateDeviceOpts) {
             return client.devices.create({
-                deviceType: opts.deviceType,
+                deviceType: toApiDeviceType(opts.deviceType),
                 name: opts.name,
                 // SDK's query param is `query_country`, not `country`.
                 query_country: opts.country?.toUpperCase(),

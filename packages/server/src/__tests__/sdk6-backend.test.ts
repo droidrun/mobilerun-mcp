@@ -3,6 +3,7 @@ import { default as Mobilerun } from '@mobilerun/sdk';
 import { createSdkBackend } from '../sdk-backend/index.js';
 import { MAX_INLINE_FILE_BYTES } from '@mobilerun/mcp-tools';
 import { capturedImage, signedDownload } from '../sdk-backend/response.js';
+import { connect } from '../../../tools/src/__tests__/connect.js';
 
 function setup(result: unknown = { data: { ok: true }, items: [] }) {
     const requests: Array<{ url: URL; method: string; headers: Headers; body: unknown }> = [];
@@ -91,9 +92,9 @@ describe('SDK 6 domain requests', () => {
         expect(requests[2]!.body).toEqual({ enabled: false });
     });
 
-    test('device input and task requests send humanize without stealth', async () => {
+    test('device input and task requests pass humanize to the API', async () => {
         const { backend, requests } = setup();
-        await backend.deviceControl.tap({ deviceId: 'd1', x: 1, y: 2, stealth: true });
+        await backend.deviceControl.tap({ deviceId: 'd1', x: 1, y: 2, humanize: true });
         await backend.deviceControl.swipe({
             deviceId: 'd1',
             startX: 1,
@@ -101,10 +102,10 @@ describe('SDK 6 domain requests', () => {
             endX: 3,
             endY: 4,
             duration: 100,
-            stealth: false,
+            humanize: false,
         });
-        await backend.deviceControl.keyboardWrite({ deviceId: 'd1', text: 'Hello', stealth: true });
-        await backend.tasks.runTask({ deviceId: 'd1', task: 'Open settings', stealth: true });
+        await backend.deviceControl.keyboardWrite({ deviceId: 'd1', text: 'Hello', humanize: true });
+        await backend.tasks.runTask({ deviceId: 'd1', task: 'Open settings', humanize: true });
         for (const [i, expected] of [true, false, true, true].entries()) {
             const request = requests[i]!;
             const query = request.url.searchParams;
@@ -113,6 +114,27 @@ describe('SDK 6 domain requests', () => {
             expect(body && 'stealth' in body).not.toBe(true);
             expect(String(query.get('humanize') ?? body?.humanize)).toBe(String(expected));
         }
+    });
+
+    test.each([
+        { fields: { humanize: true, stealth: false }, expected: true },
+        { fields: { humanize: false, stealth: true }, expected: false },
+        { fields: { stealth: true }, expected: true },
+        { fields: { stealth: false }, expected: false },
+        { fields: {}, expected: undefined },
+    ])('get_task exposes humanize from API fields %j', async ({ fields, expected }) => {
+        const { backend } = setup({ task: {
+            id: 't1', deviceId: 'd1', llmModel: 'model', task: 'Open settings',
+            userId: 'u1', status: 'running', ...fields,
+        } });
+        const { client } = await connect('full', { backend });
+        const result = await client.callTool({ name: 'get_task', arguments: { taskId: 't1', view: 'summary' } });
+        expect(result.isError).not.toBe(true);
+        const content = result.content as Array<{ type: string; text?: string }>;
+        const summary = JSON.parse(content[0]?.text ?? '{}');
+        expect(summary.id).toBe('t1');
+        expect(summary.humanize).toBe(expected);
+        expect(summary).not.toHaveProperty('stealth');
     });
 
     test('media control tokens are forwarded as headers; void writes return JSON', async () => {
@@ -198,6 +220,46 @@ test('device reads and creation forward canonical type identifiers', async () =>
     await backend.devices.createDevice({ deviceType: 'android_cloud_phone', country: 'de' });
     expect(requests[1]!.url.searchParams.get('deviceType')).toBe('android_cloud_phone');
     expect(requests[1]!.url.searchParams.get('country')).toBe('DE');
+});
+
+test.each([
+    {
+        name: 'list_devices', arguments: { type: 'ios_phone' }, parameter: 'type',
+        api: { items: [{ id: 'd1', type: 'ios_stealth_phone' }, { id: 'd2', type: 'android_cloud_phone' }], pagination: null },
+        expected: { items: [{ id: 'd1', type: 'ios_phone' }, { id: 'd2', type: 'android_cloud_phone' }], pagination: null },
+    },
+    {
+        name: 'create_device', arguments: { deviceType: 'ios_phone' }, parameter: 'deviceType',
+        api: { id: 'd1', type: 'ios_stealth_phone' }, expected: { id: 'd1', type: 'ios_phone' },
+    },
+    {
+        name: 'get_device', arguments: { deviceId: 'd1' }, parameter: undefined,
+        api: { id: 'd1', type: 'ios_stealth_phone' }, expected: { id: 'd1', type: 'ios_phone' },
+    },
+    {
+        name: 'manage_device', arguments: { operation: 'summary' }, parameter: undefined,
+        api: { total: 3, byState: { ready: 3 }, byType: { ios_stealth_phone: 2, android_cloud_phone: 1 } },
+        expected: { total: 3, byState: { ready: 3 }, byType: { ios_phone: 2, android_cloud_phone: 1 } },
+    },
+    {
+        name: 'manage_device', arguments: { operation: 'count' }, parameter: undefined,
+        api: { ios_stealth_phone: 2, android_cloud_phone: 1 }, expected: { ios_phone: 2, android_cloud_phone: 1 },
+    },
+    ...['get_capabilities', 'retrieve_capabilities'].map((operation) => ({
+        name: 'manage_device', arguments: { operation, deviceId: 'd1' }, parameter: undefined,
+        api: { deviceType: 'ios_stealth_phone', capabilities: { apps: true } },
+        expected: { deviceType: 'ios_phone', capabilities: { apps: true } },
+    })),
+])('MCP normalizes API device types in $name with $arguments', async ({ name, arguments: args, parameter, api, expected }) => {
+    const { backend, requests } = setup(api);
+    const { client } = await connect('full', { backend });
+    const result = await client.callTool({ name, arguments: args });
+    expect(result.isError).not.toBe(true);
+    const content = result.content as Array<{ type: string; text?: string }>;
+    expect(JSON.parse(content[0]?.text ?? '{}')).toEqual(expected);
+    expect(JSON.stringify(result)).not.toContain('stealth');
+    expect(requests).toHaveLength(1);
+    if (parameter) expect(requests[0]!.url.searchParams.get(parameter)).toBe('ios_stealth_phone');
 });
 
 test('number billing preferences pass through without a hard-coded default', async () => {

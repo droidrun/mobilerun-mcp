@@ -14,7 +14,7 @@ const stubBackend = () => createBackendStub({ recordArgs: true, responses: {
 } });
 
 describe('tasks tools', () => {
-    test('run_task passes every param through to backend.tasks.runTask, mapping pacedInput to stealth', async () => {
+    test('run_task passes every param through to backend.tasks.runTask', async () => {
         const backend = stubBackend();
         const { client } = await connect('full', { backend });
 
@@ -24,7 +24,7 @@ describe('tasks tools', () => {
             llmModel: 'gemini/gemini-2.5-flash',
             maxSteps: 20,
             outputSchema: { type: 'object' },
-            pacedInput: true,
+            humanize: true,
             vision: false,
             apps: ['com.android.settings'],
             credentials: [{ credentialNames: ['login'], packageName: 'com.example' }],
@@ -35,8 +35,7 @@ describe('tasks tools', () => {
 
         const call = backend.calls.find((c) => c.method === 'tasks.runTask');
         expect(call).toBeDefined();
-        const { pacedInput, ...rest } = args;
-        expect(call?.args[0]).toEqual({ ...rest, stealth: pacedInput });
+        expect(call?.args[0]).toEqual(args);
     });
 
     test('get_task view=trajectory forwards offset/limit into compactTrajectory (offset/limit not passed to backend, which has no paging param)', async () => {

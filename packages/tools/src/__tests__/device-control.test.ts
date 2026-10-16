@@ -10,14 +10,14 @@ function textOf(result: Awaited<ReturnType<Client['callTool']>>): string {
 const DEVICE_ID = 'd1';
 
 describe('device-control bundle tools', () => {
-    test('device_action maps pacedInput to the API stealth parameter', async () => {
+    test('device_action passes humanize through to the backend', async () => {
         const backend = stubBackend();
         const captured: unknown[] = [];
         backend.deviceControl.tap = async (params: unknown) => void captured.push(params);
         const { client } = await connect('full', { backend });
-        const result = await client.callTool({ name: 'device_action', arguments: { operation: 'tap', deviceId: DEVICE_ID, x: 1, y: 2, pacedInput: true } });
+        const result = await client.callTool({ name: 'device_action', arguments: { operation: 'tap', deviceId: DEVICE_ID, x: 1, y: 2, humanize: true } });
         expect(result.isError).not.toBe(true);
-        expect(captured[0]).toMatchObject({ deviceId: DEVICE_ID, x: 1, y: 2, stealth: true });
+        expect(captured[0]).toMatchObject({ deviceId: DEVICE_ID, x: 1, y: 2, humanize: true });
     });
 
     test('manage_device_files: upload payload over the inline size cap is rejected before dispatch', async () => {
