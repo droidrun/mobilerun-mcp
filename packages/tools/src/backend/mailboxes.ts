@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { billingPreferenceSchema } from './communication.js';
+import { billingPreferenceSchema, clientRequestIdSchema } from './communication.js';
 
 export const mailboxesListSchema = z
     .object({
@@ -14,7 +14,7 @@ export const mailboxesCreateSchema = z
         domainId: z.string().optional(),
         label: z.string().nullable().optional(),
         localPart: z.string().optional(),
-        clientRequestId: z.string().min(1).max(128).optional(),
+        clientRequestId: clientRequestIdSchema,
     })
     .strict();
 
@@ -88,7 +88,7 @@ export const mailboxesConnectSchema = z
     .object({
         bindingHash: z.string().optional(),
         label: z.string().optional(),
-        clientRequestId: z.string().min(1).max(128).optional(),
+        clientRequestId: clientRequestIdSchema,
     })
     .strict();
 
