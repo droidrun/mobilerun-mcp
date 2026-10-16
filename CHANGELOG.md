@@ -7,6 +7,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 ### Server
 
 - **Breaking:** `MCP_TRUST_PROXY=true` requires `MCP_CLIENT_IP_HEADERS`; trusted client-IP headers are configured explicitly.
+- Added `client_ip_sources` logs with per-source request counts, emitted at most every five minutes without IP values or hashes.
 - IPv4-mapped IPv6 clients keep separate IPv4 rate-limit buckets; IPv6 loopback and unspecified addresses use exact keys.
 - Purchase request IDs accept printable ASCII. Purchase results include the effective `clientRequestId` for explicit retries across time windows.
 - Mailbox restart and uncancel calls share purchase retry keys.

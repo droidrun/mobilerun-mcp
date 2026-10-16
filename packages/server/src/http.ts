@@ -68,6 +68,14 @@ app.delete('/', deleteNotAllowed);
 const keyLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_KEY_PER_MIN));
 const ipLimiter = new TokenBucketLimiter(rateLimitConfigFromPerMinute(env.MCP_RATE_LIMIT_PER_IP_PER_MIN));
 
+// Bounded by the configured header names plus socket/none, never by IPs.
+const clientIpSourceCounts = new Map<string, number>();
+setInterval(() => {
+    if (clientIpSourceCounts.size === 0) return;
+    log('info', 'client_ip_sources', { window_seconds: 300, counts: Object.fromEntries(clientIpSourceCounts) });
+    clientIpSourceCounts.clear();
+}, 300_000).unref();
+
 // Trusted proxies set a single client IP header; forwarded chains are never used.
 log('info', 'ip_rate_limit_source', {
     headers: env.MCP_CLIENT_IP_HEADERS,
@@ -118,6 +126,8 @@ async function mcpTimeout(c: AppContext, next: () => Promise<void>) {
 }
 async function rateLimitAndAuth(c: AppContext, next: () => Promise<void>) {
     const client = clientIp(c);
+    const source = client?.source ?? 'none';
+    clientIpSourceCounts.set(source, (clientIpSourceCounts.get(source) ?? 0) + 1);
     if (client) {
         const ipResult = ipLimiter.consume(ipBucketKey(client.ip));
         if (!ipResult.allowed) return tooManyRequestsResponse(c, ipResult.retryAfterSeconds);
