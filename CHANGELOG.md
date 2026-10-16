@@ -6,6 +6,12 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Changed
 
+- JSON-RPC batch requests are rejected.
+- Client IP rate limits use client addresses supplied by the trusted proxy, with bounded per-key buckets.
+- Upstream calls are aborted on timeout; billed operations use stable default idempotency keys and writes are not retried automatically.
+- Device file downloads are bounded while streaming.
+- All tools include annotations derived from their operation access classifications.
+
 - **Breaking:** the iOS phone device type is `ios_phone` in tool inputs and results.
 
 - **Breaking:** `device_action` and `run_task` input `pacedInput` renamed to `humanize`, matching the API. `get_task` results report `humanize` instead of `stealth`.
