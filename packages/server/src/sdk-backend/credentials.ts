@@ -1,7 +1,7 @@
 /**
  * Strips `value` from every field of a raw @mobilerun/sdk `Credential` —
  * the ONLY place in this codebase where a plaintext credential value from
- * a write response is handled, and it is dropped here before the result
+ * a list or write response is handled, and it is dropped here before the result
  * ever reaches the tools-package Backend port (whose `CredentialMetaDto`
  * type has no `value` field to begin with — see backend/credentials.ts's
  * SECRETS note).
@@ -54,10 +54,10 @@ export function createCredentialsBackend(client: Mobilerun): CredentialsBackend 
             // leaky union of the SDK's own inconsistency.
             if (packageName) {
                 const result = await client.credentials.packages.list(packageName);
-                return { items: result.data };
+                return { items: result.data.map(toCredentialMeta) };
             }
             const result = await client.credentials.list({});
-            return { items: result.items, pagination: result.pagination };
+            return { items: result.items.map(toCredentialMeta), pagination: result.pagination };
         },
         async listCredentialPackages() {
             const result = await client.credentials.packages.listAll();
