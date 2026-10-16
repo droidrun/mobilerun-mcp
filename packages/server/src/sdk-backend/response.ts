@@ -50,14 +50,20 @@ export async function capturedImage(
         void response.body?.cancel().catch(() => {});
         throw new BackendError('upstream_error', 'Screenshot capture did not return a PNG image.');
     }
+    const content = await readBoundedBody(response, 'Screenshot', timeoutMs);
+    return { mimeType: 'image/png', contentBase64: content.toString('base64') };
+}
+
+/** Bound decoded bytes and time without buffering an unbounded response. */
+export async function readBoundedBody(response: Response, label: string, timeoutMs = 5000): Promise<Buffer> {
     const reader = response.body?.getReader();
-    if (!reader) throw new BackendError('upstream_error', 'Screenshot capture returned an empty body.');
+    if (!reader) throw new BackendError('upstream_error', `${label} returned an empty body.`);
     const chunks: Uint8Array[] = [];
     let size = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
-            reject(new BackendError('upstream_error', 'Screenshot body read timed out.'));
+            reject(new BackendError('upstream_error', `${label} body read timed out.`));
             void reader.cancel().catch(() => {});
         }, timeoutMs);
     });
@@ -70,7 +76,7 @@ export async function capturedImage(
                 void reader.cancel().catch(() => {});
                 throw new BackendError(
                     'upstream_error',
-                    `Screenshot exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit; use saved screenshot download URLs.`,
+                    `${label} exceeds the ${MAX_INLINE_FILE_BYTES / 1024} KB inline limit.`,
                 );
             }
             chunks.push(value);
@@ -79,5 +85,5 @@ export async function capturedImage(
         clearTimeout(timer);
         reader.releaseLock();
     }
-    return { mimeType: 'image/png', contentBase64: Buffer.concat(chunks).toString('base64') };
+    return Buffer.concat(chunks);
 }
