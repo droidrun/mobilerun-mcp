@@ -1,6 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Context } from 'hono';
-import { app, clientIp } from '../http.js';
+import { app, clientIp, ipBucketKey } from '../http.js';
 import { env } from '../env.js';
 
 describe('POST /mcp — auth error taxonomy', () => {
@@ -146,25 +146,32 @@ test.each([{ body: [] }, { body: [{ jsonrpc: '2.0', id: 1, method: 'tools/list' 
     }
 });
 
-test('trusted client IP selection validates headers and uses the nearest proxy entry', () => {
+test('trusted client IP precedence accepts only single valid addresses', () => {
     const previous = env.MCP_TRUST_PROXY;
     const peer = '192.0.2.1';
     const ip = (headers: Record<string, string>) => clientIp(new Context(new Request('http://localhost/mcp', { headers }), { env: { ip: peer } }));
     try {
         env.MCP_TRUST_PROXY = true;
-        expect(ip({ 'cf-connecting-ip': '2001:db8::1', 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe('2001:db8::1');
-        expect(ip({ 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe('203.0.113.1');
-        expect(ip({ 'cf-connecting-ip': 'invalid', 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe('203.0.113.1');
-        expect(ip({ 'x-forwarded-for': '198.51.100.1, invalid' })).toBe(peer);
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '2001:db8::1' })).toBe('203.0.113.2');
+        expect(ip({ 'x-mobilerun-client-ip': 'invalid', 'cf-connecting-ip': '2001:db8::1' })).toBe('2001:db8::1');
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.1, 203.0.113.2', 'cf-connecting-ip': 'invalid' })).toBe(peer);
+        expect(ip({ 'x-forwarded-for': '198.51.100.1, 203.0.113.1' })).toBe(peer);
         expect(ip({ 'x-real-ip': '198.51.100.1' })).toBe(peer);
         expect(ip({})).toBe(peer);
         env.MCP_TRUST_PROXY = false;
-        expect(ip({ 'cf-connecting-ip': '203.0.113.1', 'x-forwarded-for': '198.51.100.1' })).toBe(peer);
+        expect(ip({ 'x-mobilerun-client-ip': '203.0.113.2', 'cf-connecting-ip': '203.0.113.1' })).toBe(peer);
     } finally {
         env.MCP_TRUST_PROXY = previous;
     }
 });
 
+test('IPv6 buckets share a canonical /64 while IPv4 addresses stay distinct', () => {
+    expect(ipBucketKey('2001:db8::1')).toBe(ipBucketKey('2001:0DB8:0:0:ffff:ffff:ffff:ffff'));
+    expect(ipBucketKey('2001:db8:0:1::1')).not.toBe(ipBucketKey('2001:db8::1'));
+    expect(ipBucketKey('::ffff:192.0.2.1')).toBe(ipBucketKey('::ffff:c000:201'));
+    expect(ipBucketKey('192.0.2.1')).toBe('192.0.2.1');
+    expect(ipBucketKey('192.0.2.1')).not.toBe(ipBucketKey('192.0.2.2'));
+});
 
 test('HTTP timeout returns 504 and aborts the dispatched upstream call', async () => {
     const previous = env.MCP_REQUEST_TIMEOUT_MS;

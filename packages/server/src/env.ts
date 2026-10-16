@@ -44,15 +44,11 @@ const envSchema = z.object({
     MCP_RATE_LIMIT_PER_KEY_PER_MIN: z.coerce.number().int().positive().default(60),
     MCP_RATE_LIMIT_PER_IP_PER_MIN: z.coerce.number().int().positive().default(120),
 
-    // Whether to trust X-Forwarded-For/X-Real-IP
-    // for IP-based rate limiting. Defaults to false — those headers are
-    // caller-controlled and, unguarded, let a single attacker spoof a fresh
-    // IP per request (bypassing the IP limiter entirely) or frame a victim's
-    // real IP (exhausting their bucket). Only set true when this server sits
-    // behind a proxy/load balancer that overwrites (never appends-to) those
-    // headers before forwarding. `z.coerce.boolean()` is NOT used here on
-    // purpose — it coerces any non-empty string ("false" included) to
-    // `true`, which would silently invert this flag's default.
+    // Trust valid single-IP X-Mobilerun-Client-Ip, then CF-Connecting-IP,
+    // only behind an edge that strips caller-supplied client IP headers and
+    // trusted services that set them. Otherwise use the socket peer only.
+    // Forwarded chains are ignored. IPv6 addresses share a /64 rate bucket.
+    // Do not use z.coerce.boolean(): the nonempty string "false" becomes true.
     MCP_TRUST_PROXY: z
         .string()
         .optional()
