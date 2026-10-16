@@ -1,3 +1,4 @@
+import type { Operation } from './operation-table.js';
 import { APPS_TABLE } from './apps.js';
 import { ASSISTANT_TABLE } from './assistant.js';
 import { CONFIGURE_DEVICE_TABLE } from './configure-device-operations.js';
@@ -68,3 +69,23 @@ type Bundle = Extract<(typeof TOOL_METADATA)[number], { operations: unknown }>;
 export const BUNDLE_TOOLS = Object.fromEntries(TOOL_METADATA.filter((tool) => 'operations' in tool).map((tool) => [tool.name, tool])) as {
     [Name in Bundle['name']]: Extract<Bundle, { name: Name }>;
 };
+
+/** Resolve selected/effective access and the complete table through one metadata path. */
+export function resolveOperationAccess(name: string, input?: Record<string, unknown>) {
+    const metadata = TOOL_METADATA.find((tool) => tool.name === name);
+    if (!metadata) return undefined;
+    if (!('operations' in metadata)) {
+        return { operation: undefined, effectiveOperation: undefined, access: metadata.access, accesses: [metadata.access] };
+    }
+    const operations: readonly Pick<Operation<never>, 'op' | 'access' | 'effectiveOp'>[] = metadata.operations;
+    const operation = typeof input?.[metadata.field] === 'string' ? input[metadata.field] as string : undefined;
+    const entry = operations.find((entry) => entry.op === operation);
+    const effectiveOperation = entry?.effectiveOp?.(input ?? {}) ?? operation;
+    return {
+        operation,
+        effectiveOperation,
+        access: operations.find((entry) => entry.op === effectiveOperation)?.access,
+        // Full tables deliberately keep hints independent of the caller's profile.
+        accesses: operations.map(({ access }) => access),
+    };
+}

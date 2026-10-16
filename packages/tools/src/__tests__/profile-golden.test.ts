@@ -79,7 +79,6 @@ test('golden input schema shapes for every profile', async () => {
     expect(descriptions).toMatchSnapshot('full profile descriptions');
 });
 
-
 test('golden tool annotations', async () => {
     const { client, close } = await connect('full');
     try {

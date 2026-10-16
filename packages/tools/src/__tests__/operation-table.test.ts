@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createAuthContext } from '../ctx.js';
 import { fullAccessPolicy } from '../register.js';
 import { asTextResult } from '../text-result.js';
+import { resolveOperationAccess } from '../tools/bundle-tools.js';
 import { operation, registerBundle } from '../tools/operation-table.js';
 import { stubBackend } from './backend-stub.js';
 
@@ -31,4 +32,16 @@ test('bundle registration rejects conflicting definitions unless explicitly shar
             await server.close();
         }
     }
+});
+
+
+test('access resolution shares effective operation classification and full-table hints', () => {
+    expect(resolveOperationAccess('manage_flow', { operation: 'update', enabled: true })).toMatchObject({
+        operation: 'update', effectiveOperation: 'activate', access: 'commerce',
+    });
+    expect(resolveOperationAccess('manage_flow', { operation: 'update', enabled: false })?.access).toBe('write');
+    expect(resolveOperationAccess('create_device')?.access).toBe('commerce');
+    expect(resolveOperationAccess('numbers')?.accesses).toContain('commerce');
+    expect(resolveOperationAccess('numbers', { operation: 'unknown' })?.access).toBeUndefined();
+    expect(resolveOperationAccess('unknown')).toBeUndefined();
 });

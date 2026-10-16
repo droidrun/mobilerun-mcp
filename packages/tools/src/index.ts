@@ -152,4 +152,5 @@ export { registerFilesTools } from './tools/files.js';
 
 export { MAX_INLINE_FILE_BYTES } from './inline-limits.js';
 
-export { TOOL_METADATA } from './tools/bundle-tools.js';
+export { resolveOperationAccess } from './tools/bundle-tools.js';
+export { canonicalJson } from './canonical-json.js';

@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { toJsonSchemaCompat } from '@modelcontextprotocol/sdk/server/zod-json-schema-compat.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import { canonicalJson } from '../canonical-json.js';
 import type { ToolCtx } from '../ctx.js';
 import { asErrorResult, asTextResult } from '../text-result.js';
 /** One declaration supplies an operation's surface, dispatch and profile classification. */
@@ -36,13 +37,7 @@ function operationInput(table: readonly SurfaceOperation[], shared: z.ZodRawShap
             if (Object.hasOwn(shared, key)) continue;
             let schema = field;
             while (schema instanceof z.ZodOptional) schema = schema.unwrap();
-            const definition = JSON.stringify(toJsonSchemaCompat(z.object({ value: schema })), function (key, value: unknown) {
-                if (key === 'description' && typeof value === 'string') return undefined;
-                if (value && typeof value === 'object' && !Array.isArray(value)) {
-                    return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)));
-                }
-                return value;
-            });
+            const definition = canonicalJson(toJsonSchemaCompat(z.object({ value: schema })), { omitDescriptions: true });
             const previous = definitions.get(key);
             if (previous !== undefined && previous !== definition) {
                 throw new Error(`Conflicting definitions for field "${key}" in operation=${op}; declare a shared field explicitly`);
@@ -201,13 +196,12 @@ function allowedValuesNote(narrowed: readonly string[], all: readonly string[]):
 }
 
 /** Conservative hints derived from the same access classifications as profiles. */
-export function operationAnnotations(operations: readonly { access: Operation<never>['access'] }[]) {
-    const readOnly = operations.every(({ access }) => access === 'read');
+export function operationAnnotations(accesses: readonly Operation<never>['access'][]) {
+    const readOnly = accesses.every((access) => access === 'read');
     return {
         readOnlyHint: readOnly,
         destructiveHint: !readOnly,
-        idempotentHint: readOnly,
-        // Writes and full access may send data externally; commerce starts billed services.
-        openWorldHint: !readOnly,
+        ...(!readOnly && accesses.includes('commerce') ? { idempotentHint: false } : {}),
+        openWorldHint: true,
     };
 }

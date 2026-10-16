@@ -688,6 +688,11 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "clientRequestId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string",
+        },
         "country": {
           "type": "string",
         },
@@ -832,6 +837,11 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
+        "clientRequestId": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string",
+        },
         "country": {
           "pattern": "^[A-Za-z]{2}$",
           "type": "string",
@@ -3336,7 +3346,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "manage_device_apps",
   },
   {
-    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
+    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path as base64 content; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
     "name": "manage_device_files",
   },
   {
@@ -3395,7 +3405,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3404,7 +3413,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3413,7 +3421,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3431,7 +3438,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3449,7 +3455,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3458,7 +3463,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3467,7 +3471,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3476,7 +3479,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3485,8 +3487,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "get_device",
@@ -3494,8 +3495,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "get_device_screenshot",
@@ -3503,8 +3503,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "get_device_ui_state",
@@ -3512,8 +3511,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "get_task",
@@ -3521,8 +3519,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "get_task_media",
@@ -3530,8 +3527,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "get_workflow_resource",
@@ -3539,8 +3535,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "list_apps_on_device",
@@ -3548,8 +3543,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "list_credential_packages",
@@ -3557,8 +3551,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "list_credentials",
@@ -3566,8 +3559,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "list_devices",
@@ -3575,8 +3567,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "list_tasks",
@@ -3584,8 +3575,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "list_workflow_resources",
@@ -3602,7 +3592,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3620,7 +3609,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3629,7 +3617,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3656,7 +3643,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3674,8 +3660,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
+      "openWorldHint": true,
       "readOnlyHint": true,
     },
     "name": "platform_catalog",
@@ -3683,7 +3668,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3692,7 +3676,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3701,7 +3684,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3710,7 +3692,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3728,7 +3709,6 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   {
     "annotations": {
       "destructiveHint": true,
-      "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },

@@ -97,7 +97,7 @@ export const CONNECT_TABLE = [
     }),
     operation({
         op: 'buy_proxy',
-        input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type },
+        input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type, clientRequestId: z.string().min(1).max(128).optional().describe('Reuse to retry safely; use a new value to deliberately repeat the purchase.') },
         access: 'commerce',
         doc: 'Provision and bill a residential proxy.',
         run: async (ctx, input) =>
@@ -105,6 +105,7 @@ export const CONNECT_TABLE = [
                 await ctx.backend.connect.buyConnectProxy({
                     country: requireValue(input.country, 'country', input.operation, 'connect'),
                     type: input.type,
+                    clientRequestId: input.clientRequestId,
                 }),
             ),
     }),

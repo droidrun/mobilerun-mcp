@@ -104,6 +104,7 @@ export interface ListConnectProxiesOpts {
     pageSize?: number;
 }
 export interface BuyConnectProxyParams {
+    clientRequestId?: string;
     country: string;
     type?: 'residential';
 }

@@ -148,6 +148,7 @@ export function registerDeviceTools(server: McpServer, ctx: ToolCtx): void {
             description:
                 'Provision a new device. The API bills it to your account and returns an error if your credits are insufficient. Provisioning takes a while: after creating, poll get_device with the returned id until state is "ready" before using it.',
             inputSchema: {
+                clientRequestId: z.string().min(1).max(128).optional().describe('Reuse to retry safely; use a new value to deliberately repeat the purchase.'),
                 deviceType: z.enum(DEVICE_TYPES).optional(),
                 name: z.string().max(64).optional(),
                 country: z

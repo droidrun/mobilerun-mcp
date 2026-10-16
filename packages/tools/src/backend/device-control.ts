@@ -92,7 +92,7 @@ export interface FileUploadOpts {
     contentType?: string;
 }
 export interface FileDownloadDto {
-    /** Raw client response; the device-file endpoint does not document whether content is base64 or plain text. */
+    /** Base64-encoded file bytes, bounded by the decoded inline transfer limit. */
     content: string;
 }
 
