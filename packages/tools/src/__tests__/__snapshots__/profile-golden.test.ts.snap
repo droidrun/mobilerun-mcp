@@ -3350,7 +3350,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "manage_device_apps",
   },
   {
-    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to path; decoded payload capped at 256KB, larger files are rejected. download: Read path as base64 content; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
+    "description": "Device filesystem access. path is required for every operation. list: List directory entries at path. upload: Write contentBase64 to the full target file path, including a directory and filename. If fileName is given, path is the target directory; decoded payload capped at 256KB, larger files are rejected. download: Read path as base64 content; oversized results are rejected with the same inline transfer limit. delete: Delete path.",
     "name": "manage_device_files",
   },
   {

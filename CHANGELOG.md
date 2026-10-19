@@ -4,6 +4,10 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `manage_device_files` uploads without `fileName` use `path` as the full target file path; uploads with `fileName` continue to treat `path` as the target directory.
+
 ### Server
 
 - **Breaking:** `MCP_TRUST_PROXY=true` requires `MCP_CLIENT_IP_HEADERS`; trusted client-IP headers are configured explicitly.
