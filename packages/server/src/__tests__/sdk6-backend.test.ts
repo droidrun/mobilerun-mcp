@@ -134,16 +134,8 @@ describe('SDK 6 domain requests', () => {
         expect(summary).not.toHaveProperty('stealth');
     });
 
-    test('media control tokens are forwarded as headers; void writes return JSON', async () => {
-        const { backend, requests } = setup();
-        expect(
-            await backend.deviceControl.manageDeviceMediaSessionsActivate('d1', {
-                sessionId: 's1',
-                controlToken: 'media-token',
-            }),
-        ).toBeDefined();
-        expect(requests[0]!.headers.get('X-Media-Control-Token')).toBe('media-token');
-        expect(requests[0]!.url.search).toBe('');
+    test('void writes return JSON', async () => {
+        const { backend } = setup();
         expect(await backend.deviceControl.deviceActionClipboardSet('d1', { text: 'Hello' })).toEqual({
             success: true,
         });

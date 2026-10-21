@@ -214,28 +214,6 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
         async manageDeviceTrafficSessionsDelete(deviceId, params) {
             return client.devices.trafficSessions.delete(params.sessionId, { deviceId });
         },
-        async manageDeviceMediaSessionsCreate(deviceId, params) {
-            return client.devices.mediaSessions.create(deviceId, {
-                camera: params.camera,
-                microphone: params.microphone,
-            });
-        },
-        async manageDeviceMediaSessionsDelete(deviceId, params) {
-            await client.devices.mediaSessions.delete(params.sessionId, {
-                deviceId,
-                'X-Media-Control-Token': params.controlToken,
-            });
-            return { success: true };
-        },
-        async manageDeviceMediaSessionsActivate(deviceId, params) {
-            return client.devices.mediaSessions.activate(params.sessionId, {
-                deviceId,
-                'X-Media-Control-Token': params.controlToken,
-            });
-        },
-        async manageDeviceMediaSessionsRetrieveCurrent(deviceId) {
-            return client.devices.mediaSessions.retrieveCurrent(deviceId);
-        },
         // manage_device
         async rebootDevice(deviceId) {
             await client.devices.reboot(deviceId);

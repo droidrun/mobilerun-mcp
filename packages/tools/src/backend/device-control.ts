@@ -1,6 +1,6 @@
 // Semantic port for the six device-control bundles, including lifecycle,
 // input, apps, files, configuration, eSIMs, recordings, screenshots and
-// traffic/media sessions. DTOs contain only the fields surfaced by tools;
+// traffic sessions. DTOs contain only the fields surfaced by tools;
 // operation tables live in tools/*-operations.ts, while the server adapter
 // maps these capabilities to the public SDK.
 
@@ -253,19 +253,6 @@ export interface DeviceControlBackend {
         deviceId: string,
         params: z.infer<typeof manageDeviceTrafficSessionsDeleteSchema>,
     ): Promise<unknown>;
-    manageDeviceMediaSessionsCreate(
-        deviceId: string,
-        params: z.infer<typeof manageDeviceMediaSessionsCreateSchema>,
-    ): Promise<unknown>;
-    manageDeviceMediaSessionsDelete(
-        deviceId: string,
-        params: z.infer<typeof manageDeviceMediaSessionsDeleteSchema>,
-    ): Promise<unknown>;
-    manageDeviceMediaSessionsActivate(
-        deviceId: string,
-        params: z.infer<typeof manageDeviceMediaSessionsActivateSchema>,
-    ): Promise<unknown>;
-    manageDeviceMediaSessionsRetrieveCurrent(deviceId: string): Promise<unknown>;
     // manage_device
     rebootDevice(deviceId: string): Promise<void>;
     resetDevice(deviceId: string): Promise<void>;
@@ -551,29 +538,6 @@ export const manageDeviceTrafficSessionsDeleteSchema = z
         sessionId: z.string(),
     })
     .strict();
-
-export const manageDeviceMediaSessionsCreateSchema = z
-    .object({
-        camera: z.boolean(),
-        microphone: z.boolean(),
-    })
-    .strict();
-
-export const manageDeviceMediaSessionsDeleteSchema = z
-    .object({
-        sessionId: z.string(),
-        controlToken: z.string().min(1),
-    })
-    .strict();
-
-export const manageDeviceMediaSessionsActivateSchema = z
-    .object({
-        sessionId: z.string(),
-        controlToken: z.string().min(1),
-    })
-    .strict();
-
-export const manageDeviceMediaSessionsRetrieveCurrentSchema = z.object({}).strict();
 
 export const manageDeviceScreenshotsImageSchema = z.object({ screenshotId: z.string() }).strict();
 
