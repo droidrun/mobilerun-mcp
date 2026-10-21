@@ -149,7 +149,7 @@ field metadata, using the existing redaction mechanism.
 | `stop_task` | Standalone operation |
 | `send_task_message` | Standalone operation |
 | `get_task_media` | kind: screenshot, ui_state |
-| `manage_device` | operation: recordings_trajectory, recordings_video, screenshots_image, reboot, reset, rename, wait_ready, get_capabilities, count, stop, resume, summary, retrieve_capabilities, recordings_list, recordings_delete, recordings_screenshots, recordings_start, recordings_status, recordings_stop, screenshots_list, screenshots_delete, screenshots_capture, traffic_sessions_create, traffic_sessions_retrieve, traffic_sessions_list, traffic_sessions_delete, media_sessions_create, media_sessions_delete, media_sessions_activate, media_sessions_retrieve_current |
+| `manage_device` | operation: recordings_trajectory, recordings_video, screenshots_image, reboot, reset, rename, wait_ready, get_capabilities, count, stop, resume, summary, retrieve_capabilities, recordings_list, recordings_delete, recordings_screenshots, recordings_start, recordings_status, recordings_stop, screenshots_list, screenshots_delete, screenshots_capture, traffic_sessions_create, traffic_sessions_retrieve, traffic_sessions_list, traffic_sessions_delete |
 | `device_action` | operation: tap, swipe, keyboard_write, keyboard_key, keyboard_clear, global_action, clipboard_get, clipboard_set, deep_link, browser_script |
 | `manage_device_apps` | operation: install, delete, start, stop, list_packages, grant_permission, revoke_permission, list_installs |
 | `manage_device_files` | operation: list, upload, download, delete |

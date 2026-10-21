@@ -115,10 +115,6 @@ manage_credentials.init_package  readonly:- no-commerce:x full:x
 manage_credentials.update_field  readonly:- no-commerce:x full:x
 manage_device.count  readonly:x no-commerce:x full:x
 manage_device.get_capabilities  readonly:x no-commerce:x full:x
-manage_device.media_sessions_activate  readonly:- no-commerce:x full:x
-manage_device.media_sessions_create  readonly:- no-commerce:x full:x
-manage_device.media_sessions_delete  readonly:- no-commerce:x full:x
-manage_device.media_sessions_retrieve_current  readonly:x no-commerce:x full:x
 manage_device.reboot  readonly:- no-commerce:x full:x
 manage_device.recordings_delete  readonly:- no-commerce:x full:x
 manage_device.recordings_list  readonly:x no-commerce:x full:x
@@ -1745,13 +1741,6 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "properties": {
-        "camera": {
-          "type": "boolean",
-        },
-        "controlToken": {
-          "minLength": 1,
-          "type": "string",
-        },
         "cursor": {
           "type": "string",
         },
@@ -1775,9 +1764,6 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
         },
         "maxBodyBytes": {
           "type": "number",
-        },
-        "microphone": {
-          "type": "boolean",
         },
         "name": {
           "maxLength": 64,
@@ -1811,10 +1797,6 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
             "traffic_sessions_retrieve",
             "traffic_sessions_list",
             "traffic_sessions_delete",
-            "media_sessions_create",
-            "media_sessions_delete",
-            "media_sessions_activate",
-            "media_sessions_retrieve_current",
           ],
           "type": "string",
         },
@@ -3342,7 +3324,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "manage_credentials",
   },
   {
-    "description": "Device lifecycle, recordings, screenshots, traffic capture and camera/microphone streams. recordings_trajectory: Read a short-lived signed download URL for a recording trajectory. recordings_video: Read a short-lived signed video download URL. screenshots_image: Read a short-lived signed image download URL. reboot: Reboot a device. reset: Factory-reset a device to a fresh state (destructive). rename: Rename a device; requires name. wait_ready: Block until state=ready. get_capabilities: Read the device profile: carrier, display, identifiers and model. count: Read claimed-device counts by state without deviceId. stop: Stop a device; affects device billing. resume: Resume a device; affects device billing. summary: Read account usage without deviceId. retrieve_capabilities: Read supported device features. recordings_list: List device recordings. recordings_delete: Delete a recording. recordings_screenshots: Read recording screenshot metadata. recordings_start: Start a recording. recordings_status: Read recording status. recordings_stop: Stop a recording. screenshots_list: List stored screenshots. screenshots_delete: Delete a stored screenshot. screenshots_capture: Capture a PNG image up to 256 KB; save stores device media. traffic_sessions_create: Create a traffic session to capture network activity. traffic_sessions_retrieve: Read a traffic session. traffic_sessions_list: List traffic sessions. traffic_sessions_delete: Delete a traffic session. media_sessions_create: Create a camera or microphone stream. media_sessions_delete: Delete a media session. media_sessions_activate: Activate a media session. media_sessions_retrieve_current: Read the current media session.",
+    "description": "Device lifecycle, recordings, screenshots and traffic capture. recordings_trajectory: Read a short-lived signed download URL for a recording trajectory. recordings_video: Read a short-lived signed video download URL. screenshots_image: Read a short-lived signed image download URL. reboot: Reboot a device. reset: Factory-reset a device to a fresh state (destructive). rename: Rename a device; requires name. wait_ready: Block until state=ready. get_capabilities: Read the device profile: carrier, display, identifiers and model. count: Read claimed-device counts by state without deviceId. stop: Stop a device; affects device billing. resume: Resume a device; affects device billing. summary: Read account usage without deviceId. retrieve_capabilities: Read supported device features. recordings_list: List device recordings. recordings_delete: Delete a recording. recordings_screenshots: Read recording screenshot metadata. recordings_start: Start a recording. recordings_status: Read recording status. recordings_stop: Stop a recording. screenshots_list: List stored screenshots. screenshots_delete: Delete a stored screenshot. screenshots_capture: Capture a PNG image up to 256 KB; save stores device media. traffic_sessions_create: Create a traffic session to capture network activity. traffic_sessions_retrieve: Read a traffic session. traffic_sessions_list: List traffic sessions. traffic_sessions_delete: Delete a traffic session.",
     "name": "manage_device",
   },
   {

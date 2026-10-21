@@ -1,8 +1,4 @@
 import {
-    manageDeviceMediaSessionsActivateSchema,
-    manageDeviceMediaSessionsCreateSchema,
-    manageDeviceMediaSessionsDeleteSchema,
-    manageDeviceMediaSessionsRetrieveCurrentSchema,
     manageDeviceRecordingsDeleteSchema,
     manageDeviceRecordingsListSchema,
     manageDeviceRecordingsScreenshotsSchema,
@@ -57,7 +53,7 @@ export const MANAGE_DEVICE_SHARED_FIELDS = {
     name: z.string().max(64).optional(),
 };
 
-export const MANAGE_DEVICE_INTRO = 'Device lifecycle, recordings, screenshots, traffic capture and camera/microphone streams.';
+export const MANAGE_DEVICE_INTRO = 'Device lifecycle, recordings, screenshots and traffic capture.';
 export const MANAGE_DEVICE_TABLE = [
     sdkOp(
         'recordings_trajectory',
@@ -278,36 +274,5 @@ export const MANAGE_DEVICE_TABLE = [
         (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(deviceId, params),
         'write',
         { doc: 'Delete a traffic session.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-    ),
-    sdkOp(
-        'media_sessions_create',
-        manageDeviceMediaSessionsCreateSchema,
-        (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsCreate(deviceId, params),
-        'write',
-        { doc: 'Create a camera or microphone stream.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-    ),
-    sdkOp(
-        'media_sessions_delete',
-        manageDeviceMediaSessionsDeleteSchema,
-        (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsDelete(deviceId, params),
-        'write',
-        { doc: 'Delete a media session.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-    ),
-    sdkOp(
-        'media_sessions_activate',
-        manageDeviceMediaSessionsActivateSchema,
-        (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsActivate(deviceId, params),
-        'write',
-        { doc: 'Activate a media session.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
-    ),
-    sdkOp(
-        'media_sessions_retrieve_current',
-        manageDeviceMediaSessionsRetrieveCurrentSchema,
-        (ctx, _params, deviceId) => ctx.backend.deviceControl.manageDeviceMediaSessionsRetrieveCurrent(deviceId),
-        'read',
-        {
-            doc: 'Read the current media session.',
-            deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
-        },
     ),
 ] as const;
