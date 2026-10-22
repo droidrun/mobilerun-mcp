@@ -1,6 +1,6 @@
 # --- install stage: resolve the pnpm workspace with the exact pnpm pinned
 # in package.json's "packageManager" field, via corepack. -----------------
-FROM node:22-slim AS install
+FROM node:24.22.1-bookworm-slim AS install
 
 RUN corepack enable && corepack prepare pnpm@10.18.1 --activate
 
@@ -16,7 +16,7 @@ COPY . .
 
 # --- release stage: run with bun, no build step needed (bun executes the
 # TypeScript sources directly). ------------------------------------------
-FROM oven/bun:1.2.22-slim AS release
+FROM oven/bun:1.4.3-slim AS release
 
 WORKDIR /app
 
