@@ -11,14 +11,19 @@
   Control devices, run agent tasks, manage apps, and build workflows on Mobilerun Cloud from any MCP client.
 </p>
 
+<p align="center">
+  <strong>🔐 Hosted MCP endpoint — sign in with OAuth, no API key</strong>
+</p>
+<h3 align="center"><strong><code>https://cloud.mobilerun.ai/api/mcp</code></strong></h3>
+
 <div align="center">
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=mobilerun&config=eyJ1cmwiOiJodHRwczovL2Nsb3VkLm1vYmlsZXJ1bi5haS9hcGkvbWNwIn0=) [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=mobilerun&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fcloud.mobilerun.ai%2Fapi%2Fmcp%22%7D) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=mobilerun&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fcloud.mobilerun.ai%2Fapi%2Fmcp%22%7D&quality=insiders)
+
 
 <a href="https://docs.mobilerun.ai/mcp-server">📕 Documentation</a> · <a href="https://cloud.mobilerun.ai">☁️ Mobilerun Cloud</a> · <a href="https://github.com/droidrun/mobilerun">🤖 Mobilerun framework</a> · <a href="https://discord.gg/ZZbKEZZkwK">💬 Discord</a>
 
 [![GitHub stars](https://img.shields.io/github/stars/droidrun/mobilerun-mcp?style=social)](https://github.com/droidrun/mobilerun-mcp) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-white)](./LICENSE) [![mobilerun.ai](https://img.shields.io/badge/mobilerun.ai-white)](https://mobilerun.ai) [![X Follow](https://img.shields.io/twitter/follow/mobilerun_ai?style=social)](https://x.com/mobilerun_ai) [![Discord](https://img.shields.io/discord/1360219330318696488?color=white&label=Discord&logo=discord&logoColor=white)](https://discord.gg/ZZbKEZZkwK)
-
-[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=mobilerun&config=eyJ1cmwiOiJodHRwczovL2Nsb3VkLm1vYmlsZXJ1bi5haS9hcGkvbWNwIn0=) [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=mobilerun&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fcloud.mobilerun.ai%2Fapi%2Fmcp%22%7D) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=mobilerun&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fcloud.mobilerun.ai%2Fapi%2Fmcp%22%7D&quality=insiders)
-
 </div>
 
 <p align="center">
