@@ -173,6 +173,7 @@ async function handleMcp(c: AppContext): Promise<Response> {
     const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
+        maxRequestBodySize: env.MCP_BODY_LIMIT_BYTES,
     });
 
     try {
