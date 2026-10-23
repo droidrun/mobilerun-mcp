@@ -35,7 +35,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 - **Breaking:** the iOS phone device type is `ios_phone` in tool inputs and results.
 
-- **Breaking:** `device_action` and `run_task` input `pacedInput` renamed to `humanize`, matching the API. `get_task` results report `humanize` instead of `stealth`.
+- **Breaking:** `device_action` and `run_task` accept `humanize`; `get_task` results report `humanize`.
 
 - `list_credentials` returns credential metadata and field types only, matching the other credential operations.
 - Tool operations are declared in per-tool operation tables; tool schemas and profiles are unchanged.
@@ -65,7 +65,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 ### Changed
 
 - The server uses `@mobilerun/sdk` 6.0.0.
-- `pacedInput` now maps to `humanize` for device actions, keyboard input and task requests. Deprecated `stealth` is no longer sent; existing task result fields are preserved.
+- Device actions, keyboard input and task requests send `humanize` to the API.
 - App version responses support `pruned`, and webhook URLs may be null.
 - Screenshot tools return bounded PNG image content blocks. Bundle operation inputs use flat top-level fields.
 - Conversation creation sends its idempotency key as a request header.
@@ -75,7 +75,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Changed
 
-- **Breaking:** `device_action` and `run_task` input `stealth` renamed to `pacedInput`. The value is still sent to the API as `stealth`; task results keep their `stealth` field. Shipped without a deprecation window so the old name no longer appears in tool descriptions.
+- **Breaking:** renamed the paced-input field on `device_action` and `run_task` (current name: `humanize`).
 - Tool and input descriptions reworded for clarity.
 
 ## [0.3.0] - 2026-09-30
