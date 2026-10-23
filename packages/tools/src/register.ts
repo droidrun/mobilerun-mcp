@@ -45,6 +45,11 @@ const TOOL_REGISTRATIONS = [
     registerPlatformCatalogTools,
 ] as const;
 
+// About 2x a generous unbounded workflow: 100 parents with 10 children each,
+// 10 override params per node = 21,003 array elements/object keys. Bounded
+// webhook eventTypes (100) are smaller; strings do not add elements.
+export const MAX_TOOL_INPUT_ELEMENTS = 42_100;
+
 /**
  * Explicit "everything this build knows about" policy — hosts opt into this
  * on purpose (e.g. the stdio transport, or a `full` server profile); it is
@@ -196,7 +201,10 @@ export type BuildMcpServerOpts = {
  * (metrics/tier-gating), and `opts.onToolCall` for audit telemetry.
  */
 export function buildMcpServer(ctx: ToolCtx, opts: BuildMcpServerOpts = {}): McpServer {
-    const server = new McpServer({ name: 'mobilerun', version: '0.1.0' }, { capabilities: { tools: {} } });
+    const server = new McpServer({ name: 'mobilerun', version: '0.1.0' }, {
+        capabilities: { tools: {} },
+        maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS,
+    });
     enforcePolicy(server, ctx, opts.onToolCall);
     opts.wrapRegisterTool?.(server);
 

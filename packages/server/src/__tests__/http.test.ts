@@ -3,6 +3,25 @@ import { Context } from 'hono';
 import { app, clientIp, ipBucketKey } from '../http.js';
 import { env } from '../env.js';
 
+test.each(['middleware', 'transport'])('HTTP body size is capped by %s on both MCP routes', async (layer) => {
+    const previous = env.MCP_BODY_LIMIT_BYTES;
+    try {
+        // The middleware captures the startup limit; a smaller value here
+        // exercises the per-request transport limit independently.
+        if (layer === 'transport') env.MCP_BODY_LIMIT_BYTES = 256;
+        for (const path of ['/', '/mcp']) {
+            const res = await app.request(path, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: 'Bearer dr_sk_body_limit' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', padding: 'x'.repeat(env.MCP_BODY_LIMIT_BYTES) }),
+            });
+            expect(res.status).toBe(413);
+        }
+    } finally {
+        env.MCP_BODY_LIMIT_BYTES = previous;
+    }
+});
+
 describe('POST /mcp — auth error taxonomy', () => {
     test('missing credentials -> 401 with WWW-Authenticate resource_metadata pointing at MCP_RESOURCE_URL', async () => {
         const res = await app.request('/mcp', {
