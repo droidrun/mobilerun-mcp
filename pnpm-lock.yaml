@@ -32,8 +32,8 @@ importers:
         specifier: workspace:*
         version: link:../tools
       '@mobilerun/sdk':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.0.1
+        version: 6.0.1
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.1
         version: 1.32.1(zod@3.25.76)
@@ -149,8 +149,8 @@ packages:
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
 
-  '@mobilerun/sdk@6.0.0':
-    resolution: {integrity: sha512-Kw+2QP883B378xu8gnBNSaOcRL22Z2ifTd3VPHenIluwRyY+6+xPYVlsSYD26BNWxVb24nzd4xkZtpPx5fsNYg==}
+  '@mobilerun/sdk@6.0.1':
+    resolution: {integrity: sha512-2nb6fnxnBOsM2pPJFaLWkQ1MJl2ovKx6Lk9owTh/V30LR8fjYLJqWtB8yVAiJ6e2PtFU1Se/MQ+FAcRWEs34Kw==}
 
   '@modelcontextprotocol/sdk@1.32.1':
     resolution: {integrity: sha512-2DdE+SJDtzLEEWzY1ZjY7Q+VcPhcV1KisD3zI4u0XZyktsjHum1mwbMI+JaulUBi2OZk+KJAi2uPXzxichPkdw==}
@@ -1169,7 +1169,7 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@mobilerun/sdk@6.0.0': {}
+  '@mobilerun/sdk@6.0.1': {}
 
   '@modelcontextprotocol/sdk@1.32.1(zod@3.25.76)':
     dependencies:
