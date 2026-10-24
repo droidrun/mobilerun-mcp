@@ -143,13 +143,13 @@ describe('SDK 6 domain requests', () => {
 
     test('credential retrieval reuses metadata redaction and package listing uses the direct endpoint', async () => {
         const { backend, requests } = setup({
-            data: {
+            data: [{
                 credentialName: 'login',
                 packageName: 'com.example',
                 userId: null,
                 secretPath: 'secret-path',
                 fields: [{ fieldType: 'password', value: 'must-not-leak' }],
-            },
+            }],
         });
         const result = await backend.credentials.manageCredentialsGet({
             credentialName: 'login',
@@ -157,7 +157,7 @@ describe('SDK 6 domain requests', () => {
         });
         expect(JSON.stringify(result)).not.toContain('must-not-leak');
         expect(result).toMatchObject({ data: { fields: [{ fieldType: 'password' }] } });
-        expect(requests[0]!.url.pathname).toBe('/credentials/packages/com.example/credentials/login');
+        expect(requests[0]!.url.pathname).toBe('/credentials/packages/com.example');
         const packages = setup({ data: [{ packageName: 'com.example' }] });
         expect(await packages.backend.credentials.listCredentialPackages()).toEqual({
             items: [{ packageName: 'com.example' }],
