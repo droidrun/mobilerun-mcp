@@ -16,7 +16,7 @@ COPY . .
 
 # --- release stage: run with bun, no build step needed (bun executes the
 # TypeScript sources directly). ------------------------------------------
-FROM oven/bun:1.4.3-slim AS release
+FROM oven/bun:1.4.4-slim AS release
 
 WORKDIR /app
 
