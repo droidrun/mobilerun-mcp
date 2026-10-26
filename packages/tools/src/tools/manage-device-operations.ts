@@ -94,15 +94,14 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'reset',
         input: {
             deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId,
-            mode: z.enum(['full', 'identity']).optional().describe('full erases user data and renews identity; identity keeps apps and data.'),
+            mode: z.enum(['full', 'identity']).optional(),
         },
         access: 'write',
         doc: 'Reset a device (destructive). mode=full erases apps, accounts and storage and gives the device a new identity; mode=identity gives it a new device identity and keeps apps and data. Without mode: full, or identity where retrieve_capabilities reports factoryReset=false.',
         run: async (ctx, input) => {
             const deviceId = requireValue(input.deviceId, 'deviceId', input.operation);
-            if (input.mode !== undefined) await ctx.backend.deviceControl.resetDevice(deviceId, input.mode);
-            else await ctx.backend.deviceControl.resetDevice(deviceId);
-            return asTextResult({ status: 'reset_requested', deviceId, ...(input.mode !== undefined ? { mode: input.mode } : {}) });
+            await ctx.backend.deviceControl.resetDevice(deviceId, input.mode);
+            return asTextResult({ status: 'reset_requested', deviceId, mode: input.mode });
         },
     }),
     operation({

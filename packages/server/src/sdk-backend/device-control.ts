@@ -219,8 +219,7 @@ export function createDeviceControlBackend(client: Mobilerun): DeviceControlBack
             await client.devices.reboot(deviceId);
         },
         async resetDevice(deviceId, mode) {
-            if (mode !== undefined) await client.devices.reset(deviceId, { mode });
-            else await client.devices.reset(deviceId);
+            await client.devices.reset(deviceId, { mode });
         },
         async renameDevice(deviceId, name) {
             await client.devices.setName(deviceId, { name });
