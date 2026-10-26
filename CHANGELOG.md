@@ -4,6 +4,10 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `manage_device` `reset` accepts an optional `mode` (`full` or `identity`).
+
 ### Removed
 
 - Removed `manage_device` media session operations; the backing API endpoints were removed.

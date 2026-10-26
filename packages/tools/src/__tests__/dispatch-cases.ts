@@ -108,6 +108,7 @@ export const DISPATCH_CASES: DispatchCase[] = [
 { name: 'manage_device', arguments: { operation: 'screenshots_image', screenshotId: 'sample', deviceId: 'sample' }, calls: [ { method: 'deviceControl.manageDeviceScreenshotsImage', args: [ 'sample', { screenshotId: 'sample' } ] } ] },
 { name: 'manage_device', arguments: { operation: 'reboot', deviceId: 'sample' }, calls: [ { method: 'deviceControl.rebootDevice', args: [ 'sample' ] } ] },
 { name: 'manage_device', arguments: { operation: 'reset', deviceId: 'sample' }, calls: [ { method: 'deviceControl.resetDevice', args: [ 'sample' ] } ] },
+{ name: 'manage_device', arguments: { operation: 'reset', deviceId: 'sample', mode: 'identity' }, calls: [ { method: 'deviceControl.resetDevice', args: [ 'sample', 'identity' ] } ] },
 { name: 'manage_device', arguments: { operation: 'rename', name: 'sample', deviceId: 'sample' }, calls: [ { method: 'deviceControl.renameDevice', args: [ 'sample', 'sample' ] }, { method: 'devices.getDevice', args: [ 'sample' ] } ] },
 { name: 'manage_device', arguments: { operation: 'wait_ready', deviceId: 'sample' }, calls: [ { method: 'deviceControl.waitDeviceReady', args: [ 'sample' ] }, { method: 'devices.getDevice', args: [ 'sample' ] } ] },
 { name: 'manage_device', arguments: { operation: 'get_capabilities', deviceId: 'sample' }, calls: [ { method: 'deviceControl.getDeviceCapabilities', args: [ 'sample' ] } ] },

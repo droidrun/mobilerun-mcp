@@ -1765,6 +1765,13 @@ exports[`golden input schema shapes for every profile: full profile schemas 1`] 
         "maxBodyBytes": {
           "type": "number",
         },
+        "mode": {
+          "enum": [
+            "full",
+            "identity",
+          ],
+          "type": "string",
+        },
         "name": {
           "maxLength": 64,
           "type": "string",
@@ -3324,7 +3331,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "manage_credentials",
   },
   {
-    "description": "Device lifecycle, recordings, screenshots and traffic capture. recordings_trajectory: Read a short-lived signed download URL for a recording trajectory. recordings_video: Read a short-lived signed video download URL. screenshots_image: Read a short-lived signed image download URL. reboot: Reboot a device. reset: Factory-reset a device to a fresh state (destructive). rename: Rename a device; requires name. wait_ready: Block until state=ready. get_capabilities: Read the device profile: carrier, display, identifiers and model. count: Read claimed-device counts by state without deviceId. stop: Stop a device; affects device billing. resume: Resume a device; affects device billing. summary: Read account usage without deviceId. retrieve_capabilities: Read supported device features. recordings_list: List device recordings. recordings_delete: Delete a recording. recordings_screenshots: Read recording screenshot metadata. recordings_start: Start a recording. recordings_status: Read recording status. recordings_stop: Stop a recording. screenshots_list: List stored screenshots. screenshots_delete: Delete a stored screenshot. screenshots_capture: Capture a PNG image up to 256 KB; save stores device media. traffic_sessions_create: Create a traffic session to capture network activity. traffic_sessions_retrieve: Read a traffic session. traffic_sessions_list: List traffic sessions. traffic_sessions_delete: Delete a traffic session.",
+    "description": "Device lifecycle, recordings, screenshots and traffic capture. recordings_trajectory: Read a short-lived signed download URL for a recording trajectory. recordings_video: Read a short-lived signed video download URL. screenshots_image: Read a short-lived signed image download URL. reboot: Reboot a device. reset: Reset a device (destructive). mode=full erases apps, accounts and storage and gives the device a new identity; mode=identity gives it a new device identity and keeps apps and data. Without mode: full, or identity where retrieve_capabilities reports factoryReset=false. rename: Rename a device; requires name. wait_ready: Block until state=ready. get_capabilities: Read the device profile: carrier, display, identifiers and model. count: Read claimed-device counts by state without deviceId. stop: Stop a device; affects device billing. resume: Resume a device; affects device billing. summary: Read account usage without deviceId. retrieve_capabilities: Read supported device features. recordings_list: List device recordings. recordings_delete: Delete a recording. recordings_screenshots: Read recording screenshot metadata. recordings_start: Start a recording. recordings_status: Read recording status. recordings_stop: Stop a recording. screenshots_list: List stored screenshots. screenshots_delete: Delete a stored screenshot. screenshots_capture: Capture a PNG image up to 256 KB; save stores device media. traffic_sessions_create: Create a traffic session to capture network activity. traffic_sessions_retrieve: Read a traffic session. traffic_sessions_list: List traffic sessions. traffic_sessions_delete: Delete a traffic session.",
     "name": "manage_device",
   },
   {

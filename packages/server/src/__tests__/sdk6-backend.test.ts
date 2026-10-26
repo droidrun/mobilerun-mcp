@@ -25,6 +25,28 @@ function setup(result: unknown = { data: { ok: true }, items: [] }) {
 }
 
 describe('SDK 6 domain requests', () => {
+    test.each([undefined, 'identity', 'full'] as const)('device reset sends only an explicit mode: %s', async (mode) => {
+        const { backend, requests } = setup();
+        const { client, close } = await connect('full', { backend });
+        try {
+            const result = await client.callTool({
+                name: 'manage_device',
+                arguments: { operation: 'reset', deviceId: 'd1', ...(mode !== undefined ? { mode } : {}) },
+            });
+            expect(result.isError).not.toBe(true);
+            const content = result.content as Array<{ type: string; text?: string }>;
+            expect(JSON.parse(content[0]?.text ?? '{}')).toEqual({
+                status: 'reset_requested', deviceId: 'd1', ...(mode !== undefined ? { mode } : {}),
+            });
+            expect(requests).toHaveLength(1);
+            expect(requests[0]!.url.pathname).toBe('/devices/d1/reset');
+            expect(requests[0]!.method).toBe('POST');
+            expect(requests[0]!.body).toEqual(mode !== undefined ? { mode } : {});
+        } finally {
+            await close();
+        }
+    });
+
     test('numbers purchase respects API billing defaults; SMS uses the number messages endpoint', async () => {
         const { backend, requests } = setup();
         await backend.numbers.numbersCreate({ country: 'de', label: 'Signup' });

@@ -255,7 +255,7 @@ export interface DeviceControlBackend {
     ): Promise<unknown>;
     // manage_device
     rebootDevice(deviceId: string): Promise<void>;
-    resetDevice(deviceId: string): Promise<void>;
+    resetDevice(deviceId: string, mode?: 'full' | 'identity'): Promise<void>;
     renameDevice(deviceId: string, name: string): Promise<void>;
     waitDeviceReady(deviceId: string): Promise<void>;
     getDeviceCapabilities(deviceId: string): Promise<DeviceCapabilitiesDto>;
