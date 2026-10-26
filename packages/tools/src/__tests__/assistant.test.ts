@@ -96,7 +96,6 @@ describe('curateAssistantHistory', () => {
     });
 });
 
-
 describe('paged assistant history', () => {
     test('older and empty pages expose no live turn state', () => {
         const result = curateAssistantHistory({
@@ -131,7 +130,27 @@ describe('paged assistant history', () => {
         ]);
     });
 
-    test.each([0, 21, 1.5])('rejects an invalid whole-turn limit: %s', async (limit) => {
+    test('accepts a larger limit and caps the backend request at twenty turns', async () => {
+        const { client, backend } = await connect('full', { recordArgs: true });
+        const result = await client.callTool({ name: 'assistant', arguments: {
+            operation: 'get_messages', sessionId: 's1', limit: 50,
+        } });
+        expect(result.isError).not.toBe(true);
+        expect(backend.calls).toEqual([
+            { method: 'assistant.getMessages', args: ['s1', 20, undefined] },
+        ]);
+    });
+
+    test('rejects an empty older-page cursor', async () => {
+        const { client, backend } = await connect('full', { recordArgs: true });
+        const result = await client.callTool({ name: 'assistant', arguments: {
+            operation: 'get_messages', sessionId: 's1', before: '',
+        } });
+        expect(result.isError).toBe(true);
+        expect(backend.calls).toEqual([]);
+    });
+
+    test.each([0, 101, 1.5])('rejects an invalid whole-turn limit: %s', async (limit) => {
         const { client, backend } = await connect('full', { recordArgs: true });
         const result = await client.callTool({ name: 'assistant', arguments: {
             operation: 'get_messages', sessionId: 's1', limit,

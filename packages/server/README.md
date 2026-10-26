@@ -125,7 +125,7 @@ See the [CHANGELOG](../../CHANGELOG.md) for contract changes and release notes.
 | `manage_flow` | Workflows | Bundle: `operation ∈ clone, unblock, add_action, remove_action, replace_actions, execution_metrics` |
 | `workflow_events` | Workflows | Bundle: `operation ∈ ingest, dry_run, list_event_types` (`list_event_types` reads the static app event catalog) |
 | `webhooks` | Webhooks | Bundle: `operation ∈ create, list, get, update, rotate_secret, test, list_deliveries, get_delivery, delivery_stats, list_event_types` |
-| `assistant` | Assistant | Bundle: `operation ∈ list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question`; write operations require `full`, and `answer_permission` accepts only `once` or `reject`; `get_messages` accepts `limit` (1–20 whole turns, default 10) and an optional `before` cursor |
+| `assistant` | Assistant | Bundle: `operation ∈ list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question`; write operations require `full`, and `answer_permission` accepts only `once` or `reject`; `get_messages` accepts `limit` (1–100 whole turns, default 10, capped at 20) and an optional `before` cursor |
 | `list_credentials`, `list_credential_packages` | Credentials | |
 | `manage_credentials` | Credentials | Bundle write path: `operation ∈ init_package, create_credential, delete_credential, add_field, update_field, delete_field`. Never echoes a field value back |
 | `run_task`, `get_task`, `list_tasks`, `stop_task`, `send_task_message`, `get_task_media` | Tasks | `get_task(view ∈ summary, status, trajectory)`, `get_task_media(kind ∈ screenshot, ui_state)` |
@@ -153,8 +153,9 @@ exposed as tools; no SDK support exists for them yet).
 ### Assistant
 
 Create or select a chat session, then call `assistant` with `operation=send_message`.
-If it returns `running`, poll the newest `get_messages` page (omit `before`)
-until `turnActive` is false. `limit` counts whole turns (1–20, default 10).
+If it returns `running`, poll the newest page (no `before`)
+until `turnActive` is not `true`. `limit` counts whole turns (1–100, default 10)
+and is capped at 20.
 To read older turns, pass the response's `before` cursor into the next request;
 `hasMore` indicates whether older turns remain. Older pages return `turnActive: null`.
 Use

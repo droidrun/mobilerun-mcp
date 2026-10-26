@@ -104,7 +104,6 @@ describe('assistant session creation', () => {
     });
 });
 
-
 describe('assistant paged history', () => {
     test.each([undefined, 'older-message'])('requests the session route with cursor %s', async (before) => {
         const urls: URL[] = [];

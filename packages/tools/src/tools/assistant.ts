@@ -86,17 +86,17 @@ export const ASSISTANT_TABLE = [
         op: 'get_messages',
         input: {
             sessionId: ASSISTANT_SHARED_FIELDS.sessionId,
-            limit: z.number().int().min(1).max(20).optional(),
-            before: z.string().optional(),
+            limit: z.number().int().min(1).max(100).optional(),
+            before: z.string().min(1).optional(),
         },
         access: 'read',
-        doc: 'Poll the newest page (no before) until turnActive is false. Limit counts whole turns (1–20, default 10); use before only to read older turns. Pending permissions and questions may require answer_permission, answer_question or reject_question.',
+        doc: 'Poll the newest page (no before) until turnActive is not true. Limit counts whole turns (1–100, default 10) and is capped at 20; use before only to read older turns. Pending permissions and questions may require answer_permission, answer_question or reject_question.',
         run: async (ctx, input) =>
             asTextResult(
                 await curateAssistantHistory(
                     await ctx.backend.assistant.getMessages(
                         requireValue(input.sessionId, 'sessionId', input.operation, 'assistant'),
-                        input.limit ?? 10,
+                        Math.min(input.limit ?? 10, 20),
                         input.before,
                     ),
                 ),
