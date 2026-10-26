@@ -103,3 +103,25 @@ describe('assistant session creation', () => {
         expect(requests[1]?.key).not.toBe(requests[0]?.key);
     });
 });
+
+
+describe('assistant paged history', () => {
+    test.each([undefined, 'older-message'])('requests the session route with cursor %s', async (before) => {
+        const urls: URL[] = [];
+        const history = {
+            data: [], firstId: null, lastId: null, hasMore: false, turn: null, agent: null,
+        };
+        const backend = createAssistantBackend(new SdkClient({
+            apiKey: 'test-key', baseURL: 'https://example.com',
+            fetch: async (input) => {
+                urls.push(new URL(input instanceof Request ? input.url : String(input)));
+                return Response.json(history);
+            },
+        }));
+        expect(await backend.getMessages('s1', 10, before)).toEqual(history);
+        expect(urls[0]?.pathname).toBe('/assistant/chat/sessions/s1/messages');
+        expect(urls[0]?.searchParams.get('limit')).toBe('10');
+        expect(urls[0]?.searchParams.get('before')).toBe(before ?? null);
+        expect(urls[0]?.searchParams.has('sessionId')).toBe(false);
+    });
+});

@@ -140,7 +140,7 @@ field metadata, using the existing redaction mechanism.
 | `manage_flow` | operation: execution_screenshot, clone, unblock, add_action, remove_action, replace_actions, execution_metrics, update, delete, activate, run, validate, verify, dry_run, capacity, delivery_options, template_context, list_repairs, update_action, delete_action, update_trigger, delete_trigger, fire_trigger, abort_execution |
 | `workflow_events` | operation: ingest, dry_run |
 | `webhooks` | operation: create, list, get, update, rotate_secret, test, list_deliveries, get_delivery, delivery_stats, delete, deliveries, integrations, integration_targets |
-| `assistant` | operation: list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question |
+| `assistant` | operation: list_sessions, create_session, update_session, send_message, get_messages, abort, answer_permission, answer_question, reject_question; get_messages: limit counts whole turns (1–20, default 10), optional before cursor reads older turns; response hasMore and before indicate pagination, turnActive is null on older pages; poll without before until turnActive is false |
 | `list_credentials` | Standalone operation |
 | `list_credential_packages` | Standalone operation |
 | `run_task` | Standalone operation |

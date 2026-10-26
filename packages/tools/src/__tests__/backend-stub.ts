@@ -6,7 +6,7 @@ const responses: Record<string, unknown> = {
     'workflows.listFlowActions': { items: [] },
     'workflows.ingestEvent': { eventId: 'evt_1' },
     'assistant.listSessions': { sessions: [] },
-    'assistant.getMessages': { turnActive: false, messages: [] },
+    'assistant.getMessages': { turn: { turnActive: false, turnState: null }, data: [], firstId: null, lastId: null, hasMore: false },
     'credentials.initPackage': { data: { packageName: 'p' }, message: 'ok', success: true },
     'credentials.createCredential': { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] }, message: 'ok', success: true },
     'credentials.deleteCredential': { data: { credentialName: 'c', packageName: 'p', userId: 'u', secretPath: 's', fields: [] }, message: 'ok', success: true },

@@ -93,7 +93,7 @@ export const DISPATCH_CASES: DispatchCase[] = [
 { name: 'assistant', arguments: { operation: 'create_session', title: 'sample', description: 'sample' }, calls: [ { method: 'assistant.createSession', args: [ 'sample', 'sample' ] } ] },
 { name: 'assistant', arguments: { operation: 'update_session', sessionId: 'sample', title: 'sample', description: 'sample', pinned: true, status: 'active' }, calls: [ { method: 'assistant.updateSession', args: [ 'sample', { title: 'sample', description: 'sample', pinned: true, status: 'active' } ] } ] },
 { name: 'assistant', arguments: { operation: 'send_message', sessionId: 'sample', message: 'sample', waitSeconds: 1 }, calls: [ { method: 'assistant.sendMessage', args: [ 'sample', 'sample', 1 ] } ] },
-{ name: 'assistant', arguments: { operation: 'get_messages', sessionId: 'sample', limit: 1 }, calls: [ { method: 'assistant.getMessages', args: [ 'sample', 1 ] } ] },
+{ name: 'assistant', arguments: { operation: 'get_messages', sessionId: 'sample', limit: 1 }, calls: [ { method: 'assistant.getMessages', args: [ 'sample', 1, undefined ] } ] },
 { name: 'assistant', arguments: { operation: 'abort', sessionId: 'sample', expectedTurnId: 'sample' }, calls: [ { method: 'assistant.abort', args: [ 'sample', 'sample' ] } ] },
 { name: 'assistant', arguments: { operation: 'answer_permission', permissionId: 'sample', response: 'once' }, calls: [ { method: 'assistant.answerPermission', args: [ 'sample', 'once' ] } ] },
 { name: 'assistant', arguments: { operation: 'answer_question', questionId: 'sample', answers: [ [ { label: 'Yes' } ] ] }, calls: [ { method: 'assistant.answerQuestion', args: [ 'sample', [ [ { label: 'Yes' } ] ] ] } ] },

@@ -11,10 +11,14 @@ export interface AssistantSession {
 }
 
 export interface AssistantHistory {
-    turnActive: boolean;
-    lastTurnOutcome?: string | null;
-    turnState?: { id: string; phase: string; outcome: string | null } | null;
-    messages: Array<{
+    firstId: string | null;
+    lastId: string | null;
+    hasMore: boolean;
+    turn: {
+        turnActive: boolean;
+        turnState: { id: string; phase: string; outcome: string | null } | null;
+    } | null;
+    data: Array<{
         id: string;
         role: string;
         createdAt?: string;
@@ -33,7 +37,7 @@ export interface AssistantBackend {
         | { status: 'completed'; chatSessionId: string; assistantText: string; errorText?: string }
         | { status: 'running'; chatSessionId: string; next: string }
     >;
-    getMessages(sessionId: string, limit: number): Promise<AssistantHistory>;
+    getMessages(sessionId: string, limit: number, before?: string): Promise<AssistantHistory>;
     abort(sessionId: string, expectedTurnId?: string): Promise<{ ok: true }>;
     answerPermission(permissionId: string, response: 'once' | 'reject'): Promise<{ ok: true }>;
     answerQuestion(questionId: string, answers: AssistantAnswer): Promise<{ ok: true }>;

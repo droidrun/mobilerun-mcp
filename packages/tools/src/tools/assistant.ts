@@ -84,15 +84,20 @@ export const ASSISTANT_TABLE = [
     }),
     operation({
         op: 'get_messages',
-        input: { sessionId: ASSISTANT_SHARED_FIELDS.sessionId, limit: z.number().int().min(1).max(100).optional() },
+        input: {
+            sessionId: ASSISTANT_SHARED_FIELDS.sessionId,
+            limit: z.number().int().min(1).max(20).optional(),
+            before: z.string().optional(),
+        },
         access: 'read',
-        doc: 'Read history until turnActive is false. Pending permissions and questions may require answer_permission, answer_question or reject_question.',
+        doc: 'Poll the newest page (no before) until turnActive is false. Limit counts whole turns (1–20, default 10); use before only to read older turns. Pending permissions and questions may require answer_permission, answer_question or reject_question.',
         run: async (ctx, input) =>
             asTextResult(
                 await curateAssistantHistory(
                     await ctx.backend.assistant.getMessages(
                         requireValue(input.sessionId, 'sessionId', input.operation, 'assistant'),
-                        input.limit ?? 20,
+                        input.limit ?? 10,
+                        input.before,
                     ),
                 ),
             ),
@@ -163,7 +168,7 @@ export function curateAssistantHistory(history: AssistantHistory) {
         questionId: unknown;
         questions: unknown;
     }> = [];
-    const messages = history.messages.map(({ id, role, createdAt, source, parts }) => ({
+    const messages = history.data.map(({ id, role, createdAt, source, parts }) => ({
         id,
         role,
         createdAt,
@@ -189,12 +194,14 @@ export function curateAssistantHistory(history: AssistantHistory) {
             return { type: type, toolCallId: data.toolCallId, state: data.state };
         }),
     }));
-    const turnState = history.turnState;
+    const turnState = history.turn?.turnState;
     return {
-        turnActive: history.turnActive,
-        lastTurnOutcome: history.lastTurnOutcome,
+        turnActive: history.turn?.turnActive ?? null,
+        lastTurnOutcome: turnState?.outcome ?? null,
         turn: turnState ? { id: turnState.id, phase: turnState.phase, outcome: turnState.outcome } : null,
         messages,
+        hasMore: history.hasMore,
+        before: history.firstId,
         pending: { permissions, questions },
     };
 }

@@ -57,8 +57,8 @@ export function createAssistantBackend(client: Mobilerun): AssistantBackend {
                 throw err;
             }
         },
-        getMessages(sessionId, limit) {
-            return conversations.history({ sessionId, limit });
+        getMessages(sessionId, limit, before) {
+            return conversations.history(sessionId, { limit, before });
         },
         abort(sessionId, expectedTurnId) {
             return conversations.abort({ sessionId, expectedTurnId });
