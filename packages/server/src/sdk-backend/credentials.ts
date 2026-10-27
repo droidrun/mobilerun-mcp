@@ -8,6 +8,7 @@
  */
 import { type default as Mobilerun } from '@mobilerun/sdk';
 import {
+    BackendError,
     type AddFieldParams,
     type CreateCredentialParams,
     type CredentialFieldDto,
@@ -38,10 +39,16 @@ function toCredentialMeta(cred: {
 export function createCredentialsBackend(client: Mobilerun): CredentialsBackend {
     return {
         async manageCredentialsGet(params) {
-            const result = await client.credentials.packages.credentials.retrieve(params.credentialName, {
-                packageName: params.packageName,
-            });
-            return { data: toCredentialMeta(result.data) };
+            const result = await client.credentials.packages.list(params.packageName);
+            const credential = result.data.find((c) => c.credentialName === params.credentialName);
+            if (!credential) {
+                throw new BackendError(
+                    'not_found',
+                    `Credential '${params.credentialName}' not found in package '${params.packageName}'`,
+                    404,
+                );
+            }
+            return { data: toCredentialMeta(credential) };
         },
         async listCredentials(packageName?: string) {
             // NORMALIZATION: the
