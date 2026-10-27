@@ -1,11 +1,11 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.droidrun/mobilerun-mcp",
+  "name": "io.github.droidrun/mobilerun",
   "title": "Mobilerun",
   "description": "Let AI agents control Android and iOS devices on Mobilerun Cloud: screen, input, apps, workflows.",
   "repository": { "url": "https://github.com/droidrun/mobilerun-mcp", "source": "github" },
   "websiteUrl": "https://docs.mobilerun.ai/mcp-server",
-  "version": "0.5.0",
+  "version": "1.1.0",
   "remotes": [
     { "type": "streamable-http", "url": "https://cloud.mobilerun.ai/api/mcp" },
     {
