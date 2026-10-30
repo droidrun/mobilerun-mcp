@@ -4,6 +4,14 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Every tool now has a `title` in `tools/list`.
+
+### Changed
+
+- `destructiveHint` is true only for tools with operations that delete, reset, replace or otherwise irreversibly change state; tools that only create, update or read report `false`. Mailbox and Connect tool descriptions use neutral wording.
+
 ### Removed
 
 - Removed `manage_device` media session operations; the backing API endpoints were removed.

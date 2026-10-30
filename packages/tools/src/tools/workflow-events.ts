@@ -15,6 +15,7 @@ export const WORKFLOW_EVENTS_TABLE = [
         op: 'ingest',
         input: { eventType: WORKFLOW_EVENTS_SHARED_FIELDS.eventType, payload: WORKFLOW_EVENTS_SHARED_FIELDS.payload },
         access: 'commerce',
+        destructive: true,
         doc: 'Enqueue an event for trigger evaluation (eventType, optional payload); returns immediately with eventId.',
         run: async (ctx, input) =>
             asTextResult(

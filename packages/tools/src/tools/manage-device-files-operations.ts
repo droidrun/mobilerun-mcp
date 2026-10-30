@@ -82,6 +82,7 @@ export const MANAGE_FILES_TABLE = [
         op: 'delete',
         input: { deviceId: MANAGE_FILES_SHARED_FIELDS.deviceId, path: MANAGE_FILES_SHARED_FIELDS.path },
         access: 'write',
+        destructive: true,
         doc: 'Delete path.',
         run: async (ctx, input) => {
             const { deviceId, path } = input;

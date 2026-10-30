@@ -100,6 +100,7 @@ export const WEBHOOK_TABLE = [
         op: 'rotate_secret',
         input: { endpointId: WEBHOOK_SHARED_FIELDS.endpointId },
         access: 'write',
+        destructive: true,
         doc: 'Rotate the signing secret only with explicit consent; returns a secret shown exactly once.',
         run: async (ctx, input) => {
             const endpointId = requireValue(input.endpointId, 'endpointId', input.operation, 'webhooks');
@@ -159,6 +160,7 @@ export const WEBHOOK_TABLE = [
         run: async (ctx, input) => asTextResult(await ctx.backend.webhooks.getWebhookDeliveryStats({ since: input.since })),
     }),
     sdkOp('delete', webhooksDeleteSchema, (ctx, params) => ctx.backend.webhooks.webhooksDelete(params), 'write', {
+        destructive: true,
         doc: 'Delete a webhook subscription.',
     }),
     sdkOp('deliveries', webhooksDeliveriesSchema, (ctx, params) => ctx.backend.webhooks.webhooksDeliveries(params), 'read', {

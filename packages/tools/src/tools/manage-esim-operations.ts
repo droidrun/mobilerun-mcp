@@ -63,6 +63,7 @@ export const MANAGE_ESIM_TABLE = [
         op: 'remove',
         input: { subId: MANAGE_ESIM_SHARED_FIELDS.subId, deviceId: MANAGE_ESIM_SHARED_FIELDS.deviceId },
         access: 'write',
+        destructive: true,
         doc: 'Remove subId.',
         run: async (ctx, input) => {
             const { deviceId } = input;

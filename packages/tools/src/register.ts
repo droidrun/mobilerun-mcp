@@ -161,9 +161,11 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
             }
         };
         const resolved = resolveOperationAccess(name);
+        const title = TOOL_METADATA.find((tool) => tool.name === name)?.title;
         const definition = {
             ...(def as object),
-            ...(resolved ? { annotations: operationAnnotations(resolved.accesses) } : {}),
+            ...(title ? { title } : {}),
+            ...(resolved ? { annotations: operationAnnotations(resolved.accesses, resolved.destructive) } : {}),
         };
         // @ts-expect-error — passing through the SDK's variadic registerTool signature.
         const registered = original(name, definition, wrapped);

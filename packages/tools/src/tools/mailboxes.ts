@@ -29,7 +29,7 @@ const MAILBOXES_SHARED_FIELDS = {
     label: z.string().nullable().optional(),
     clientRequestId: clientRequestIdSchema.describe('Optional stable request key for create/connect retries.'),
     mailboxId: z.string().optional().describe('Required for get/update/delete/uncancel/restart/disconnect/otp/messages/message.'),
-    after: z.string().optional().describe('otp/messages: record this timestamp before requesting a fresh email code.'),
+    after: z.string().optional().describe('otp/messages: record this timestamp before triggering a new email.'),
     messageId: z.string().optional().describe('Required for message. Opaque identifier from messages.'),
     connectionId: z.string().optional().describe('Required for connection. Identifier returned by connect.'),
 };
@@ -57,6 +57,7 @@ export const MAILBOXES_TABLE = [
         doc: 'Update the mailbox label.',
     }),
     sdkOp('delete', mailboxesDeleteSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDelete(params), 'commerce', {
+        destructive: true,
         doc: 'Cancel a pending mailbox or schedule paid cancellation.',
     }),
     sdkOp('uncancel', mailboxesUncancelSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesUncancel(params), 'commerce', {
@@ -66,10 +67,11 @@ export const MAILBOXES_TABLE = [
         doc: 'Restart an archived mailbox; may start paid service.',
     }),
     sdkOp('disconnect', mailboxesDisconnectSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesDisconnect(params), 'write', {
+        destructive: true,
         doc: 'Disconnect an external inbox link.',
     }),
     sdkOp('otp', mailboxesOtpSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesOtp(params), 'read', {
-        doc: 'Read a recent email code; set after before requesting the code.',
+        doc: 'Read the code from a recent sign-in email, for testing sign-in flows in your own apps; set after before triggering the email.',
     }),
     sdkOp('messages', mailboxesMessagesSchema, (ctx, params) => ctx.backend.mailboxes.mailboxesMessages(params), 'read', {
         doc: 'Read recent email summaries.',

@@ -42,7 +42,7 @@ test('every tool description, schema property and enum uses public product wordi
             const result = await client.listTools({ cursor });
             for (const tool of result.tools) {
                 seen.push(tool.name);
-                for (const wording of [tool.description ?? '', ...schemaWording(tool.inputSchema), ...schemaWording(tool.outputSchema)]) {
+                for (const wording of [tool.title ?? '', tool.description ?? '', ...schemaWording(tool.inputSchema), ...schemaWording(tool.outputSchema)]) {
                     const match = wording.match(BANNED_WORDING);
                     expect(match, `${tool.name}: banned wording "${match?.[0]}" in schema or description "${wording}"`).toBeNull();
                 }

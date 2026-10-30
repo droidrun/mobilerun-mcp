@@ -3240,7 +3240,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "configure_device",
   },
   {
-    "description": "Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool). list_countries: List available countries. list_proxies: List residential proxies. get_proxy: Read a residential proxy. buy_proxy: Provision and bill a residential proxy. Retry with the returned clientRequestId to avoid a second purchase. cancel_proxy: End a billed proxy. ping_proxy: Read cached latency. list_connections: Read a proxy's connection history. list_users: List bound users. get_user: Read a bound user. list_user_connections: Read a user's connection history. update_proxy: Update a residential proxy label. ensure_healthy: Repair an unhealthy residential proxy.",
+    "description": "Manage Mobilerun Connect proxies and their bound users (distinct from the device-bound proxies tool). list_countries: List available countries. list_proxies: List Connect proxies. get_proxy: Read a Connect proxy. buy_proxy: Provision and bill a Connect proxy. Retry with the returned clientRequestId to avoid a second purchase. cancel_proxy: End a billed proxy. ping_proxy: Read cached latency. list_connections: Read a proxy's connection history. list_users: List bound users. get_user: Read a bound user. list_user_connections: Read a user's connection history. update_proxy: Update a Connect proxy label. ensure_healthy: Repair an unhealthy Connect proxy.",
     "name": "connect",
   },
   {
@@ -3316,7 +3316,7 @@ exports[`golden input schema shapes for every profile: full profile descriptions
     "name": "list_workflow_resources",
   },
   {
-    "description": "Manage mailboxes, external inbox links and email messages. list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. Retry with the returned clientRequestId to avoid a second purchase. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read a recent email code; set after before requesting the code. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.",
+    "description": "Manage mailboxes, external inbox links and email messages. list: List owned mailboxes. capacity: Read included mailbox capacity. create: Create a mailbox; may start paid service. Retry with the returned clientRequestId to avoid a second purchase. get: Read a mailbox. update: Update the mailbox label. delete: Cancel a pending mailbox or schedule paid cancellation. uncancel: Withdraw a scheduled cancellation and continue service. restart: Restart an archived mailbox; may start paid service. disconnect: Disconnect an external inbox link. otp: Read the code from a recent sign-in email, for testing sign-in flows in your own apps; set after before triggering the email. messages: Read recent email summaries. message: Read a single email with attachment metadata. connect: Link an external inbox; the user completes consent using the returned redirect URL. connection: Read the connection status after consent.",
     "name": "mailboxes",
   },
   {
@@ -3395,22 +3395,25 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "apps",
+    "title": "Manage Apps",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "assistant",
+    "title": "Assistant Sessions",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "configure_device",
+    "title": "Configure Device",
   },
   {
     "annotations": {
@@ -3420,39 +3423,44 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "connect",
+    "title": "Manage Connect Proxies",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "create_action",
+    "title": "Create Action",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "idempotentHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "create_device",
+    "title": "Create Device",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "create_flow",
+    "title": "Create Flow",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "create_trigger",
+    "title": "Create Trigger",
   },
   {
     "annotations": {
@@ -3461,6 +3469,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "device_action",
+    "title": "Device Action",
   },
   {
     "annotations": {
@@ -3469,6 +3478,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "files",
+    "title": "Manage Files",
   },
   {
     "annotations": {
@@ -3477,6 +3487,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "get_device",
+    "title": "Get Device",
   },
   {
     "annotations": {
@@ -3485,6 +3496,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "get_device_screenshot",
+    "title": "Get Device Screenshot",
   },
   {
     "annotations": {
@@ -3493,6 +3505,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "get_device_ui_state",
+    "title": "Get Device UI State",
   },
   {
     "annotations": {
@@ -3501,6 +3514,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "get_task",
+    "title": "Get Task",
   },
   {
     "annotations": {
@@ -3509,6 +3523,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "get_task_media",
+    "title": "Get Task Media",
   },
   {
     "annotations": {
@@ -3517,6 +3532,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "get_workflow_resource",
+    "title": "Get Workflow Resource",
   },
   {
     "annotations": {
@@ -3525,6 +3541,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "list_apps_on_device",
+    "title": "List Device Apps",
   },
   {
     "annotations": {
@@ -3533,6 +3550,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "list_credential_packages",
+    "title": "List Credential Packages",
   },
   {
     "annotations": {
@@ -3541,6 +3559,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "list_credentials",
+    "title": "List Credentials",
   },
   {
     "annotations": {
@@ -3549,6 +3568,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "list_devices",
+    "title": "List Devices",
   },
   {
     "annotations": {
@@ -3557,6 +3577,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "list_tasks",
+    "title": "List Tasks",
   },
   {
     "annotations": {
@@ -3565,6 +3586,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "list_workflow_resources",
+    "title": "List Workflow Resources",
   },
   {
     "annotations": {
@@ -3574,6 +3596,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "mailboxes",
+    "title": "Manage Mailboxes",
   },
   {
     "annotations": {
@@ -3582,6 +3605,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "manage_credentials",
+    "title": "Manage Credentials",
   },
   {
     "annotations": {
@@ -3591,6 +3615,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "manage_device",
+    "title": "Manage Device",
   },
   {
     "annotations": {
@@ -3599,6 +3624,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "manage_device_apps",
+    "title": "Manage Device Apps",
   },
   {
     "annotations": {
@@ -3607,6 +3633,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "manage_device_files",
+    "title": "Manage Device Files",
   },
   {
     "annotations": {
@@ -3616,6 +3643,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "manage_esim",
+    "title": "Manage eSIM",
   },
   {
     "annotations": {
@@ -3625,14 +3653,16 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "manage_flow",
+    "title": "Manage Flow",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "messages",
+    "title": "Manage Messages",
   },
   {
     "annotations": {
@@ -3642,6 +3672,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "numbers",
+    "title": "Manage Numbers",
   },
   {
     "annotations": {
@@ -3650,6 +3681,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": true,
     },
     "name": "platform_catalog",
+    "title": "Platform Catalog",
   },
   {
     "annotations": {
@@ -3658,6 +3690,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "proxies",
+    "title": "Manage Device Proxies",
   },
   {
     "annotations": {
@@ -3666,6 +3699,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "run_task",
+    "title": "Run Task",
   },
   {
     "annotations": {
@@ -3674,14 +3708,16 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "send_task_message",
+    "title": "Send Task Message",
   },
   {
     "annotations": {
-      "destructiveHint": true,
+      "destructiveHint": false,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
     "name": "stop_task",
+    "title": "Stop Task",
   },
   {
     "annotations": {
@@ -3691,6 +3727,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "terminate_device",
+    "title": "Terminate Device",
   },
   {
     "annotations": {
@@ -3699,6 +3736,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "webhooks",
+    "title": "Manage Webhooks",
   },
   {
     "annotations": {
@@ -3708,6 +3746,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
       "readOnlyHint": false,
     },
     "name": "workflow_events",
+    "title": "Workflow Events",
   },
 ]
 `;

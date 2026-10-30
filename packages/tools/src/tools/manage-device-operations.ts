@@ -94,6 +94,7 @@ export const MANAGE_DEVICE_TABLE = [
         op: 'reset',
         input: { deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
         access: 'write',
+        destructive: true,
         doc: 'Factory-reset a device to a fresh state (destructive).',
         run: async (ctx, input) => {
             const deviceId = requireValue(input.deviceId, 'deviceId', input.operation);
@@ -180,7 +181,7 @@ export const MANAGE_DEVICE_TABLE = [
         manageDeviceRecordingsDeleteSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceRecordingsDelete(deviceId, params),
         'write',
-        { doc: 'Delete a recording.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
+        { destructive: true, doc: 'Delete a recording.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
     ),
     sdkOp(
         'recordings_screenshots',
@@ -222,7 +223,7 @@ export const MANAGE_DEVICE_TABLE = [
         manageDeviceScreenshotsDeleteSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceScreenshotsDelete(deviceId, params),
         'write',
-        { doc: 'Delete a stored screenshot.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
+        { destructive: true, doc: 'Delete a stored screenshot.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
     ),
     sdkOp(
         'screenshots_capture',
@@ -273,6 +274,6 @@ export const MANAGE_DEVICE_TABLE = [
         manageDeviceTrafficSessionsDeleteSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.manageDeviceTrafficSessionsDelete(deviceId, params),
         'write',
-        { doc: 'Delete a traffic session.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
+        { destructive: true, doc: 'Delete a traffic session.', deviceId: MANAGE_DEVICE_SHARED_FIELDS.deviceId },
     ),
 ] as const;

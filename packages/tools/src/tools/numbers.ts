@@ -49,6 +49,7 @@ export const NUMBERS_TABLE = [
         doc: 'Update the display label.',
     }),
     sdkOp('delete', numbersDeleteSchema, (ctx, params) => ctx.backend.numbers.numbersDelete(params), 'commerce', {
+        destructive: true,
         doc: 'Cancel a pending purchase or schedule cancellation of a paid number.',
     }),
     sdkOp('messages', numbersMessagesSchema, (ctx, params) => ctx.backend.numbers.numbersMessages(params), 'read', {

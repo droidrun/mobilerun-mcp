@@ -153,6 +153,7 @@ export const MANAGE_FLOW_TABLE = [
             flowId: MANAGE_FLOW_SHARED_FIELDS.flowId,
         },
         access: 'write',
+        destructive: true,
         doc: 'Remove a step (flowActionId, flowId).',
         run: async (ctx, input) =>
             asTextResult(
@@ -166,6 +167,7 @@ export const MANAGE_FLOW_TABLE = [
         op: 'replace_actions',
         input: { flowId: MANAGE_FLOW_SHARED_FIELDS.flowId, actions: MANAGE_FLOW_SHARED_FIELDS.actions },
         access: 'write',
+        destructive: true,
         doc: 'Replace the ENTIRE action list (flowId, actions[]). An omitted key is carried over from the existing step matching flowActionId, or at the same position with the same actionId, and derived for genuinely new steps. When reordering or inserting steps, pass key or flowActionId for every step you are keeping so it is recognized as existing.',
         run: async (ctx, input) => {
             // operation === 'replace_actions'
@@ -208,6 +210,7 @@ export const MANAGE_FLOW_TABLE = [
         effectiveOp: (input) => (input.enabled === true || input.lifecycleStatus === 'enabled' ? 'activate' : 'update'),
     }),
     sdkOp('delete', manageFlowDeleteSchema, (ctx, params) => ctx.backend.workflows.manageFlowDelete(params), 'write', {
+        destructive: true,
         doc: 'Delete a flow.',
     }),
     sdkOp('activate', manageFlowActivateSchema, (ctx, params) => ctx.backend.workflows.manageFlowActivate(params), 'commerce', {
@@ -249,6 +252,7 @@ export const MANAGE_FLOW_TABLE = [
         doc: 'Update a workflow action.',
     }),
     sdkOp('delete_action', manageFlowDeleteActionSchema, (ctx, params) => ctx.backend.workflows.manageFlowDeleteAction(params), 'write', {
+        destructive: true,
         doc: 'Delete a workflow action.',
     }),
     sdkOp(
@@ -263,7 +267,7 @@ export const MANAGE_FLOW_TABLE = [
         manageFlowDeleteTriggerSchema,
         (ctx, params) => ctx.backend.workflows.manageFlowDeleteTrigger(params),
         'write',
-        { doc: 'Delete a workflow trigger.' },
+        { destructive: true, doc: 'Delete a workflow trigger.' },
     ),
     sdkOp('fire_trigger', manageFlowFireTriggerSchema, (ctx, params) => ctx.backend.workflows.manageFlowFireTrigger(params), 'commerce', {
         doc: 'Fire a workflow trigger.',
