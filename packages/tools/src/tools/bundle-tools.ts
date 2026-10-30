@@ -80,7 +80,8 @@ export function resolveOperationAccess(name: string, input?: Record<string, unkn
             effectiveOperation: undefined,
             access: metadata.access,
             accesses: [metadata.access],
-            destructive: 'destructive' in metadata,
+            destructive: 'destructive' in metadata && metadata.destructive === true,
+            title: metadata.title,
         };
     }
     const operations: readonly Pick<Operation<never>, 'op' | 'access' | 'effectiveOp' | 'destructive'>[] = metadata.operations;
@@ -94,5 +95,6 @@ export function resolveOperationAccess(name: string, input?: Record<string, unkn
         // Full tables deliberately keep hints independent of the caller's profile.
         accesses: operations.map(({ access }) => access),
         destructive: operations.some(({ destructive }) => destructive),
+        title: metadata.title,
     };
 }

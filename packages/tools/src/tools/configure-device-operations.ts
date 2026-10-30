@@ -158,6 +158,7 @@ export const CONFIGURE_DEVICE_TABLE = [
         op: 'proxy_disconnect',
         input: { deviceId: CONFIGURE_DEVICE_SHARED_FIELDS.deviceId },
         access: 'write',
+        destructive: true,
         doc: 'Disconnect the proxy.',
         run: async (ctx, input) => {
             const { deviceId } = input;

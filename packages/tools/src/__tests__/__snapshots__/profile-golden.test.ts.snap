@@ -3399,7 +3399,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   },
   {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "openWorldHint": true,
       "readOnlyHint": false,
     },
@@ -3408,7 +3408,7 @@ exports[`golden tool annotations: full profile annotations 1`] = `
   },
   {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "openWorldHint": true,
       "readOnlyHint": false,
     },

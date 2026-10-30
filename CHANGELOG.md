@@ -10,7 +10,7 @@ All notable changes to `@mobilerun/mcp-tools` are documented here.
 
 ### Changed
 
-- `destructiveHint` is true only for tools with operations that delete, reset, replace or otherwise irreversibly change state; tools that only create, update or read report `false`. Mailbox and Connect tool descriptions use neutral wording.
+- `destructiveHint` is true only for tools with operations that delete, reset, cancel, disconnect or replace state, or that drive a device or agent with open-ended instructions; other tools report `false`. Mailbox and Connect tool descriptions use neutral wording.
 
 ### Removed
 

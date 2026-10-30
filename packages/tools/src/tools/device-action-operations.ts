@@ -175,7 +175,7 @@ export const DEVICE_ACTION_TABLE = [
         deviceActionClipboardGetSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardGet(deviceId, params),
         'read',
-        { destructive: true, doc: 'Read clipboard text.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
+        { doc: 'Read clipboard text.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
     ),
     sdkOp(
         'clipboard_set',
