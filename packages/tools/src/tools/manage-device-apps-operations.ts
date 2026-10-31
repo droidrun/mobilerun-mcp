@@ -39,6 +39,7 @@ export const MANAGE_APPS_TABLE = [
         op: 'delete',
         input: { packageName: MANAGE_APPS_SHARED_FIELDS.packageName, deviceId: MANAGE_APPS_SHARED_FIELDS.deviceId },
         access: 'write',
+        destructive: true,
         doc: 'Delete packageName.',
         run: async (ctx, input) => {
             const { deviceId } = input;

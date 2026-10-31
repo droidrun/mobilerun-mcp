@@ -10,6 +10,8 @@ export type Operation<Input> = {
     op: string;
     input: z.ZodRawShape;
     access: 'read' | 'write' | 'commerce' | 'full';
+    /** Deletes, resets, replaces or otherwise irreversibly changes existing state; drives `destructiveHint`. */
+    destructive?: true;
     /** A payload may require another operation's access in addition to its declared operation. */
     effectiveOp?: (input: Record<string, unknown>) => string;
     doc: string;
@@ -67,7 +69,7 @@ async function runOperation(table: BundleTable, op: string, ctx: ToolCtx, input:
     return entry.run(ctx, { ...input, operation: op } as never);
 }
 
-type SdkMetadata = Pick<Operation<never>, 'doc' | 'effectiveOp'>;
+type SdkMetadata = Pick<Operation<never>, 'doc' | 'effectiveOp' | 'destructive'>;
 
 /** SDK passthrough with a stripped body, optional device path and custom result formatting. */
 export function sdkOp<
@@ -196,11 +198,11 @@ function allowedValuesNote(narrowed: readonly string[], all: readonly string[]):
 }
 
 /** Conservative hints derived from the same access classifications as profiles. */
-export function operationAnnotations(accesses: readonly Operation<never>['access'][]) {
+export function operationAnnotations(accesses: readonly Operation<never>['access'][], destructive: boolean) {
     const readOnly = accesses.every((access) => access === 'read');
     return {
         readOnlyHint: readOnly,
-        destructiveHint: !readOnly,
+        destructiveHint: !readOnly && destructive,
         ...(!readOnly && accesses.includes('commerce') ? { idempotentHint: false } : {}),
         openWorldHint: true,
     };

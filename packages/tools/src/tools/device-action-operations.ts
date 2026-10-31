@@ -34,6 +34,7 @@ export const DEVICE_ACTION_TABLE = [
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
         access: 'write',
+        destructive: true,
         doc: 'Tap x, y.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
@@ -61,6 +62,7 @@ export const DEVICE_ACTION_TABLE = [
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
         access: 'write',
+        destructive: true,
         doc: 'Swipe startX, startY to endX, endY with duration in milliseconds.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
@@ -93,6 +95,7 @@ export const DEVICE_ACTION_TABLE = [
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
         access: 'write',
+        destructive: true,
         doc: 'Type text with optional clear, errorRate, wpm and humanize.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
@@ -117,6 +120,7 @@ export const DEVICE_ACTION_TABLE = [
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
         access: 'write',
+        destructive: true,
         doc: 'Send an Android keycode.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
@@ -133,6 +137,7 @@ export const DEVICE_ACTION_TABLE = [
         op: 'keyboard_clear',
         input: { displayId: DEVICE_ACTION_SHARED_FIELDS.displayId, deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
         access: 'write',
+        destructive: true,
         doc: 'Clear keyboard input.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
@@ -149,6 +154,7 @@ export const DEVICE_ACTION_TABLE = [
             deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId,
         },
         access: 'write',
+        destructive: true,
         doc: 'Send an Android global-action code, e.g. back/home/recents.',
         run: async (ctx, input) => {
             const { deviceId, displayId } = input;
@@ -176,20 +182,20 @@ export const DEVICE_ACTION_TABLE = [
         deviceActionClipboardSetSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionClipboardSet(deviceId, params),
         'write',
-        { doc: 'Write clipboard text.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
+        { destructive: true, doc: 'Write clipboard text.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
     ),
     sdkOp(
         'deep_link',
         deviceActionDeepLinkSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionDeepLink(deviceId, params),
         'write',
-        { doc: 'Open a URL or app link.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
+        { destructive: true, doc: 'Open a URL or app link.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
     ),
     sdkOp(
         'browser_script',
         deviceActionBrowserScriptSchema,
         (ctx, params, deviceId) => ctx.backend.deviceControl.deviceActionBrowserScript(deviceId, params),
         'write',
-        { doc: 'Run a script in the device browser.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
+        { destructive: true, doc: 'Run a script in the device browser.', deviceId: DEVICE_ACTION_SHARED_FIELDS.deviceId },
     ),
 ] as const;

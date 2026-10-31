@@ -85,7 +85,7 @@ test('golden tool annotations', async () => {
         const { tools } = await client.listTools();
         expect(tools.every((tool) => tool.annotations !== undefined)).toBe(true);
         expect(tools.sort((a, b) => a.name.localeCompare(b.name))
-            .map(({ name, annotations }) => ({ name, annotations }))).toMatchSnapshot('full profile annotations');
+            .map(({ name, title, annotations }) => ({ name, title, annotations }))).toMatchSnapshot('full profile annotations');
     } finally {
         await close();
     }

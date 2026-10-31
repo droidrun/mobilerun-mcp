@@ -84,6 +84,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
             credentialName: MANAGE_CREDENTIALS_SHARED_FIELDS.credentialName,
         },
         access: 'write',
+        destructive: true,
         doc: 'Delete a credential (packageName, credentialName).',
         run: async (ctx, input) => {
             const packageName = requireValue(input.packageName, 'packageName', input.operation, 'manage_credentials');
@@ -147,6 +148,7 @@ export const MANAGE_CREDENTIALS_TABLE = [
             fieldType: MANAGE_CREDENTIALS_SHARED_FIELDS.fieldType,
         },
         access: 'write',
+        destructive: true,
         doc: 'Delete a field (packageName, credentialName, fieldType).',
         run: async (ctx, input) => {
             const packageName = requireValue(input.packageName, 'packageName', input.operation, 'manage_credentials');

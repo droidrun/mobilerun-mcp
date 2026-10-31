@@ -163,7 +163,8 @@ function enforcePolicy(server: McpServer, ctx: ToolCtx, onToolCall?: (event: Too
         const resolved = resolveOperationAccess(name);
         const definition = {
             ...(def as object),
-            ...(resolved ? { annotations: operationAnnotations(resolved.accesses) } : {}),
+            ...(resolved?.title ? { title: resolved.title } : {}),
+            ...(resolved ? { annotations: operationAnnotations(resolved.accesses, resolved.destructive) } : {}),
         };
         // @ts-expect-error — passing through the SDK's variadic registerTool signature.
         const registered = original(name, definition, wrapped);

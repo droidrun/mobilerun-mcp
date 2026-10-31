@@ -124,6 +124,7 @@ export const APPS_TABLE = [
         op: 'delete',
         input: { id: APPS_SHARED_FIELDS.id },
         access: 'write',
+        destructive: true,
         doc: 'Delete an uploaded app.',
         run: async (ctx, input) => asTextResult(await ctx.backend.apps.deleteApp(requireValue(input.id, 'id', input.operation, 'apps'))),
     }),

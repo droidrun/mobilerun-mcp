@@ -31,6 +31,7 @@ export const FILES_TABLE = [
         doc: 'Update file metadata.',
     }),
     sdkOp('delete', filesDeleteSchema, (ctx, params) => ctx.backend.files.filesDelete(params), 'write', {
+        destructive: true,
         doc: 'Delete a file.',
     }),
     sdkOp('cancel_pending', filesCancelPendingSchema, (ctx, params) => ctx.backend.files.filesCancelPending(params), 'write', {

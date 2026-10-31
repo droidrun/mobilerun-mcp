@@ -1,6 +1,6 @@
 import { clientRequestIdSchema } from '../backend/communication.js';
 import { operation, registerBundle, requireValue, sdkOp } from './operation-table.js';
-// connect bundle — residential SOCKS5 proxies + bound users (distinct from
+// connect bundle — Connect proxies + bound users (distinct from
 // the device-bound `proxies` tool). Operations: list_countries,
 // list_proxies, get_proxy, buy_proxy, cancel_proxy, ping_proxy,
 // list_connections (a proxy's connection history), list_users, get_user,
@@ -50,7 +50,7 @@ const CONNECT_SHARED_FIELDS = {
 };
 
 const CONNECT_INTRO =
-    'Manage Mobilerun Connect residential SOCKS5 proxies and their bound users (distinct from the device-bound proxies tool).';
+    'Manage Mobilerun Connect proxies and their bound users (distinct from the device-bound proxies tool).';
 export const CONNECT_TABLE = [
     operation({
         op: 'list_countries',
@@ -78,7 +78,7 @@ export const CONNECT_TABLE = [
             pageSize: CONNECT_SHARED_FIELDS.pageSize,
         },
         access: 'read',
-        doc: 'List residential proxies.',
+        doc: 'List Connect proxies.',
         run: async (ctx, input) =>
             asTextResult(
                 await ctx.backend.connect.listConnectProxies({
@@ -92,7 +92,7 @@ export const CONNECT_TABLE = [
         op: 'get_proxy',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'read',
-        doc: 'Read a residential proxy.',
+        doc: 'Read a Connect proxy.',
         run: async (ctx, input) =>
             asTextResult(await ctx.backend.connect.getConnectProxy(requireValue(input.proxyId, 'proxyId', input.operation, 'connect'))),
     }),
@@ -100,7 +100,7 @@ export const CONNECT_TABLE = [
         op: 'buy_proxy',
         input: { country: CONNECT_SHARED_FIELDS.country, type: CONNECT_SHARED_FIELDS.type, clientRequestId: clientRequestIdSchema.describe('Reuse to retry safely; use a new value to deliberately repeat the purchase.') },
         access: 'commerce',
-        doc: 'Provision and bill a residential proxy. Retry with the returned clientRequestId to avoid a second purchase.',
+        doc: 'Provision and bill a Connect proxy. Retry with the returned clientRequestId to avoid a second purchase.',
         run: async (ctx, input) =>
             asTextResult(
                 await ctx.backend.connect.buyConnectProxy({
@@ -114,6 +114,7 @@ export const CONNECT_TABLE = [
         op: 'cancel_proxy',
         input: { proxyId: CONNECT_SHARED_FIELDS.proxyId },
         access: 'commerce',
+        destructive: true,
         doc: 'End a billed proxy.',
         run: async (ctx, input) => {
             await ctx.backend.connect.cancelConnectProxy(requireValue(input.proxyId, 'proxyId', input.operation, 'connect'));
@@ -215,10 +216,10 @@ export const CONNECT_TABLE = [
             ),
     }),
     sdkOp('update_proxy', connectUpdateProxySchema, (ctx, params) => ctx.backend.connect.connectUpdateProxy(params), 'write', {
-        doc: 'Update a residential proxy label.',
+        doc: 'Update a Connect proxy label.',
     }),
     sdkOp('ensure_healthy', connectEnsureHealthySchema, (ctx, params) => ctx.backend.connect.connectEnsureHealthy(params), 'write', {
-        doc: 'Repair an unhealthy residential proxy.',
+        doc: 'Repair an unhealthy Connect proxy.',
     }),
 ] as const;
 type ConnectInput = z.infer<z.ZodObject<typeof CONNECT_SHARED_FIELDS>>;

@@ -1,6 +1,6 @@
 import { operation, registerBundle, requireValue } from './operation-table.js';
 // proxies bundle — device-bound socks5/wireguard proxy configs (distinct
-// from the `connect` tool's purchasable residential proxies).
+// from the `connect` tool's purchasable Connect proxies).
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { ToolCtx } from '../ctx.js';
@@ -75,6 +75,7 @@ export const PROXIES_TABLE = [
         op: 'delete',
         input: { proxyId: PROXIES_SHARED_FIELDS.proxyId },
         access: 'write',
+        destructive: true,
         doc: 'Delete a proxy configuration.',
         run: async (ctx, input) =>
             asTextResult(await ctx.backend.proxies.deleteProxy(requireValue(input.proxyId, 'proxyId', input.operation, 'proxies'))),
